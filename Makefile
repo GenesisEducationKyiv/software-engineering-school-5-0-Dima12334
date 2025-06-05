@@ -26,5 +26,5 @@ test: ## Run all tests
 swag: ## Generate Swagger docs
 	swag init -g internal/app/app.go
 
-lint: ## Run golangci-lint with remote config (first you need to install this linter on you , look Readme.md)
+lint: ## Run golangci-lint with remote config (first you need to install this linter on you, look Readme.md)
 	bash -c 'golangci-lint run --config <(curl -sSfL https://raw.githubusercontent.com/fabl3ss/genesis-se-school-linter/refs/heads/main/.golangci.yaml)'
