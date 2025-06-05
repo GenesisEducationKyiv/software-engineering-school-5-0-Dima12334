@@ -15,7 +15,15 @@ func ApplyMigrations(dsn, migrationsPath string, direction string) error {
 	if err != nil {
 		return fmt.Errorf("failed to connect to database: %w", err)
 	}
-	defer db.Close()
+	defer func(db *sql.DB) {
+		if closeErr := db.Close(); closeErr != nil {
+			if err != nil {
+				err = fmt.Errorf("%w; failed to close db connection: %w", err, closeErr)
+			} else {
+				err = fmt.Errorf("failed to close db connection: %w", closeErr)
+			}
+		}
+	}(db)
 
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
 	if err != nil {
@@ -29,11 +37,11 @@ func ApplyMigrations(dsn, migrationsPath string, direction string) error {
 
 	switch direction {
 	case "up":
-		if err := m.Up(); err != nil && !errors.Is(migrate.ErrNoChange, err) {
+		if err := m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
 			return fmt.Errorf("failed to apply migrations up: %w", err)
 		}
 	case "down":
-		if err := m.Down(); err != nil && !errors.Is(migrate.ErrNoChange, err) {
+		if err := m.Down(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
 			return fmt.Errorf("failed to apply migrations down: %w", err)
 		}
 	default:

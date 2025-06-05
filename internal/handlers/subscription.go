@@ -2,11 +2,12 @@ package handlers
 
 import (
 	"errors"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"weather_forecast_sub/internal/service"
 	customErrors "weather_forecast_sub/pkg/errors"
 	"weather_forecast_sub/pkg/hash"
+
+	"github.com/gin-gonic/gin"
 )
 
 type subscribeEmailInput struct {

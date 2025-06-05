@@ -48,7 +48,10 @@ func setupCronTestEnvironment(t *testing.T, ctrl *gomock.Controller) (*service.S
 	)
 
 	cleanup := func() {
-		testDB.Exec(`DELETE FROM subscriptions;`)
+		_, err := testDB.Exec(`DELETE FROM subscriptions;`)
+		if err != nil {
+			t.Fatalf("cleanup failed: could not delete subscriptions data: %v", err)
+		}
 	}
 
 	return subService, mockWeatherService, mockEmailSender, cleanup

@@ -3,6 +3,7 @@ package clients
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -12,6 +13,7 @@ import (
 
 const (
 	weatherAPICityNotFoundCode = 1006
+	weatherAPIClientTimeout    = 10 * time.Second
 )
 
 type WeatherAPIClient struct {
@@ -24,7 +26,7 @@ func NewWeatherAPIClient(apiKey string) *WeatherAPIClient {
 	return &WeatherAPIClient{
 		APIKey:     apiKey,
 		BaseURL:    "https://api.weatherapi.com/v1",
-		HTTPClient: &http.Client{Timeout: 10 * time.Second},
+		HTTPClient: &http.Client{Timeout: weatherAPIClientTimeout},
 	}
 }
 
@@ -83,7 +85,15 @@ func (c *WeatherAPIClient) GetAPICurrentWeather(city string) (*WeatherResponse, 
 		logger.Errorf("error making request to WeatherClient API: %s", err.Error())
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			if err != nil {
+				err = fmt.Errorf("%w; failed to close response body: %w", err, closeErr)
+			} else {
+				err = fmt.Errorf("failed to close response body: %w", closeErr)
+			}
+		}
+	}(resp.Body)
 
 	if resp.StatusCode != http.StatusOK {
 		var apiErr weatherAPIErrorResponse
@@ -125,7 +135,15 @@ func (c *WeatherAPIClient) GetAPIDayWeather(city string) (*DayWeatherResponse, e
 		logger.Errorf("error making request to WeatherAPI: %s", err.Error())
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			if err != nil {
+				err = fmt.Errorf("%w; failed to close response body: %w", err, closeErr)
+			} else {
+				err = fmt.Errorf("failed to close response body: %w", closeErr)
+			}
+		}
+	}(resp.Body)
 
 	if resp.StatusCode != http.StatusOK {
 		var apiErr weatherAPIErrorResponse
@@ -148,12 +166,12 @@ func (c *WeatherAPIClient) GetAPIDayWeather(city string) (*DayWeatherResponse, e
 
 	// Map of required times
 	targetHours := map[string]*WeatherResponse{
-		"07:00": &WeatherResponse{},
-		"10:00": &WeatherResponse{},
-		"13:00": &WeatherResponse{},
-		"16:00": &WeatherResponse{},
-		"19:00": &WeatherResponse{},
-		"22:00": &WeatherResponse{},
+		"07:00": {},
+		"10:00": {},
+		"13:00": {},
+		"16:00": {},
+		"19:00": {},
+		"22:00": {},
 	}
 
 	for _, hourData := range result.Forecast.ForecastDay[0].Hour {

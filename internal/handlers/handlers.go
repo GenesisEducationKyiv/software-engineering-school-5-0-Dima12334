@@ -1,11 +1,12 @@
 package handlers
 
 import (
+	"net/http"
+	"weather_forecast_sub/internal/service"
+
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
-	"net/http"
-	"weather_forecast_sub/internal/service"
 
 	_ "weather_forecast_sub/docs"
 )

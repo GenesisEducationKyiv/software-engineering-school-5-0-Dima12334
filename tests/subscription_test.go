@@ -2,9 +2,6 @@ package tests
 
 import (
 	"bytes"
-	"github.com/gin-gonic/gin"
-	"github.com/stretchr/testify/assert"
-	"go.uber.org/mock/gomock"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -16,6 +13,10 @@ import (
 	mockService "weather_forecast_sub/internal/service/mocks"
 	mockSender "weather_forecast_sub/pkg/email/mocks"
 	"weather_forecast_sub/pkg/hash"
+
+	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 )
 
 func TestSubscription(t *testing.T) {
@@ -25,6 +26,7 @@ func TestSubscription(t *testing.T) {
 	t.Run("Duplicate subscription", testDuplicateSubscribe)
 	t.Run("Unsubscribe success", testUnsubscribeSuccess)
 	t.Run("Unsubscribe not found", testUnsubscribeNotFound)
+	t.Run("Unsubscribe invalid token", testUnsubscribeInvalidToken)
 	t.Run("Confirm success", testConfirmSuccess)
 	t.Run("Confirm not found", testConfirmNotFound)
 	t.Run("Confirm invalid token", testConfirmInvalidToken)
@@ -66,7 +68,10 @@ func setupTestEnvironment(t *testing.T, ctrl *gomock.Controller) (*gin.Engine, *
 	router.LoadHTMLGlob("../templates/**/*.html")
 
 	cleanup := func() {
-		testDB.Exec(`DELETE FROM subscriptions;`)
+		_, err := testDB.Exec(`DELETE FROM subscriptions;`)
+		if err != nil {
+			t.Fatalf("cleanup failed: could not delete subscriptions data: %v", err)
+		}
 	}
 
 	return router, mockEmailSender, cleanup

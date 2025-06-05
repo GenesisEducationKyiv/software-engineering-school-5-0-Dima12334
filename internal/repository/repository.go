@@ -2,9 +2,10 @@ package repository
 
 import (
 	"context"
-	"github.com/jmoiron/sqlx"
 	"time"
 	"weather_forecast_sub/internal/domain"
+
+	"github.com/jmoiron/sqlx"
 )
 
 //go:generate mockgen -source=repository.go -destination=mocks/mock_repository.go

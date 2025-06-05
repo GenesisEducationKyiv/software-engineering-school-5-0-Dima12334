@@ -1,12 +1,14 @@
 package tests
 
 import (
-	"github.com/jmoiron/sqlx"
+	"fmt"
 	"log"
 	"os"
 	"testing"
 	"weather_forecast_sub/internal/config"
 	"weather_forecast_sub/pkg/migrations"
+
+	"github.com/jmoiron/sqlx"
 )
 
 const (
@@ -31,7 +33,15 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		log.Fatalf("Failed to connect to test database: %v", err)
 	}
-	defer testDB.Close()
+	defer func(db *sqlx.DB) {
+		if closeErr := db.Close(); closeErr != nil {
+			if err != nil {
+				err = fmt.Errorf("%w; failed to close test db connection: %w", err, closeErr)
+			} else {
+				err = fmt.Errorf("failed to close test db connection: %w", closeErr)
+			}
+		}
+	}(testDB)
 
 	code := m.Run()
 

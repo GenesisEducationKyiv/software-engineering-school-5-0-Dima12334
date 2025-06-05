@@ -2,10 +2,11 @@ package config
 
 import (
 	"fmt"
-	"github.com/joho/godotenv"
-	"github.com/spf13/viper"
 	"log"
 	"os"
+
+	"github.com/joho/godotenv"
+	"github.com/spf13/viper"
 )
 
 const (

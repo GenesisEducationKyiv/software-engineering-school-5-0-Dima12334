@@ -2,10 +2,11 @@ package handlers
 
 import (
 	"errors"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"net/url"
 	customErrors "weather_forecast_sub/pkg/errors"
+
+	"github.com/gin-gonic/gin"
 )
 
 type weatherResponse struct {

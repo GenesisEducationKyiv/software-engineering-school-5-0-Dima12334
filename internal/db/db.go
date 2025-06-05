@@ -1,9 +1,10 @@
 package db
 
 import (
+	"weather_forecast_sub/internal/config"
+
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
-	"weather_forecast_sub/internal/config"
 )
 
 func ConnectDB(dbCfg config.DatabaseConfig) (*sqlx.DB, error) {

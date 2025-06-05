@@ -1,9 +1,6 @@
 package tests
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/stretchr/testify/assert"
-	"go.uber.org/mock/gomock"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -14,6 +11,10 @@ import (
 	"weather_forecast_sub/pkg/clients"
 	mockClients "weather_forecast_sub/pkg/clients/mocks"
 	customErrors "weather_forecast_sub/pkg/errors"
+
+	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 )
 
 func TestWeather(t *testing.T) {
