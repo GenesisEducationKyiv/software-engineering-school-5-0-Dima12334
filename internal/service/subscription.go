@@ -18,6 +18,9 @@ const (
 	HourlyWeatherEmailFrequency = "hourly"
 )
 
+type WeatherFetcherFunc[T any] func(ctx context.Context, city string) (T, error)
+type EmailSenderFunc[T any] func(sub domain.Subscription, weather T, date string) error
+
 type SubscriptionService struct {
 	repo           repository.SubscriptionRepository
 	hasher         hash.EmailHasher
@@ -125,8 +128,8 @@ func sendWeatherForecast[T any](
 	ctx context.Context,
 	s *SubscriptionService,
 	frequency string,
-	getWeatherFunc func(ctx context.Context, city string) (T, error),
-	sendEmailFunc func(sub domain.Subscription, weather T, date string) error,
+	getWeatherFunc WeatherFetcherFunc[T],
+	sendEmailFunc EmailSenderFunc[T],
 	dateFormat string,
 ) error {
 	subs, err := s.repo.GetConfirmedByFrequency(frequency)

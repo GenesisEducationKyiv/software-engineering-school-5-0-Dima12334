@@ -3,6 +3,7 @@ package hash
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"unicode"
 )
 
 //go:generate mockgen -source=email.go -destination=mocks/mock_email.go
@@ -27,7 +28,7 @@ func IsValidSHA256Hex(s string) bool {
 		return false
 	}
 	for _, r := range s {
-		if (r < '0' || r > '9') && (r < 'a' || r > 'f') {
+		if !unicode.IsDigit(r) && (r < 'a' || r > 'f') {
 			return false
 		}
 	}
