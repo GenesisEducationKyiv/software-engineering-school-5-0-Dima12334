@@ -1,0 +1,49 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:16
+    container_name: weather_forecast_sub_postgres
+    healthcheck:
+      test: [ "CMD-SHELL", "sh -c 'pg_isready -U ${DB_USER} -d ${DB_NAME}'" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "${DB_PORT}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  db_test:
+    image: postgres:16
+    container_name: weather_forecast_sub_postgres_test
+    healthcheck:
+      test: [ "CMD-SHELL", "sh -c 'pg_isready -U ${TEST_DB_USER} -d ${TEST_DB_NAME}'" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    environment:
+      POSTGRES_USER: ${TEST_DB_USER}
+      POSTGRES_PASSWORD: ${TEST_DB_PASSWORD}
+      POSTGRES_DB: ${TEST_DB_NAME}
+    ports:
+      - "${TEST_DB_PORT}:5432"
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+
+  app:
+    build: .
+    container_name: weather_forecast_sub_app
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${APP_PORT}:${APP_PORT}"
+
+volumes:
+  postgres_data:
+  postgres_test_data:
