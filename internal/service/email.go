@@ -32,7 +32,11 @@ type weatherForecastHourlyEmailInput struct {
 	Date            string
 }
 
-func NewEmailsService(sender email.Sender, emailConfig config.EmailConfig, httpConfig config.HTTPConfig) *EmailService {
+func NewEmailsService(
+	sender email.Sender,
+	emailConfig config.EmailConfig,
+	httpConfig config.HTTPConfig,
+) *EmailService {
 	return &EmailService{
 		sender:      sender,
 		emailConfig: emailConfig,
@@ -48,7 +52,10 @@ func (s *EmailService) SendConfirmationEmail(inp ConfirmationEmailInput) error {
 	}
 	sendInput := email.SendEmailInput{Subject: subject, To: inp.Email}
 
-	if err := sendInput.GenerateBodyFromHTML(s.emailConfig.Templates.Confirmation, templateInput); err != nil {
+	if err := sendInput.GenerateBodyFromHTML(
+		s.emailConfig.Templates.Confirmation,
+		templateInput,
+	); err != nil {
 		logger.Errorf("failed to generate confirmation email body: %s", err.Error())
 		return err
 	}
@@ -75,7 +82,9 @@ func (s *EmailService) SendWeatherForecastDailyEmail(inp WeatherForecastDailyEma
 	}
 	sendInput := email.SendEmailInput{Subject: subject, To: inp.Subscription.Email}
 
-	if err := sendInput.GenerateBodyFromHTML(s.emailConfig.Templates.WeatherForecastDaily, templateInput); err != nil {
+	if err := sendInput.GenerateBodyFromHTML(
+		s.emailConfig.Templates.WeatherForecastDaily, templateInput,
+	); err != nil {
 		logger.Errorf("failed to generate weather daily email body: %s", err.Error())
 		return err
 	}
@@ -94,7 +103,10 @@ func (s *EmailService) SendWeatherForecastHourlyEmail(inp WeatherForecastHourlyE
 	}
 	sendInput := email.SendEmailInput{Subject: subject, To: inp.Subscription.Email}
 
-	if err := sendInput.GenerateBodyFromHTML(s.emailConfig.Templates.WeatherForecastHourly, templateInput); err != nil {
+	if err := sendInput.GenerateBodyFromHTML(
+		s.emailConfig.Templates.WeatherForecastHourly,
+		templateInput,
+	); err != nil {
 		logger.Errorf("failed to generate weather hourly email body: %s", err.Error())
 		return err
 	}

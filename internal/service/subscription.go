@@ -7,14 +7,15 @@ import (
 	"weather_forecast_sub/internal/config"
 	"weather_forecast_sub/internal/domain"
 	"weather_forecast_sub/internal/repository"
+	"weather_forecast_sub/pkg/clients"
 	"weather_forecast_sub/pkg/email"
 	"weather_forecast_sub/pkg/hash"
 	"weather_forecast_sub/pkg/logger"
 )
 
 const (
-	DailyFrequency  = "daily"
-	HourlyFrequency = "hourly"
+	DailyWeatherEmailFrequency  = "daily"
+	HourlyWeatherEmailFrequency = "hourly"
 )
 
 type SubscriptionService struct {
@@ -86,79 +87,76 @@ func (s *SubscriptionService) Delete(ctx context.Context, token string) error {
 	return s.repo.Delete(ctx, token)
 }
 
-func (s *SubscriptionService) SendDailyWeatherForecast() error {
-	subs, err := s.repo.GetConfirmedByFrequency(DailyFrequency)
-	if err != nil {
-		logger.Errorf("failed to get daily subscriptions: %s", err.Error())
-		return err
-	}
-
-	var cityToSubscriptionMap = make(map[string][]domain.Subscription)
-	for _, sub := range subs {
-		cityToSubscriptionMap[sub.City] = append(cityToSubscriptionMap[sub.City], sub)
-	}
-
-	var subscriptionsToUpdate []string
-
-	for city, subscriptions := range cityToSubscriptionMap {
-		escapedCity := url.QueryEscape(city)
-		weather, err := s.weatherService.GetDayWeather(escapedCity)
-		if err != nil {
-			logger.Errorf("failed to get daily weather for city %s: %s", city, err.Error())
-			continue
-		}
-
-		for _, subscription := range subscriptions {
-			err = s.emailService.SendWeatherForecastDailyEmail(WeatherForecastDailyEmailInput{
-				Subscription: subscription,
+func (s *SubscriptionService) SendDailyWeatherForecast(ctx context.Context) error {
+	return sendWeatherForecast[*clients.DayWeatherResponse](
+		ctx,
+		s,
+		DailyWeatherEmailFrequency,
+		s.weatherService.GetDayWeather,
+		func(sub domain.Subscription, weather *clients.DayWeatherResponse, date string) error {
+			return s.emailService.SendWeatherForecastDailyEmail(WeatherForecastDailyEmailInput{
+				Subscription: sub,
 				Weather:      weather,
-				Date:         time.Now().Format(time.DateOnly),
+				Date:         date,
 			})
-			if err != nil {
-				logger.Errorf("failed to send daily email to %s: %s", subscription.Email, err.Error())
-				continue
-			}
-			subscriptionsToUpdate = append(subscriptionsToUpdate, subscription.Token)
-		}
-	}
-
-	if len(subscriptionsToUpdate) == 0 {
-		logger.Warn("no daily subscriptions to update")
-		return nil
-	}
-	return s.repo.SetLastSentAt(time.Now(), subscriptionsToUpdate)
+		},
+		time.DateOnly,
+	)
 }
 
-func (s *SubscriptionService) SendHourlyWeatherForecast() error {
-	subs, err := s.repo.GetConfirmedByFrequency(HourlyFrequency)
+func (s *SubscriptionService) SendHourlyWeatherForecast(ctx context.Context) error {
+	return sendWeatherForecast[*clients.WeatherResponse](
+		ctx,
+		s,
+		HourlyWeatherEmailFrequency,
+		s.weatherService.GetCurrentWeather,
+		func(sub domain.Subscription, weather *clients.WeatherResponse, date string) error {
+			return s.emailService.SendWeatherForecastHourlyEmail(WeatherForecastHourlyEmailInput{
+				Subscription: sub,
+				Weather:      weather,
+				Date:         date,
+			})
+		},
+		time.DateTime,
+	)
+}
+
+func sendWeatherForecast[T any](
+	ctx context.Context,
+	s *SubscriptionService,
+	frequency string,
+	getWeatherFunc func(ctx context.Context, city string) (T, error),
+	sendEmailFunc func(sub domain.Subscription, weather T, date string) error,
+	dateFormat string,
+) error {
+	subs, err := s.repo.GetConfirmedByFrequency(frequency)
 	if err != nil {
-		logger.Errorf("failed to get hourly subscriptions: %s", err.Error())
+		logger.Errorf("failed to get subscriptions (%s): %s", frequency, err.Error())
 		return err
 	}
 
-	var cityToSubscriptionMap = make(map[string][]domain.Subscription)
+	cityToSubscriptions := make(map[string][]domain.Subscription)
 	for _, sub := range subs {
-		cityToSubscriptionMap[sub.City] = append(cityToSubscriptionMap[sub.City], sub)
+		cityToSubscriptions[sub.City] = append(cityToSubscriptions[sub.City], sub)
 	}
 
 	var subscriptionsToUpdate []string
-
-	for city, subscriptions := range cityToSubscriptionMap {
+	for city, subscriptions := range cityToSubscriptions {
 		escapedCity := url.QueryEscape(city)
-		weather, err := s.weatherService.GetCurrentWeather(escapedCity)
+		weather, err := getWeatherFunc(ctx, escapedCity)
 		if err != nil {
-			logger.Errorf("failed to get hourly weather for city %s: %s", city, err.Error())
+			logger.Errorf("failed to get weather (%s) for city %s: %s", frequency, city, err.Error())
 			continue
 		}
 
 		for _, subscription := range subscriptions {
-			err = s.emailService.SendWeatherForecastHourlyEmail(WeatherForecastHourlyEmailInput{
-				Subscription: subscription,
-				Weather:      weather,
-				Date:         time.Now().Format(time.DateTime),
-			})
-			if err != nil {
-				logger.Errorf("failed to send hourly email to %s: %s", subscription.Email, err.Error())
+			if err := sendEmailFunc(subscription, weather, time.Now().Format(dateFormat)); err != nil {
+				logger.Errorf(
+					"failed to send email (%s) to %s: %s",
+					frequency,
+					subscription.Email,
+					err.Error(),
+				)
 				continue
 			}
 			subscriptionsToUpdate = append(subscriptionsToUpdate, subscription.Token)
@@ -166,8 +164,9 @@ func (s *SubscriptionService) SendHourlyWeatherForecast() error {
 	}
 
 	if len(subscriptionsToUpdate) == 0 {
-		logger.Warn("no hourly subscriptions to update")
+		logger.Warnf("no %s subscriptions to update", frequency)
 		return nil
 	}
+
 	return s.repo.SetLastSentAt(time.Now(), subscriptionsToUpdate)
 }

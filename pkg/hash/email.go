@@ -23,11 +23,11 @@ func (h *SHA256Hasher) GenerateEmailHash(email string) string {
 }
 
 func IsValidSHA256Hex(s string) bool {
-	if len(s) != 64 {
+	if len(s) != sha256.BlockSize {
 		return false
 	}
 	for _, r := range s {
-		if !((r >= '0' && r <= '9') || (r >= 'a' && r <= 'f')) {
+		if (r < '0' || r > '9') && (r < 'a' || r > 'f') {
 			return false
 		}
 	}

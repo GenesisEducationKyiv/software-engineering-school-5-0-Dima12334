@@ -85,31 +85,31 @@ func (mr *MockSubscriptionMockRecorder) Delete(ctx, token any) *gomock.Call {
 }
 
 // SendDailyWeatherForecast mocks base method.
-func (m *MockSubscription) SendDailyWeatherForecast() error {
+func (m *MockSubscription) SendDailyWeatherForecast(ctx context.Context) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SendDailyWeatherForecast")
+	ret := m.ctrl.Call(m, "SendDailyWeatherForecast", ctx)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // SendDailyWeatherForecast indicates an expected call of SendDailyWeatherForecast.
-func (mr *MockSubscriptionMockRecorder) SendDailyWeatherForecast() *gomock.Call {
+func (mr *MockSubscriptionMockRecorder) SendDailyWeatherForecast(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendDailyWeatherForecast", reflect.TypeOf((*MockSubscription)(nil).SendDailyWeatherForecast))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendDailyWeatherForecast", reflect.TypeOf((*MockSubscription)(nil).SendDailyWeatherForecast), ctx)
 }
 
 // SendHourlyWeatherForecast mocks base method.
-func (m *MockSubscription) SendHourlyWeatherForecast() error {
+func (m *MockSubscription) SendHourlyWeatherForecast(ctx context.Context) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SendHourlyWeatherForecast")
+	ret := m.ctrl.Call(m, "SendHourlyWeatherForecast", ctx)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // SendHourlyWeatherForecast indicates an expected call of SendHourlyWeatherForecast.
-func (mr *MockSubscriptionMockRecorder) SendHourlyWeatherForecast() *gomock.Call {
+func (mr *MockSubscriptionMockRecorder) SendHourlyWeatherForecast(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendHourlyWeatherForecast", reflect.TypeOf((*MockSubscription)(nil).SendHourlyWeatherForecast))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendHourlyWeatherForecast", reflect.TypeOf((*MockSubscription)(nil).SendHourlyWeatherForecast), ctx)
 }
 
 // MockWeather is a mock of Weather interface.
@@ -137,33 +137,33 @@ func (m *MockWeather) EXPECT() *MockWeatherMockRecorder {
 }
 
 // GetCurrentWeather mocks base method.
-func (m *MockWeather) GetCurrentWeather(city string) (*clients.WeatherResponse, error) {
+func (m *MockWeather) GetCurrentWeather(ctx context.Context, city string) (*clients.WeatherResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetCurrentWeather", city)
+	ret := m.ctrl.Call(m, "GetCurrentWeather", ctx, city)
 	ret0, _ := ret[0].(*clients.WeatherResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetCurrentWeather indicates an expected call of GetCurrentWeather.
-func (mr *MockWeatherMockRecorder) GetCurrentWeather(city any) *gomock.Call {
+func (mr *MockWeatherMockRecorder) GetCurrentWeather(ctx, city any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCurrentWeather", reflect.TypeOf((*MockWeather)(nil).GetCurrentWeather), city)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCurrentWeather", reflect.TypeOf((*MockWeather)(nil).GetCurrentWeather), ctx, city)
 }
 
 // GetDayWeather mocks base method.
-func (m *MockWeather) GetDayWeather(city string) (*clients.DayWeatherResponse, error) {
+func (m *MockWeather) GetDayWeather(ctx context.Context, city string) (*clients.DayWeatherResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetDayWeather", city)
+	ret := m.ctrl.Call(m, "GetDayWeather", ctx, city)
 	ret0, _ := ret[0].(*clients.DayWeatherResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetDayWeather indicates an expected call of GetDayWeather.
-func (mr *MockWeatherMockRecorder) GetDayWeather(city any) *gomock.Call {
+func (mr *MockWeatherMockRecorder) GetDayWeather(ctx, city any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDayWeather", reflect.TypeOf((*MockWeather)(nil).GetDayWeather), city)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDayWeather", reflect.TypeOf((*MockWeather)(nil).GetDayWeather), ctx, city)
 }
 
 // MockEmails is a mock of Emails interface.

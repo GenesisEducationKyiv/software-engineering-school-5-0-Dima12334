@@ -34,7 +34,7 @@ func (h *Handler) GetWeather(c *gin.Context) {
 	}
 	escapedCity := url.QueryEscape(city)
 
-	weather, err := h.services.Weather.GetCurrentWeather(escapedCity)
+	weather, err := h.services.Weather.GetCurrentWeather(c, escapedCity)
 	if err != nil {
 		switch {
 		case errors.Is(err, customErrors.ErrCityNotFound):

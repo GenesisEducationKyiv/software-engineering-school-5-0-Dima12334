@@ -44,7 +44,7 @@ func testSuccessfulWeatherRequest(t *testing.T) {
 	// Setup mock client
 	mockClient := mockClients.NewMockWeatherClient(ctrl)
 	mockClient.EXPECT().
-		GetAPICurrentWeather("Kyiv").
+		GetAPICurrentWeather(gomock.Any(), "Kyiv").
 		Return(&clients.WeatherResponse{
 			Temperature: 25.4,
 			Humidity:    70,
@@ -63,7 +63,11 @@ func testSuccessfulWeatherRequest(t *testing.T) {
 
 	// Verify response
 	assert.Equal(t, http.StatusOK, w.Code)
-	assert.JSONEq(t, `{"temperature":25.4,"humidity":70,"description":"Sunny"}`, strings.TrimSpace(w.Body.String()))
+	assert.JSONEq(
+		t,
+		`{"temperature":25.4,"humidity":70,"description":"Sunny"}`,
+		strings.TrimSpace(w.Body.String()),
+	)
 }
 
 func testEmptyCityParameter(t *testing.T) {
@@ -95,7 +99,7 @@ func testCityNotFound(t *testing.T) {
 	// Setup mock client
 	mockClient := mockClients.NewMockWeatherClient(ctrl)
 	mockClient.EXPECT().
-		GetAPICurrentWeather(url.QueryEscape("Київ")).
+		GetAPICurrentWeather(gomock.Any(), url.QueryEscape("Київ")).
 		Return(nil, customErrors.ErrCityNotFound)
 
 	// Setup service and handler

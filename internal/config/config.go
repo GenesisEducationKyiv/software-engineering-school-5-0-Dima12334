@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/joho/godotenv"
 	"github.com/spf13/viper"
@@ -35,6 +36,10 @@ type (
 		Scheme  string
 		Domain  string
 		BaseURL string
+
+		ReadTimeout       time.Duration `mapstructure:"readTimeout"`
+		ReadHeaderTimeout time.Duration `mapstructure:"readHeaderTimeout"`
+		WriteTimeout      time.Duration `mapstructure:"writeTimeout"`
 	}
 
 	ThirdPartyConfig struct {

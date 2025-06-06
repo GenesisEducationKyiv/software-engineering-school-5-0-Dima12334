@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"time"
 	"weather_forecast_sub/internal/service"
 	"weather_forecast_sub/pkg/logger"
@@ -43,14 +44,16 @@ func (c *CronRunner) addTask(schedule string, taskFunc func(), taskName string) 
 }
 
 func (c *CronRunner) hourlyWeatherEmailTask() {
-	err := c.services.Subscriptions.SendHourlyWeatherForecast()
+	ctx := context.Background()
+	err := c.services.Subscriptions.SendHourlyWeatherForecast(ctx)
 	if err != nil {
 		logger.Errorf("hourly weather task error: %s", err.Error())
 	}
 }
 
 func (c *CronRunner) dailyWeatherEmailTask() {
-	err := c.services.Subscriptions.SendDailyWeatherForecast()
+	ctx := context.Background()
+	err := c.services.Subscriptions.SendDailyWeatherForecast(ctx)
 	if err != nil {
 		logger.Errorf("daily weather task error: %s", err.Error())
 	}

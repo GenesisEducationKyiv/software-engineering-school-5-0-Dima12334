@@ -31,12 +31,12 @@ func (h *Handler) Init() *gin.Engine {
 	// Swagger docs
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-	h.initApi(router)
+	h.initAPI(router)
 
 	return router
 }
 
-func (h *Handler) initApi(router *gin.Engine) {
+func (h *Handler) initAPI(router *gin.Engine) {
 	router.GET("/subscribe", h.ShowSubscribePage)
 
 	api := router.Group("/api")

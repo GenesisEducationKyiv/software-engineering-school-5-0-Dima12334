@@ -1,9 +1,9 @@
 package clients
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -77,15 +77,21 @@ type dayWeatherAPIResponse struct {
 	} `json:"forecast"`
 }
 
-func (c *WeatherAPIClient) GetAPICurrentWeather(city string) (*WeatherResponse, error) {
+func (c *WeatherAPIClient) GetAPICurrentWeather(ctx context.Context, city string) (*WeatherResponse, error) {
 	url := fmt.Sprintf("%s/current.json?key=%s&q=%s", c.BaseURL, c.APIKey, city)
 
-	resp, err := c.HTTPClient.Get(url)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		logger.Errorf("failed to create WeatherAPI request: %s", err)
+		return nil, err
+	}
+
+	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
 		logger.Errorf("error making request to WeatherClient API: %s", err.Error())
 		return nil, err
 	}
-	defer func(Body io.ReadCloser) {
+	defer func() {
 		if closeErr := resp.Body.Close(); closeErr != nil {
 			if err != nil {
 				err = fmt.Errorf("%w; failed to close response body: %w", err, closeErr)
@@ -93,7 +99,7 @@ func (c *WeatherAPIClient) GetAPICurrentWeather(city string) (*WeatherResponse, 
 				err = fmt.Errorf("failed to close response body: %w", closeErr)
 			}
 		}
-	}(resp.Body)
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		var apiErr weatherAPIErrorResponse
@@ -127,15 +133,21 @@ func (c *WeatherAPIClient) GetAPICurrentWeather(city string) (*WeatherResponse, 
 	}, nil
 }
 
-func (c *WeatherAPIClient) GetAPIDayWeather(city string) (*DayWeatherResponse, error) {
+func (c *WeatherAPIClient) GetAPIDayWeather(ctx context.Context, city string) (*DayWeatherResponse, error) {
 	url := fmt.Sprintf("%s/forecast.json?key=%s&q=%s&days=1", c.BaseURL, c.APIKey, city)
 
-	resp, err := c.HTTPClient.Get(url)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		logger.Errorf("failed to create WeatherAPI request: %s", err)
+		return nil, err
+	}
+
+	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
 		logger.Errorf("error making request to WeatherAPI: %s", err.Error())
 		return nil, err
 	}
-	defer func(Body io.ReadCloser) {
+	defer func() {
 		if closeErr := resp.Body.Close(); closeErr != nil {
 			if err != nil {
 				err = fmt.Errorf("%w; failed to close response body: %w", err, closeErr)
@@ -143,7 +155,7 @@ func (c *WeatherAPIClient) GetAPIDayWeather(city string) (*DayWeatherResponse, e
 				err = fmt.Errorf("failed to close response body: %w", closeErr)
 			}
 		}
-	}(resp.Body)
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		var apiErr weatherAPIErrorResponse
@@ -151,7 +163,12 @@ func (c *WeatherAPIClient) GetAPIDayWeather(city string) (*DayWeatherResponse, e
 			if resp.StatusCode == http.StatusBadRequest && apiErr.Error.Code == weatherAPICityNotFoundCode {
 				return nil, customErrors.ErrCityNotFound
 			}
-			logger.Errorf("WeatherAPI error. Status code: %d, api code: %d, message: %s", resp.StatusCode, apiErr.Error.Code, apiErr.Error.Message)
+			logger.Errorf(
+				"WeatherAPI error. Status code: %d, api code: %d, message: %s",
+				resp.StatusCode,
+				apiErr.Error.Code,
+				apiErr.Error.Message,
+			)
 			return nil, customErrors.ErrWeatherAPIError
 		}
 		logger.Errorf("WeatherAPI error. Status code: %d", resp.StatusCode)
@@ -174,13 +191,13 @@ func (c *WeatherAPIClient) GetAPIDayWeather(city string) (*DayWeatherResponse, e
 		"22:00": {},
 	}
 
+	const dateTimeSplitStrLength = 2 // "2025-05-17 07:00" -> ["2025-05-17", "07:00"]
 	for _, hourData := range result.Forecast.ForecastDay[0].Hour {
-		// time format: "2025-05-17 07:00"
-		parts := strings.Split(hourData.Time, " ")
-		if len(parts) != 2 {
+		dateTimeParts := strings.Split(hourData.Time, " ")
+		if len(dateTimeParts) != dateTimeSplitStrLength {
 			continue
 		}
-		timePart := parts[1]
+		timePart := dateTimeParts[1]
 
 		if target, ok := targetHours[timePart]; ok {
 			target.Temperature = hourData.TempC

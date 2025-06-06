@@ -1,7 +1,6 @@
 package tests
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"testing"
@@ -26,27 +25,22 @@ func TestMain(m *testing.M) {
 
 	err = migrations.ApplyMigrations(cfg.TestDB.DSN, cfg.TestDB.MigrationsPath, "up")
 	if err != nil {
-		log.Fatalf("Failed to apply migrations: %v", err)
+		log.Fatalf("failed to apply migrations: %v", err)
 	}
 
 	testDB, err = sqlx.Open("postgres", cfg.TestDB.DSN)
 	if err != nil {
-		log.Fatalf("Failed to connect to test database: %v", err)
+		log.Fatalf("failed to connect to test database: %v", err)
 	}
-	defer func(db *sqlx.DB) {
-		if closeErr := db.Close(); closeErr != nil {
-			if err != nil {
-				err = fmt.Errorf("%w; failed to close test db connection: %w", err, closeErr)
-			} else {
-				err = fmt.Errorf("failed to close test db connection: %w", closeErr)
-			}
-		}
-	}(testDB)
 
 	code := m.Run()
 
+	// Cleanup
 	if err := migrations.ApplyMigrations(cfg.TestDB.DSN, cfg.TestDB.MigrationsPath, "down"); err != nil {
-		log.Printf("Failed to rollback migrations: %v", err)
+		log.Fatalf("failed to rollback migrations: %v", err)
+	}
+	if err := testDB.Close(); err != nil {
+		log.Fatalf("failed to close test db connection: %v", err)
 	}
 
 	os.Exit(code)

@@ -23,13 +23,13 @@ type Subscription interface {
 	Confirm(ctx context.Context, token string) error
 	Delete(ctx context.Context, token string) error
 
-	SendHourlyWeatherForecast() error
-	SendDailyWeatherForecast() error
+	SendHourlyWeatherForecast(ctx context.Context) error
+	SendDailyWeatherForecast(ctx context.Context) error
 }
 
 type Weather interface {
-	GetCurrentWeather(city string) (*clients.WeatherResponse, error)
-	GetDayWeather(city string) (*clients.DayWeatherResponse, error)
+	GetCurrentWeather(ctx context.Context, city string) (*clients.WeatherResponse, error)
+	GetDayWeather(ctx context.Context, city string) (*clients.DayWeatherResponse, error)
 }
 
 type ConfirmationEmailInput struct {

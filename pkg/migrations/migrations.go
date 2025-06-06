@@ -15,7 +15,7 @@ func ApplyMigrations(dsn, migrationsPath string, direction string) error {
 	if err != nil {
 		return fmt.Errorf("failed to connect to database: %w", err)
 	}
-	defer func(db *sql.DB) {
+	defer func() {
 		if closeErr := db.Close(); closeErr != nil {
 			if err != nil {
 				err = fmt.Errorf("%w; failed to close db connection: %w", err, closeErr)
@@ -23,7 +23,7 @@ func ApplyMigrations(dsn, migrationsPath string, direction string) error {
 				err = fmt.Errorf("failed to close db connection: %w", closeErr)
 			}
 		}
-	}(db)
+	}()
 
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
 	if err != nil {

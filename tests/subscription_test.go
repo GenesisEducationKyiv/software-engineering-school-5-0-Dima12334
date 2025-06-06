@@ -32,7 +32,10 @@ func TestSubscription(t *testing.T) {
 	t.Run("Confirm invalid token", testConfirmInvalidToken)
 }
 
-func setupTestEnvironment(t *testing.T, ctrl *gomock.Controller) (*gin.Engine, *mockSender.MockSender, func()) {
+func setupTestEnvironment(
+	t *testing.T,
+	ctrl *gomock.Controller,
+) (*gin.Engine, *mockSender.MockSender, func()) {
 	repo := repository.NewSubscriptionRepo(testDB)
 	hasher := hash.NewSHA256Hasher()
 	cfg, err := config.Init(configsDir, testEnvironment)
@@ -227,6 +230,7 @@ func testUnsubscribeSuccess(t *testing.T) {
 		FROM subscriptions 
 		WHERE token = $1
 	`, token).Scan(&count)
+	assert.NoError(t, err)
 	assert.Equal(t, 1, count)
 
 	w := httptest.NewRecorder()
@@ -289,6 +293,7 @@ func testUnsubscribeInvalidToken(t *testing.T) {
 		FROM subscriptions 
 		WHERE token = $1
 	`, token).Scan(&count)
+	assert.NoError(t, err)
 	assert.Equal(t, 1, count)
 
 	w := httptest.NewRecorder()
