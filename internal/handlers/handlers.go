@@ -1,15 +1,15 @@
 package handlers
 
 import (
-	"weather_forecast_sub/internal/config"
-	"weather_forecast_sub/internal/service"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
-	"net/http"
 
 	_ "weather_forecast_sub/docs"
+	"weather_forecast_sub/internal/config"
+	"weather_forecast_sub/internal/service"
 )
 
 type Handler struct {
