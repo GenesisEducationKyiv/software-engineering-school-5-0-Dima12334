@@ -33,7 +33,7 @@ func TestSubscription(t *testing.T) {
 func setupTestEnvironment(t *testing.T, ctrl *gomock.Controller) (*gin.Engine, *mockSender.MockSender, func()) {
 	repo := repository.NewSubscriptionRepo(testDB)
 	hasher := hash.NewSHA256Hasher()
-	cfg, err := config.Init(configsDir, testEnvironment)
+	cfg, err := config.Init(configsDir, config.TestEnvironment)
 	if err != nil {
 		t.Fatalf("failed to init configs: %v", err.Error())
 	}

@@ -9,18 +9,13 @@ import (
 	"weather_forecast_sub/pkg/migrations"
 )
 
-const (
-	configsDir     = "configs"
-	devEnvironment = "dev"
-)
-
 func main() {
 	environ := os.Getenv("ENV")
 	if environ == "" {
-		environ = devEnvironment
+		environ = config.DevEnvironment
 	}
 
-	cfg, err := config.Init(configsDir, environ)
+	cfg, err := config.Init(config.ConfigsDir, environ)
 	if err != nil {
 		log.Fatalf("failed to init configs: %v", err.Error())
 	}

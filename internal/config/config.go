@@ -9,9 +9,12 @@ import (
 )
 
 const (
-	testEnvironment       = "test"
-	devEnvironment        = "dev"
-	prodEnvironment       = "prod"
+	ProdEnvironment = "prod"
+	DevEnvironment  = "dev"
+	TestEnvironment = "test"
+
+	ConfigsDir = "configs"
+
 	defaultHTTPPort       = "8080"
 	defaultMigrationsPath = "file://migrations"
 )
@@ -97,7 +100,7 @@ func Init(configDir, environ string) (*Config, error) {
 
 	setFormEnv(&cfg)
 
-	if cfg.Environment == prodEnvironment {
+	if cfg.Environment == ProdEnvironment {
 		cfg.HTTP.Scheme = "https"
 		cfg.HTTP.Domain = cfg.HTTP.Host
 	} else {
@@ -149,7 +152,7 @@ func unmarshalConfig(cfg *Config) error {
 }
 
 func parseConfigFile(configDir, environ string) error {
-	if environ == testEnvironment {
+	if environ == TestEnvironment {
 		viper.SetConfigName("test")
 	} else {
 		viper.SetConfigName("main")
@@ -167,11 +170,11 @@ func setFormEnv(cfg *Config) {
 	var err error
 
 	switch cfg.Environment {
-	case testEnvironment:
+	case TestEnvironment:
 		err = godotenv.Load("../.env")
-	case devEnvironment:
+	case DevEnvironment:
 		err = godotenv.Load()
-	case prodEnvironment:
+	case ProdEnvironment:
 		// Do nothing
 	default:
 		err = godotenv.Load()
@@ -181,20 +184,28 @@ func setFormEnv(cfg *Config) {
 		log.Fatalf("error loading .env file")
 	}
 
-	cfg.Logger.LoggerEnv = os.Getenv("LOGG_ENV")
+	// Load and validate required variables
+	requiredVars := map[string]*string{
+		"LOGG_ENV":        &cfg.Logger.LoggerEnv,
+		"WEATHER_API_KEY": &cfg.ThirdParty.WeatherAPIKey,
+		"HTTP_HOST":       &cfg.HTTP.Host,
+		"SMTP_PASSWORD":   &cfg.SMTP.Pass,
 
-	cfg.ThirdParty.WeatherAPIKey = os.Getenv("WEATHER_API_KEY")
+		"DB_HOST":     &cfg.DB.Host,
+		"DB_PORT":     &cfg.DB.Port,
+		"DB_USER":     &cfg.DB.User,
+		"DB_PASSWORD": &cfg.DB.Password,
+		"DB_NAME":     &cfg.DB.DBName,
+		"DB_SSLMODE":  &cfg.DB.SSLMode,
+	}
 
-	cfg.HTTP.Host = os.Getenv("HTTP_HOST")
-
-	cfg.SMTP.Pass = os.Getenv("SMTP_PASSWORD")
-
-	cfg.DB.Host = os.Getenv("DB_HOST")
-	cfg.DB.Port = os.Getenv("DB_PORT")
-	cfg.DB.User = os.Getenv("DB_USER")
-	cfg.DB.Password = os.Getenv("DB_PASSWORD")
-	cfg.DB.DBName = os.Getenv("DB_NAME")
-	cfg.DB.SSLMode = os.Getenv("DB_SSLMODE")
+	for key, ptr := range requiredVars {
+		val, exists := os.LookupEnv(key)
+		if !exists || val == "" {
+			log.Fatalf("environment variable %q is required but not set or empty", key)
+		}
+		*ptr = val
+	}
 
 	cfg.TestDB.Host = os.Getenv("TEST_DB_HOST")
 	cfg.TestDB.Port = os.Getenv("TEST_DB_PORT")

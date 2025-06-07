@@ -10,14 +10,13 @@ import (
 )
 
 const (
-	testEnvironment = "test"
-	configsDir      = "../configs"
+	configsDir = "../configs"
 )
 
 var testDB *sqlx.DB
 
 func TestMain(m *testing.M) {
-	cfg, err := config.Init(configsDir, testEnvironment)
+	cfg, err := config.Init(configsDir, config.TestEnvironment)
 	if err != nil {
 		log.Fatalf("failed to init configs: %v", err.Error())
 	}
