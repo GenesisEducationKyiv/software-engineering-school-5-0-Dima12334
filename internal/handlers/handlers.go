@@ -1,12 +1,13 @@
 package handlers
 
 import (
-	"net/http"
+	"weather_forecast_sub/internal/config"
 	"weather_forecast_sub/internal/service"
 
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+	"net/http"
 
 	_ "weather_forecast_sub/docs"
 )
@@ -19,7 +20,11 @@ func NewHandler(services *service.Services) *Handler {
 	return &Handler{services: services}
 }
 
-func (h *Handler) Init() *gin.Engine {
+func (h *Handler) Init(cfg *config.Config) *gin.Engine {
+	if cfg.Environment == config.ProdEnvironment {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
 	router := gin.Default()
 	router.LoadHTMLGlob("templates/**/*.html")
 

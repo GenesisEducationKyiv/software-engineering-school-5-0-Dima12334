@@ -17,7 +17,7 @@ type CronRunner struct {
 func NewCronRunner(services *service.Services) *CronRunner {
 	return &CronRunner{
 		services: services,
-		cron:     cron.New(cron.WithLocation(time.Local)),
+		cron:     cron.New(cron.WithLocation(time.UTC)),
 	}
 }
 

@@ -38,7 +38,7 @@ type CronTestEnv struct {
 func setupCronTestEnvironment(t *testing.T, ctrl *gomock.Controller) CronTestEnv {
 	repo := repository.NewSubscriptionRepo(testDB)
 	hasher := hash.NewSHA256Hasher()
-	cfg, err := config.Init(configsDir, testEnvironment)
+	cfg, err := config.Init(configsDir, config.TestEnvironment)
 	if err != nil {
 		t.Fatalf("failed to init configs: %v", err.Error())
 	}
@@ -140,7 +140,7 @@ func testSendDailyWeatherForecastRepoError(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	cfg, err := config.Init(configsDir, testEnvironment)
+	cfg, err := config.Init(configsDir, config.TestEnvironment)
 	if err != nil {
 		t.Fatalf("failed to init configs: %v", err.Error())
 	}
@@ -235,7 +235,7 @@ func testSendHourlyWeatherForecastRepoError(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	cfg, err := config.Init(configsDir, testEnvironment)
+	cfg, err := config.Init(configsDir, config.TestEnvironment)
 	if err != nil {
 		t.Fatalf("failed to init configs: %v", err.Error())
 	}
