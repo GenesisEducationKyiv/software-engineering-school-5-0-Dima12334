@@ -99,7 +99,11 @@ func hourlyWeatherFetcher(s *SubscriptionService) WeatherFetcherFunc[*clients.We
 }
 
 func dailyWeatherEmailSender(s *SubscriptionService) EmailSenderFunc[*clients.DayWeatherResponse] {
-	sendEmailFunc := func(sub domain.Subscription, weatherData *clients.DayWeatherResponse, date string) error {
+	sendEmailFunc := func(
+		sub domain.Subscription,
+		weatherData *clients.DayWeatherResponse,
+		date string,
+	) error {
 		inp := WeatherForecastDailyEmailInput{
 			Subscription: sub,
 			Weather:      weatherData,
