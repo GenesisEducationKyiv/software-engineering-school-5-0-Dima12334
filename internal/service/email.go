@@ -89,7 +89,9 @@ func sendWeatherForecastEmail(
 	return sender.Send(sendInput)
 }
 
-func (s *EmailService) SendWeatherForecastDailyEmail(inp WeatherForecastEmailInput[*clients.DayWeatherResponse]) error {
+func (s *EmailService) SendWeatherForecastDailyEmail(
+	inp WeatherForecastEmailInput[*clients.DayWeatherResponse],
+) error {
 	templateInput := weatherForecastDailyEmailInput{
 		UnsubscribeLink: s.createUnsubscribeLink(inp.Subscription.Token),
 		City:            inp.Subscription.City,
@@ -108,7 +110,9 @@ func (s *EmailService) SendWeatherForecastDailyEmail(inp WeatherForecastEmailInp
 	)
 }
 
-func (s *EmailService) SendWeatherForecastHourlyEmail(inp WeatherForecastEmailInput[*clients.WeatherResponse]) error {
+func (s *EmailService) SendWeatherForecastHourlyEmail(
+	inp WeatherForecastEmailInput[*clients.WeatherResponse],
+) error {
 	templateInput := weatherForecastHourlyEmailInput{
 		UnsubscribeLink: s.createUnsubscribeLink(inp.Subscription.Token),
 		City:            inp.Subscription.City,
