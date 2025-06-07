@@ -205,7 +205,7 @@ func (mr *MockEmailsMockRecorder) SendConfirmationEmail(arg0 any) *gomock.Call {
 }
 
 // SendWeatherForecastDailyEmail mocks base method.
-func (m *MockEmails) SendWeatherForecastDailyEmail(arg0 service.WeatherForecastDailyEmailInput) error {
+func (m *MockEmails) SendWeatherForecastDailyEmail(arg0 service.WeatherForecastEmailInput[*clients.DayWeatherResponse]) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SendWeatherForecastDailyEmail", arg0)
 	ret0, _ := ret[0].(error)
@@ -219,7 +219,7 @@ func (mr *MockEmailsMockRecorder) SendWeatherForecastDailyEmail(arg0 any) *gomoc
 }
 
 // SendWeatherForecastHourlyEmail mocks base method.
-func (m *MockEmails) SendWeatherForecastHourlyEmail(arg0 service.WeatherForecastHourlyEmailInput) error {
+func (m *MockEmails) SendWeatherForecastHourlyEmail(arg0 service.WeatherForecastEmailInput[*clients.WeatherResponse]) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SendWeatherForecastHourlyEmail", arg0)
 	ret0, _ := ret[0].(error)

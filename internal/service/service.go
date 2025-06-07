@@ -32,27 +32,25 @@ type Weather interface {
 	GetDayWeather(ctx context.Context, city string) (*clients.DayWeatherResponse, error)
 }
 
+type WeatherResponseType interface {
+	*clients.WeatherResponse | *clients.DayWeatherResponse
+}
+
 type ConfirmationEmailInput struct {
 	Email string
 	Token string
 }
 
-type WeatherForecastDailyEmailInput struct {
+type WeatherForecastEmailInput[T WeatherResponseType] struct {
 	Subscription domain.Subscription
-	Weather      *clients.DayWeatherResponse
-	Date         string
-}
-
-type WeatherForecastHourlyEmailInput struct {
-	Subscription domain.Subscription
-	Weather      *clients.WeatherResponse
+	Weather      T
 	Date         string
 }
 
 type Emails interface {
 	SendConfirmationEmail(ConfirmationEmailInput) error
-	SendWeatherForecastDailyEmail(WeatherForecastDailyEmailInput) error
-	SendWeatherForecastHourlyEmail(WeatherForecastHourlyEmailInput) error
+	SendWeatherForecastDailyEmail(WeatherForecastEmailInput[*clients.DayWeatherResponse]) error
+	SendWeatherForecastHourlyEmail(WeatherForecastEmailInput[*clients.WeatherResponse]) error
 }
 
 type Deps struct {
