@@ -2,9 +2,6 @@ package tests
 
 import (
 	"bytes"
-	"github.com/gin-gonic/gin"
-	"github.com/stretchr/testify/assert"
-	"go.uber.org/mock/gomock"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -16,6 +13,10 @@ import (
 	mockService "weather_forecast_sub/internal/service/mocks"
 	mockSender "weather_forecast_sub/pkg/email/mocks"
 	"weather_forecast_sub/pkg/hash"
+
+	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 )
 
 func TestSubscription(t *testing.T) {
@@ -25,15 +26,19 @@ func TestSubscription(t *testing.T) {
 	t.Run("Duplicate subscription", testDuplicateSubscribe)
 	t.Run("Unsubscribe success", testUnsubscribeSuccess)
 	t.Run("Unsubscribe not found", testUnsubscribeNotFound)
+	t.Run("Unsubscribe invalid token", testUnsubscribeInvalidToken)
 	t.Run("Confirm success", testConfirmSuccess)
 	t.Run("Confirm not found", testConfirmNotFound)
 	t.Run("Confirm invalid token", testConfirmInvalidToken)
 }
 
-func setupTestEnvironment(t *testing.T, ctrl *gomock.Controller) (*gin.Engine, *mockSender.MockSender, func()) {
+func setupTestEnvironment(
+	t *testing.T,
+	ctrl *gomock.Controller,
+) (*gin.Engine, *mockSender.MockSender, func()) {
 	repo := repository.NewSubscriptionRepo(testDB)
 	hasher := hash.NewSHA256Hasher()
-	cfg, err := config.Init(configsDir, testEnvironment)
+	cfg, err := config.Init(configsDir, config.TestEnvironment)
 	if err != nil {
 		t.Fatalf("failed to init configs: %v", err.Error())
 	}
@@ -66,7 +71,10 @@ func setupTestEnvironment(t *testing.T, ctrl *gomock.Controller) (*gin.Engine, *
 	router.LoadHTMLGlob("../templates/**/*.html")
 
 	cleanup := func() {
-		testDB.Exec(`DELETE FROM subscriptions;`)
+		_, err := testDB.Exec(`DELETE FROM subscriptions;`)
+		if err != nil {
+			t.Fatalf("cleanup failed: could not delete subscriptions data: %v", err)
+		}
 	}
 
 	return router, mockEmailSender, cleanup
@@ -222,6 +230,7 @@ func testUnsubscribeSuccess(t *testing.T) {
 		FROM subscriptions 
 		WHERE token = $1
 	`, token).Scan(&count)
+	assert.NoError(t, err)
 	assert.Equal(t, 1, count)
 
 	w := httptest.NewRecorder()
@@ -284,6 +293,7 @@ func testUnsubscribeInvalidToken(t *testing.T) {
 		FROM subscriptions 
 		WHERE token = $1
 	`, token).Scan(&count)
+	assert.NoError(t, err)
 	assert.Equal(t, 1, count)
 
 	w := httptest.NewRecorder()

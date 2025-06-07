@@ -4,11 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"github.com/jmoiron/sqlx"
-	"github.com/lib/pq"
 	"time"
 	"weather_forecast_sub/internal/domain"
 	customErrors "weather_forecast_sub/pkg/errors"
+
+	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 )
 
 type SubscriptionRepo struct {

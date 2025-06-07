@@ -1,6 +1,9 @@
 http_server:
   host: localhost
   port: 8080
+  readTimeout: 10s
+  readHeaderTimeout: 5s
+  writeTimeout: 10s
 
 db:
   migrationsPath: "file://../migrations"

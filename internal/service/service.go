@@ -23,13 +23,17 @@ type Subscription interface {
 	Confirm(ctx context.Context, token string) error
 	Delete(ctx context.Context, token string) error
 
-	SendHourlyWeatherForecast() error
-	SendDailyWeatherForecast() error
+	SendHourlyWeatherForecast(ctx context.Context) error
+	SendDailyWeatherForecast(ctx context.Context) error
 }
 
 type Weather interface {
-	GetCurrentWeather(city string) (*clients.WeatherResponse, error)
-	GetDayWeather(city string) (*clients.DayWeatherResponse, error)
+	GetCurrentWeather(ctx context.Context, city string) (*clients.WeatherResponse, error)
+	GetDayWeather(ctx context.Context, city string) (*clients.DayWeatherResponse, error)
+}
+
+type WeatherResponseType interface {
+	*clients.WeatherResponse | *clients.DayWeatherResponse
 }
 
 type ConfirmationEmailInput struct {
@@ -37,22 +41,16 @@ type ConfirmationEmailInput struct {
 	Token string
 }
 
-type WeatherForecastDailyEmailInput struct {
+type WeatherForecastEmailInput[T WeatherResponseType] struct {
 	Subscription domain.Subscription
-	Weather      *clients.DayWeatherResponse
-	Date         string
-}
-
-type WeatherForecastHourlyEmailInput struct {
-	Subscription domain.Subscription
-	Weather      *clients.WeatherResponse
+	Weather      T
 	Date         string
 }
 
 type Emails interface {
 	SendConfirmationEmail(ConfirmationEmailInput) error
-	SendWeatherForecastDailyEmail(WeatherForecastDailyEmailInput) error
-	SendWeatherForecastHourlyEmail(WeatherForecastHourlyEmailInput) error
+	SendWeatherForecastDailyEmail(WeatherForecastEmailInput[*clients.DayWeatherResponse]) error
+	SendWeatherForecastHourlyEmail(WeatherForecastEmailInput[*clients.WeatherResponse]) error
 }
 
 type Deps struct {

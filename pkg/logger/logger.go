@@ -1,9 +1,10 @@
 package logger
 
 import (
+	"weather_forecast_sub/internal/config"
+
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"weather_forecast_sub/internal/config"
 )
 
 const (
