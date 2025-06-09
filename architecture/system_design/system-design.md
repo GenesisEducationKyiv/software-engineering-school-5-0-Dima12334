@@ -17,7 +17,7 @@
 - **Безпека**: підтвердження створення підписки і валідація даних
 
 ### Обмеження
-- **Budget**: мінімальна інфраструктурних компонентів
+- **Budget**: мінімальна кількість інфраструктурних компонентів
 - **External API rate limits**: 1М запитів/місяць
 - **Compliance**: система відповідає вимогам Загального регламенту про захист даних (GDPR)
 
@@ -128,23 +128,7 @@ func (c *CronRunner) registerTasks() {
 - Зберігання даних про підписки на розсилку погоди
 
 **Схема бази даних**:
-```sql
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
-CREATE TABLE subscriptions (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    email VARCHAR(255) NOT NULL,
-    city VARCHAR(255) NOT NULL,
-    token VARCHAR(255) NOT NULL,
-    frequency VARCHAR(255) NOT NULL,
-    confirmed BOOLEAN NOT NULL DEFAULT FALSE,
-    last_sent_at TIMESTAMPTZ DEFAULT NULL,
-
-    UNIQUE(email),
-    UNIQUE(token)
-);
-```
+![img.png](../adr/db_schema.png)
 
 **Оптимізація**:
 - B-Tree індекси на полях `id`, `email`, `token`
