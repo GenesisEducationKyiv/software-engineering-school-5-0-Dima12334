@@ -21,7 +21,7 @@ Local version: http://localhost:8080/swagger/index.html
 ```
 https://github.com/Dima12334/weather_forecast_sub.git
 ```
-2. Create .env file in the root directory and fill it with variables as in .env.example file
+2. Create .env.dev and .env.test files in the root directory and fill it with variables as in .env.dev.example and .env.test.example files accordingly
 3. Build and up docker containers (app and db):
 ```
 make up-with-build

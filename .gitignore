@@ -3,7 +3,8 @@
 .bin
 .DS_Store
 
-.env
+.env.dev
+.env.test
 cover.out
 
 # Visual Studio Settings

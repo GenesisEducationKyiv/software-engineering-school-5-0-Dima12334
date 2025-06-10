@@ -44,7 +44,7 @@ services:
     ports:
       - "${APP_PORT}:${APP_PORT}"
     volumes:
-      - ./.env:/app/.env
+      - ./.env.dev:/app/.env.dev
 
 volumes:
   postgres_data:

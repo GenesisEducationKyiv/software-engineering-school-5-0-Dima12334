@@ -27,7 +27,6 @@ type (
 		HTTP        HTTPConfig `mapstructure:"http_server"`
 		Logger      LoggerConfig
 		DB          DatabaseConfig `mapstructure:"db"`
-		TestDB      DatabaseConfig
 		ThirdParty  ThirdPartyConfig
 		SMTP        SMTPConfig  `mapstructure:"smtp"`
 		Email       EmailConfig `mapstructure:"email"`
@@ -124,28 +123,11 @@ func Init(configDir, environ string) (*Config, error) {
 		cfg.DB.DBName,
 		cfg.DB.SSLMode,
 	)
-
-	cfg.TestDB.DSN = fmt.Sprintf(
-		"postgres://%s:%s@%s:%s/%s?sslmode=%s",
-		cfg.TestDB.User,
-		cfg.TestDB.Password,
-		cfg.TestDB.Host,
-		cfg.TestDB.Port,
-		cfg.TestDB.DBName,
-		cfg.TestDB.SSLMode,
-	)
-
 	return &cfg, nil
 }
 
 func unmarshalConfig(cfg *Config) error {
-	if err := viper.Unmarshal(cfg); err != nil {
-		return err
-	}
-
-	// TODO: Refactor tests setup to unify the migrations and templates paths
-	cfg.TestDB.MigrationsPath = cfg.DB.MigrationsPath
-	return nil
+	return viper.Unmarshal(cfg)
 }
 
 func parseConfigFile(configDir, environ string) error {
@@ -165,7 +147,7 @@ func setFormEnv(cfg *Config) {
 
 	switch cfg.Environment {
 	case TestEnvironment:
-		err = godotenv.Load("../.env")
+		err = godotenv.Load("../.env.dev.test")
 	case ProdEnvironment:
 		// Do nothing
 	default:
@@ -173,22 +155,34 @@ func setFormEnv(cfg *Config) {
 	}
 
 	if err != nil {
-		log.Fatalf("error loading .env file")
+		log.Fatalf("error loading .env.dev file")
 	}
 
 	// Load and validate required variables
-	requiredVars := map[string]*string{
-		"LOGG_ENV":        &cfg.Logger.LoggerEnv,
-		"WEATHER_API_KEY": &cfg.ThirdParty.WeatherAPIKey,
-		"HTTP_HOST":       &cfg.HTTP.Host,
-		"SMTP_PASSWORD":   &cfg.SMTP.Pass,
+	var requiredVars map[string]*string
+	if cfg.Environment == TestEnvironment {
+		requiredVars = map[string]*string{
+			"DB_HOST":     &cfg.DB.Host,
+			"DB_PORT":     &cfg.DB.Port,
+			"DB_USER":     &cfg.DB.User,
+			"DB_PASSWORD": &cfg.DB.Password,
+			"DB_NAME":     &cfg.DB.DBName,
+			"DB_SSLMODE":  &cfg.DB.SSLMode,
+		}
+	} else {
+		requiredVars = map[string]*string{
+			"LOGG_ENV":        &cfg.Logger.LoggerEnv,
+			"WEATHER_API_KEY": &cfg.ThirdParty.WeatherAPIKey,
+			"HTTP_HOST":       &cfg.HTTP.Host,
+			"SMTP_PASSWORD":   &cfg.SMTP.Pass,
 
-		"DB_HOST":     &cfg.DB.Host,
-		"DB_PORT":     &cfg.DB.Port,
-		"DB_USER":     &cfg.DB.User,
-		"DB_PASSWORD": &cfg.DB.Password,
-		"DB_NAME":     &cfg.DB.DBName,
-		"DB_SSLMODE":  &cfg.DB.SSLMode,
+			"DB_HOST":     &cfg.DB.Host,
+			"DB_PORT":     &cfg.DB.Port,
+			"DB_USER":     &cfg.DB.User,
+			"DB_PASSWORD": &cfg.DB.Password,
+			"DB_NAME":     &cfg.DB.DBName,
+			"DB_SSLMODE":  &cfg.DB.SSLMode,
+		}
 	}
 
 	for key, ptr := range requiredVars {
@@ -198,13 +192,6 @@ func setFormEnv(cfg *Config) {
 		}
 		*ptr = val
 	}
-
-	cfg.TestDB.Host = os.Getenv("TEST_DB_HOST")
-	cfg.TestDB.Port = os.Getenv("TEST_DB_PORT")
-	cfg.TestDB.User = os.Getenv("TEST_DB_USER")
-	cfg.TestDB.Password = os.Getenv("TEST_DB_PASSWORD")
-	cfg.TestDB.DBName = os.Getenv("TEST_DB_NAME")
-	cfg.TestDB.SSLMode = os.Getenv("TEST_DB_SSLMODE")
 }
 
 func populateDefaults() {
