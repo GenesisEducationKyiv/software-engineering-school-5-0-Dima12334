@@ -24,6 +24,7 @@ func TestSubscription(t *testing.T) {
 	t.Run("Successful subscription", testSuccessfulSubscribe)
 	t.Run("Invalid request body", testInvalidSubscribeRequestBody)
 	t.Run("Duplicate subscription", testDuplicateSubscribe)
+	t.Run("Duplicate email subscription with different frequency", testDuplicateEmailSubscribe)
 	t.Run("Unsubscribe success", testUnsubscribeSuccess)
 	t.Run("Unsubscribe not found", testUnsubscribeNotFound)
 	t.Run("Unsubscribe invalid token", testUnsubscribeInvalidToken)
@@ -177,7 +178,7 @@ func testDuplicateSubscribe(t *testing.T) {
 
 	// Create existing subscription
 	hasher := hash.NewSHA256Hasher()
-	token := hasher.GenerateEmailHash("existing@example.com")
+	token := hasher.GenerateSubscriptionHash("existing@example.com", "Kyiv", "daily")
 	_, err := testDB.Exec(`
 		INSERT INTO subscriptions (email, city, frequency, token, confirmed, created_at)
 		VALUES ('existing@example.com', 'Kyiv', 'daily', $1, false, NOW())
@@ -207,6 +208,52 @@ func testDuplicateSubscribe(t *testing.T) {
 	assert.Equal(t, token, originalToken)
 }
 
+func testDuplicateEmailSubscribe(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	// Setup
+	handler, mockEmailSender, cleanup := setupTestEnvironment(t, ctrl)
+	defer cleanup()
+
+	// Mock expectations
+	mockEmailSender.
+		EXPECT().
+		Send(gomock.Any()).
+		Return(nil)
+
+	var createdSubscriptions int
+
+	// Create existing subscription
+	hasher := hash.NewSHA256Hasher()
+	token := hasher.GenerateSubscriptionHash("existing@example.com", "Kyiv", "daily")
+	_, err := testDB.Exec(`
+		INSERT INTO subscriptions (email, city, frequency, token, confirmed, created_at)
+		VALUES ('existing@example.com', 'Kyiv', 'daily', $1, false, NOW())
+	`, token)
+	assert.NoError(t, err)
+	createdSubscriptions++
+
+	// Execute
+	w := httptest.NewRecorder()
+	req := httptest.NewRequest("POST", "/api/subscribe", bytes.NewBufferString(
+		`{"email": "existing@example.com", "city": "Kyiv", "frequency": "hourly"}`, // different frequency
+	))
+	req.Header.Set("Content-Type", "application/json")
+
+	handler.ServeHTTP(w, req)
+
+	// Verify
+	assert.Equal(t, http.StatusOK, w.Code)
+	createdSubscriptions++
+
+	// Verify existing record wasn't modified
+	var countSubscriptions int
+	err = testDB.QueryRowx(`SELECT COUNT(*) FROM subscriptions;`).Scan(&countSubscriptions)
+	assert.NoError(t, err)
+	assert.Equal(t, createdSubscriptions, countSubscriptions)
+}
+
 func testUnsubscribeSuccess(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -216,7 +263,7 @@ func testUnsubscribeSuccess(t *testing.T) {
 
 	// Insert subscription to be deleted
 	hasher := hash.NewSHA256Hasher()
-	token := hasher.GenerateEmailHash("unsubscribe@example.com")
+	token := hasher.GenerateSubscriptionHash("unsubscribe@example.com", "Kyiv", "daily")
 
 	_, err := testDB.Exec(`
 		INSERT INTO subscriptions (email, city, frequency, token, confirmed, created_at)
@@ -259,7 +306,7 @@ func testUnsubscribeNotFound(t *testing.T) {
 	defer cleanup()
 
 	hasher := hash.NewSHA256Hasher()
-	token := hasher.GenerateEmailHash("non-existen-email@example.com")
+	token := hasher.GenerateSubscriptionHash("non-existen-email@example.com", "Kyiv", "daily")
 
 	// Execute
 	w := httptest.NewRecorder()
@@ -279,7 +326,7 @@ func testUnsubscribeInvalidToken(t *testing.T) {
 
 	// Insert subscription to be deleted
 	hasher := hash.NewSHA256Hasher()
-	token := hasher.GenerateEmailHash("unsubscribe@example.com")
+	token := hasher.GenerateSubscriptionHash("unsubscribe@example.com", "Kyiv", "daily")
 
 	_, err := testDB.Exec(`
 		INSERT INTO subscriptions (email, city, frequency, token, confirmed, created_at)
@@ -323,7 +370,7 @@ func testConfirmSuccess(t *testing.T) {
 
 	// Insert unconfirmed subscription
 	hasher := hash.NewSHA256Hasher()
-	token := hasher.GenerateEmailHash("confirm@example.com")
+	token := hasher.GenerateSubscriptionHash("confirm@example.com", "Kyiv", "daily")
 
 	_, err := testDB.Exec(`
         INSERT INTO subscriptions (email, city, frequency, token, confirmed, created_at)
@@ -364,7 +411,7 @@ func testConfirmNotFound(t *testing.T) {
 	defer cleanup()
 
 	hasher := hash.NewSHA256Hasher()
-	token := hasher.GenerateEmailHash("non-existen-email@example.com")
+	token := hasher.GenerateSubscriptionHash("non-existen-email@example.com", "Kyiv", "daily")
 
 	// Execute
 	w := httptest.NewRecorder()
@@ -383,7 +430,7 @@ func testConfirmInvalidToken(t *testing.T) {
 
 	// Insert unconfirmed subscription
 	hasher := hash.NewSHA256Hasher()
-	token := hasher.GenerateEmailHash("confirm@example.com")
+	token := hasher.GenerateSubscriptionHash("confirm@example.com", "Kyiv", "daily")
 
 	_, err := testDB.Exec(`
         INSERT INTO subscriptions (email, city, frequency, token, confirmed, created_at)

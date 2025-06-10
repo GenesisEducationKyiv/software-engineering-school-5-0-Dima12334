@@ -54,12 +54,12 @@ type Emails interface {
 }
 
 type Deps struct {
-	Repos       *repository.Repositories
-	Clients     *clients.Clients
-	EmailHasher hash.EmailHasher
-	EmailSender email.Sender
-	EmailConfig config.EmailConfig
-	HTTPConfig  config.HTTPConfig
+	Repos              *repository.Repositories
+	Clients            *clients.Clients
+	SubscriptionHasher hash.SubscriptionHasher
+	EmailSender        email.Sender
+	EmailConfig        config.EmailConfig
+	HTTPConfig         config.HTTPConfig
 }
 
 type Services struct {
@@ -73,7 +73,7 @@ func NewServices(deps Deps) *Services {
 	return &Services{
 		Subscriptions: NewSubscriptionService(
 			deps.Repos.Subscription,
-			deps.EmailHasher,
+			deps.SubscriptionHasher,
 			deps.EmailSender,
 			deps.EmailConfig,
 			deps.HTTPConfig,

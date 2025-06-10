@@ -23,7 +23,7 @@ type EmailSenderFunc[T WeatherResponseType] func(inp WeatherForecastEmailInput[T
 
 type SubscriptionService struct {
 	repo           repository.SubscriptionRepository
-	hasher         hash.EmailHasher
+	hasher         hash.SubscriptionHasher
 	emailSender    email.Sender
 	emailConfig    config.EmailConfig
 	httpConfig     config.HTTPConfig
@@ -33,7 +33,7 @@ type SubscriptionService struct {
 
 func NewSubscriptionService(
 	repo repository.SubscriptionRepository,
-	hasher hash.EmailHasher,
+	hasher hash.SubscriptionHasher,
 	emailSender email.Sender,
 	emailConfig config.EmailConfig,
 	httpConfig config.HTTPConfig,
@@ -52,7 +52,7 @@ func NewSubscriptionService(
 }
 
 func (s *SubscriptionService) Create(ctx context.Context, inp CreateSubscriptionInput) error {
-	token := s.hasher.GenerateEmailHash(inp.Email)
+	token := s.hasher.GenerateSubscriptionHash(inp.Email, inp.City, inp.Frequency)
 
 	subscription := domain.Subscription{
 		CreatedAt:  time.Now(),

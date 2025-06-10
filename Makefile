@@ -15,10 +15,10 @@ migration: ## Create a new SQL migration. Usage: make migration <name>
 	@migrate create -ext sql -dir ./migrations -seq $(filter-out $@,$(MAKECMDGOALS))
 
 migrate-up: ## Apply database migrations
-	@docker-compose exec app go run cmd/migrate/main.go up
+	@docker-compose exec app ./bin/migrate up
 
 migrate-down: ## Rollback last database migration
-	@docker-compose exec app go run cmd/migrate/main.go down
+	@docker-compose exec app ./bin/migrate down
 
 test: ## Run all tests
 	go test -v ./...

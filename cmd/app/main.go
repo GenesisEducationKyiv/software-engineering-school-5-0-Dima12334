@@ -54,12 +54,12 @@ func main() {
 	repositories := repository.NewRepositories(dbConn)
 	services := service.NewServices(
 		service.Deps{
-			Clients:     thirdPartyClients,
-			Repos:       repositories,
-			EmailHasher: hasher,
-			EmailSender: emailSender,
-			EmailConfig: cfg.Email,
-			HTTPConfig:  cfg.HTTP,
+			Clients:            thirdPartyClients,
+			Repos:              repositories,
+			SubscriptionHasher: hasher,
+			EmailSender:        emailSender,
+			EmailConfig:        cfg.Email,
+			HTTPConfig:         cfg.HTTP,
 		},
 	)
 

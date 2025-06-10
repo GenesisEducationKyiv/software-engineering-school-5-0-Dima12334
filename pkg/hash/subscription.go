@@ -6,10 +6,10 @@ import (
 	"unicode"
 )
 
-//go:generate mockgen -source=email.go -destination=mocks/mock_email.go
+//go:generate mockgen -source=subscription.go -destination=mocks/mock_subscription.go
 
-type EmailHasher interface {
-	GenerateEmailHash(email string) string
+type SubscriptionHasher interface {
+	GenerateSubscriptionHash(email, city, frequency string) string
 }
 
 type SHA256Hasher struct{}
@@ -18,8 +18,9 @@ func NewSHA256Hasher() *SHA256Hasher {
 	return &SHA256Hasher{}
 }
 
-func (h *SHA256Hasher) GenerateEmailHash(email string) string {
-	hash := sha256.Sum256([]byte(email))
+func (h *SHA256Hasher) GenerateSubscriptionHash(email, city, frequency string) string {
+	data := []byte(email + city + frequency)
+	hash := sha256.Sum256(data)
 	return hex.EncodeToString(hash[:])
 }
 
