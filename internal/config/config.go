@@ -159,30 +159,19 @@ func setFormEnv(cfg *Config) {
 	}
 
 	// Load and validate required variables
-	var requiredVars map[string]*string
-	if cfg.Environment == TestEnvironment {
-		requiredVars = map[string]*string{
-			"DB_HOST":     &cfg.DB.Host,
-			"DB_PORT":     &cfg.DB.Port,
-			"DB_USER":     &cfg.DB.User,
-			"DB_PASSWORD": &cfg.DB.Password,
-			"DB_NAME":     &cfg.DB.DBName,
-			"DB_SSLMODE":  &cfg.DB.SSLMode,
-		}
-	} else {
-		requiredVars = map[string]*string{
-			"LOGG_ENV":        &cfg.Logger.LoggerEnv,
-			"WEATHER_API_KEY": &cfg.ThirdParty.WeatherAPIKey,
-			"HTTP_HOST":       &cfg.HTTP.Host,
-			"SMTP_PASSWORD":   &cfg.SMTP.Pass,
-
-			"DB_HOST":     &cfg.DB.Host,
-			"DB_PORT":     &cfg.DB.Port,
-			"DB_USER":     &cfg.DB.User,
-			"DB_PASSWORD": &cfg.DB.Password,
-			"DB_NAME":     &cfg.DB.DBName,
-			"DB_SSLMODE":  &cfg.DB.SSLMode,
-		}
+	requiredVars := map[string]*string{
+		"DB_HOST":     &cfg.DB.Host,
+		"DB_PORT":     &cfg.DB.Port,
+		"DB_USER":     &cfg.DB.User,
+		"DB_PASSWORD": &cfg.DB.Password,
+		"DB_NAME":     &cfg.DB.DBName,
+		"DB_SSLMODE":  &cfg.DB.SSLMode,
+	}
+	if cfg.Environment != TestEnvironment {
+		requiredVars["LOGG_ENV"] = &cfg.Logger.LoggerEnv
+		requiredVars["HTTP_HOST"] = &cfg.HTTP.Host
+		requiredVars["WEATHER_API_KEY"] = &cfg.ThirdParty.WeatherAPIKey
+		requiredVars["SMTP_PASSWORD"] = &cfg.SMTP.Pass
 	}
 
 	for key, ptr := range requiredVars {
