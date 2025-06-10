@@ -51,12 +51,12 @@ func (h *Handler) SubscribeEmail(c *gin.Context) {
 		},
 	)
 	if err != nil {
-		if errors.Is(err, customErrors.ErrSubscriptionAlreadyExists) {
+		switch {
+		case errors.Is(err, customErrors.ErrSubscriptionAlreadyExists):
 			c.Status(http.StatusConflict)
-			return
+		default:
+			c.Status(http.StatusInternalServerError)
 		}
-
-		c.Status(http.StatusBadRequest)
 		return
 	}
 
@@ -88,7 +88,7 @@ func (h *Handler) ConfirmEmail(c *gin.Context) {
 		case errors.Is(err, customErrors.ErrSubscriptionNotFound):
 			c.Status(http.StatusNotFound)
 		default:
-			c.Status(http.StatusBadRequest)
+			c.Status(http.StatusInternalServerError)
 		}
 		return
 	}
@@ -121,7 +121,7 @@ func (h *Handler) UnsubscribeEmail(c *gin.Context) {
 		case errors.Is(err, customErrors.ErrSubscriptionNotFound):
 			c.Status(http.StatusNotFound)
 		default:
-			c.Status(http.StatusBadRequest)
+			c.Status(http.StatusInternalServerError)
 		}
 		return
 	}

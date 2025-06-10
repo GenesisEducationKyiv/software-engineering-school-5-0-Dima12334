@@ -40,7 +40,7 @@ func (h *Handler) GetWeather(c *gin.Context) {
 		case errors.Is(err, customErrors.ErrCityNotFound):
 			c.Status(http.StatusNotFound)
 		default:
-			c.Status(http.StatusBadRequest)
+			c.Status(http.StatusInternalServerError)
 		}
 		return
 	}
