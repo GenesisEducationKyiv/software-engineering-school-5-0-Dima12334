@@ -39,7 +39,7 @@ func (c *CronRunner) addTask(schedule string, taskFunc func(), taskName string) 
 		taskFunc()
 	})
 	if err != nil {
-		logger.Fatalf("failed to schedule %s: %v", taskName, err)
+		logger.Errorf("failed to schedule %s: %v", taskName, err)
 	}
 }
 

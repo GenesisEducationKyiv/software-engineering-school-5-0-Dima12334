@@ -24,13 +24,13 @@ const (
 type (
 	Config struct {
 		Environment string
-		HTTP        HTTPConfig
+		HTTP        HTTPConfig `mapstructure:"http_server"`
 		Logger      LoggerConfig
-		DB          DatabaseConfig
+		DB          DatabaseConfig `mapstructure:"db"`
 		TestDB      DatabaseConfig
 		ThirdParty  ThirdPartyConfig
-		SMTP        SMTPConfig
-		Email       EmailConfig
+		SMTP        SMTPConfig  `mapstructure:"smtp"`
+		Email       EmailConfig `mapstructure:"email"`
 	}
 
 	HTTPConfig struct {
@@ -139,21 +139,12 @@ func Init(configDir, environ string) (*Config, error) {
 }
 
 func unmarshalConfig(cfg *Config) error {
-	if err := viper.UnmarshalKey("http_server", &cfg.HTTP); err != nil {
+	if err := viper.Unmarshal(cfg); err != nil {
 		return err
 	}
-	if err := viper.UnmarshalKey("db", &cfg.DB); err != nil {
-		return err
-	}
-	if err := viper.UnmarshalKey("db", &cfg.TestDB); err != nil {
-		return err
-	}
-	if err := viper.UnmarshalKey("smtp", &cfg.SMTP); err != nil {
-		return err
-	}
-	if err := viper.UnmarshalKey("email", &cfg.Email); err != nil {
-		return err
-	}
+
+	// TODO: Refactor tests setup to unify the migrations and templates paths
+	cfg.TestDB.MigrationsPath = cfg.DB.MigrationsPath
 	return nil
 }
 
@@ -166,10 +157,7 @@ func parseConfigFile(configDir, environ string) error {
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(configDir)
 
-	if err := viper.ReadInConfig(); err != nil {
-		return err
-	}
-	return nil
+	return viper.ReadInConfig()
 }
 
 func setFormEnv(cfg *Config) {
@@ -178,8 +166,6 @@ func setFormEnv(cfg *Config) {
 	switch cfg.Environment {
 	case TestEnvironment:
 		err = godotenv.Load("../.env")
-	case DevEnvironment:
-		err = godotenv.Load()
 	case ProdEnvironment:
 		// Do nothing
 	default:

@@ -11,11 +11,11 @@ import (
 func ConnectDB(dbCfg config.DatabaseConfig) (*sqlx.DB, error) {
 	db, err := sqlx.Open("postgres", dbCfg.DSN)
 	if err != nil {
-		return nil, errors.Wrap(err, "description")
+		return nil, errors.Wrap(err, "failed to open database connection")
 	}
 
 	if err := db.Ping(); err != nil {
-		return nil, errors.Wrap(err, "description")
+		return nil, errors.Wrap(err, "failed to ping database")
 	}
 
 	return db, nil

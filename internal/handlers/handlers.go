@@ -29,7 +29,7 @@ func (h *Handler) Init(cfg *config.Config) *gin.Engine {
 	router.LoadHTMLGlob("templates/**/*.html")
 
 	// Init router
-	router.GET("ping", func(c *gin.Context) {
+	router.GET("/ping", func(c *gin.Context) {
 		c.String(http.StatusOK, "pong")
 	})
 
