@@ -144,18 +144,21 @@ func parseConfigFile(configDir, environ string) error {
 
 func setFormEnv(cfg *Config) {
 	var err error
+	var envFile string
 
 	switch cfg.Environment {
 	case TestEnvironment:
-		err = godotenv.Load("../.env.dev.test")
+		envFile = "../.env.test"
+		err = godotenv.Load(envFile)
 	case ProdEnvironment:
 		// Do nothing
 	default:
-		err = godotenv.Load()
+		envFile = "./.env.dev"
+		err = godotenv.Load(envFile)
 	}
 
 	if err != nil {
-		log.Fatalf("error loading .env.dev file")
+		log.Fatalf("error loading %s file", envFile)
 	}
 
 	// Load and validate required variables
