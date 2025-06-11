@@ -2,7 +2,12 @@ package errors
 
 import (
 	"errors"
+
 	"github.com/lib/pq"
+)
+
+const (
+	pgUniqueViolationCode = "23505"
 )
 
 var (
@@ -15,7 +20,7 @@ var (
 func IsDuplicateDBError(err error) bool {
 	var pqErr *pq.Error
 	if errors.As(err, &pqErr) {
-		return pqErr.Code == "23505" // Unique violation code
+		return pqErr.Code == pgUniqueViolationCode
 	}
 	return false
 }

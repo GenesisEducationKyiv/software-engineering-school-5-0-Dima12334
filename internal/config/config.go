@@ -2,16 +2,21 @@ package config
 
 import (
 	"fmt"
-	"github.com/joho/godotenv"
-	"github.com/spf13/viper"
 	"log"
 	"os"
+	"time"
+
+	"github.com/joho/godotenv"
+	"github.com/spf13/viper"
 )
 
 const (
-	testEnvironment       = "test"
-	devEnvironment        = "dev"
-	prodEnvironment       = "prod"
+	ProdEnvironment = "prod"
+	DevEnvironment  = "dev"
+	TestEnvironment = "test"
+
+	ConfigsDir = "configs"
+
 	defaultHTTPPort       = "8080"
 	defaultMigrationsPath = "file://migrations"
 )
@@ -19,13 +24,12 @@ const (
 type (
 	Config struct {
 		Environment string
-		HTTP        HTTPConfig
+		HTTP        HTTPConfig `mapstructure:"http_server"`
 		Logger      LoggerConfig
-		DB          DatabaseConfig
-		TestDB      DatabaseConfig
+		DB          DatabaseConfig `mapstructure:"db"`
 		ThirdParty  ThirdPartyConfig
-		SMTP        SMTPConfig
-		Email       EmailConfig
+		SMTP        SMTPConfig  `mapstructure:"smtp"`
+		Email       EmailConfig `mapstructure:"email"`
 	}
 
 	HTTPConfig struct {
@@ -34,6 +38,10 @@ type (
 		Scheme  string
 		Domain  string
 		BaseURL string
+
+		ReadTimeout       time.Duration `mapstructure:"readTimeout"`
+		ReadHeaderTimeout time.Duration `mapstructure:"readHeaderTimeout"`
+		WriteTimeout      time.Duration `mapstructure:"writeTimeout"`
 	}
 
 	ThirdPartyConfig struct {
@@ -97,7 +105,7 @@ func Init(configDir, environ string) (*Config, error) {
 
 	setFormEnv(&cfg)
 
-	if cfg.Environment == prodEnvironment {
+	if cfg.Environment == ProdEnvironment {
 		cfg.HTTP.Scheme = "https"
 		cfg.HTTP.Domain = cfg.HTTP.Host
 	} else {
@@ -115,41 +123,15 @@ func Init(configDir, environ string) (*Config, error) {
 		cfg.DB.DBName,
 		cfg.DB.SSLMode,
 	)
-
-	cfg.TestDB.DSN = fmt.Sprintf(
-		"postgres://%s:%s@%s:%s/%s?sslmode=%s",
-		cfg.TestDB.User,
-		cfg.TestDB.Password,
-		cfg.TestDB.Host,
-		cfg.TestDB.Port,
-		cfg.TestDB.DBName,
-		cfg.TestDB.SSLMode,
-	)
-
 	return &cfg, nil
 }
 
 func unmarshalConfig(cfg *Config) error {
-	if err := viper.UnmarshalKey("http_server", &cfg.HTTP); err != nil {
-		return err
-	}
-	if err := viper.UnmarshalKey("db", &cfg.DB); err != nil {
-		return err
-	}
-	if err := viper.UnmarshalKey("db", &cfg.TestDB); err != nil {
-		return err
-	}
-	if err := viper.UnmarshalKey("smtp", &cfg.SMTP); err != nil {
-		return err
-	}
-	if err := viper.UnmarshalKey("email", &cfg.Email); err != nil {
-		return err
-	}
-	return nil
+	return viper.Unmarshal(cfg)
 }
 
 func parseConfigFile(configDir, environ string) error {
-	if environ == testEnvironment {
+	if environ == TestEnvironment {
 		viper.SetConfigName("test")
 	} else {
 		viper.SetConfigName("main")
@@ -157,51 +139,51 @@ func parseConfigFile(configDir, environ string) error {
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(configDir)
 
-	if err := viper.ReadInConfig(); err != nil {
-		return err
-	}
-	return nil
+	return viper.ReadInConfig()
 }
 
 func setFormEnv(cfg *Config) {
 	var err error
+	var envFile string
 
 	switch cfg.Environment {
-	case testEnvironment:
-		err = godotenv.Load("../.env")
-	case devEnvironment:
-		err = godotenv.Load()
-	case prodEnvironment:
+	case TestEnvironment:
+		envFile = "../.env.test"
+		err = godotenv.Load(envFile)
+	case ProdEnvironment:
 		// Do nothing
 	default:
-		err = godotenv.Load()
+		envFile = "./.env.dev"
+		err = godotenv.Load(envFile)
 	}
 
 	if err != nil {
-		log.Fatalf("error loading .env file")
+		log.Fatalf("error loading %s file", envFile)
 	}
 
-	cfg.Logger.LoggerEnv = os.Getenv("LOGG_ENV")
+	// Load and validate required variables
+	requiredVars := map[string]*string{
+		"DB_HOST":     &cfg.DB.Host,
+		"DB_PORT":     &cfg.DB.Port,
+		"DB_USER":     &cfg.DB.User,
+		"DB_PASSWORD": &cfg.DB.Password,
+		"DB_NAME":     &cfg.DB.DBName,
+		"DB_SSLMODE":  &cfg.DB.SSLMode,
+	}
+	if cfg.Environment != TestEnvironment {
+		requiredVars["LOGG_ENV"] = &cfg.Logger.LoggerEnv
+		requiredVars["HTTP_HOST"] = &cfg.HTTP.Host
+		requiredVars["WEATHER_API_KEY"] = &cfg.ThirdParty.WeatherAPIKey
+		requiredVars["SMTP_PASSWORD"] = &cfg.SMTP.Pass
+	}
 
-	cfg.ThirdParty.WeatherAPIKey = os.Getenv("WEATHER_API_KEY")
-
-	cfg.HTTP.Host = os.Getenv("HTTP_HOST")
-
-	cfg.SMTP.Pass = os.Getenv("SMTP_PASSWORD")
-
-	cfg.DB.Host = os.Getenv("DB_HOST")
-	cfg.DB.Port = os.Getenv("DB_PORT")
-	cfg.DB.User = os.Getenv("DB_USER")
-	cfg.DB.Password = os.Getenv("DB_PASSWORD")
-	cfg.DB.DBName = os.Getenv("DB_NAME")
-	cfg.DB.SSLMode = os.Getenv("DB_SSLMODE")
-
-	cfg.TestDB.Host = os.Getenv("TEST_DB_HOST")
-	cfg.TestDB.Port = os.Getenv("TEST_DB_PORT")
-	cfg.TestDB.User = os.Getenv("TEST_DB_USER")
-	cfg.TestDB.Password = os.Getenv("TEST_DB_PASSWORD")
-	cfg.TestDB.DBName = os.Getenv("TEST_DB_NAME")
-	cfg.TestDB.SSLMode = os.Getenv("TEST_DB_SSLMODE")
+	for key, ptr := range requiredVars {
+		val, exists := os.LookupEnv(key)
+		if !exists || val == "" {
+			log.Fatalf("environment variable %q is required but not set or empty", key)
+		}
+		*ptr = val
+	}
 }
 
 func populateDefaults() {

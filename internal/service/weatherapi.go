@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"weather_forecast_sub/pkg/clients"
 )
 
@@ -12,10 +13,14 @@ func NewWeatherService(client clients.WeatherClient) *WeatherService {
 	return &WeatherService{client: client}
 }
 
-func (s *WeatherService) GetCurrentWeather(city string) (*clients.WeatherResponse, error) {
-	return s.client.GetAPICurrentWeather(city)
+func (s *WeatherService) GetCurrentWeather(ctx context.Context, city string) (
+	*clients.WeatherResponse, error,
+) {
+	return s.client.GetAPICurrentWeather(ctx, city)
 }
 
-func (s *WeatherService) GetDayWeather(city string) (*clients.DayWeatherResponse, error) {
-	return s.client.GetAPIDayWeather(city)
+func (s *WeatherService) GetDayWeather(ctx context.Context, city string) (
+	*clients.DayWeatherResponse, error,
+) {
+	return s.client.GetAPIDayWeather(ctx, city)
 }

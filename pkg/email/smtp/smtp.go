@@ -1,10 +1,11 @@
 package smtp
 
 import (
-	"github.com/go-gomail/gomail"
-	"github.com/pkg/errors"
 	"weather_forecast_sub/pkg/email"
 	"weather_forecast_sub/pkg/logger"
+
+	"github.com/go-gomail/gomail"
+	"github.com/pkg/errors"
 )
 
 type SMTPSender struct {

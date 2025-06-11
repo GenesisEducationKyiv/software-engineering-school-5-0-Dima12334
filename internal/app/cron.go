@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"time"
 	"weather_forecast_sub/internal/service"
 	"weather_forecast_sub/pkg/logger"
@@ -16,7 +17,7 @@ type CronRunner struct {
 func NewCronRunner(services *service.Services) *CronRunner {
 	return &CronRunner{
 		services: services,
-		cron:     cron.New(cron.WithLocation(time.Local)),
+		cron:     cron.New(cron.WithLocation(time.UTC)),
 	}
 }
 
@@ -38,19 +39,21 @@ func (c *CronRunner) addTask(schedule string, taskFunc func(), taskName string) 
 		taskFunc()
 	})
 	if err != nil {
-		logger.Fatalf("failed to schedule %s: %v", taskName, err)
+		logger.Errorf("failed to schedule %s: %v", taskName, err)
 	}
 }
 
 func (c *CronRunner) hourlyWeatherEmailTask() {
-	err := c.services.Subscriptions.SendHourlyWeatherForecast()
+	ctx := context.Background()
+	err := c.services.Subscriptions.SendHourlyWeatherForecast(ctx)
 	if err != nil {
 		logger.Errorf("hourly weather task error: %s", err.Error())
 	}
 }
 
 func (c *CronRunner) dailyWeatherEmailTask() {
-	err := c.services.Subscriptions.SendDailyWeatherForecast()
+	ctx := context.Background()
+	err := c.services.Subscriptions.SendDailyWeatherForecast(ctx)
 	if err != nil {
 		logger.Errorf("daily weather task error: %s", err.Error())
 	}
