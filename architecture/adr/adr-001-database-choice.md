@@ -58,7 +58,7 @@
 Обрано **PostgreSQL**
 
 ## Схема бази даних:
-![img.png](db_schema.png)
+![img.png](../db_schema.png)
 
 ## Наслідки
 **Позитивні:**
