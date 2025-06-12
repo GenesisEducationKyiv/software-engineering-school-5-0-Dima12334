@@ -19,7 +19,7 @@
 
 ### 1.3 Функціональні вимоги
 - Користувачі мають змогу створити підписку на оновлення погоди для конкретного міста, вказавши свій email
-- Попередньо потрібно підтрвердити підписку через посилання, яке надійде на вказаний email
+- Попередньо потрібно підтвердити підписку через посилання, яке надійде на вказаний email
 - Система надсилає регулярні повідомлення на поштову скриньку (щодня, щогодини)
 - API для керування підписками (створення і видалення підписки)
 - Можливість отримання поточної інформації про погоду в обраному місті
@@ -105,47 +105,17 @@
 - Перетворення даних у внутрішній формат
 
 **Client settings**:
-```go
-const weatherAPIClientTimeout    = 10 * time.Second
-
-type WeatherAPIClient struct {
-	APIKey     string
-	BaseURL    string
-	HTTPClient *http.Client
-}
-
-func NewWeatherAPIClient(apiKey string) *WeatherAPIClient {
-	return &WeatherAPIClient{
-		APIKey:     apiKey,
-		BaseURL:    "https://api.weatherapi.com/v1",
-		HTTPClient: &http.Client{Timeout: weatherAPIClientTimeout},
-	}
-}
-```
+- Використовуємо HTTP клієнт з таймаутом 10 секунд
+- Entrypoint: `https://api.weatherapi.com/v1`
+- Потрібен API ключ для доступу до WeatherAPI
 
 ### 4.5. Scheduler (Cron jobs)
 **Відповідальність**:
 - Періодичні задачі по розкладу
 
 **Задачі**:
-```go
-type CronRunner struct {
-	services *service.Services
-	cron     *cron.Cron
-}
-
-func (c *CronRunner) Start() {
-	c.registerTasks()
-	c.cron.Start()
-}
-
-func (c *CronRunner) registerTasks() {
-	// Top of each hour (7:00, 8:00, 9:00, etc.)
-	c.addTask("0 * * * *", c.hourlyWeatherEmailTask, "hourly weather email sending")
-	// Daily at 7AM
-	c.addTask("0 7 * * *", c.dailyWeatherEmailTask, "daily weather email sending")
-}
-```
+- Щогодинна розсилка погоди (на початку кожної години)
+- Щоденна розсилка погоди (щодня о 07:00 по UTC)
 
 ### 4.6. PostgreSQL
 **Відповідальність**:
