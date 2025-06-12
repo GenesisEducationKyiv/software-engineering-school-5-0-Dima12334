@@ -1,0 +1,22 @@
+name: Linter
+
+on:
+  push:
+    branches:
+      - '**'
+      - '!main'
+
+jobs:
+  linter:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Fetch remote lint config
+        run: curl -sSfL -o .golangci.yml https://raw.githubusercontent.com/fabl3ss/genesis-se-school-linter/refs/heads/main/.golangci.yaml
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: latest

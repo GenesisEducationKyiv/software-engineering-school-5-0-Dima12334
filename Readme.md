@@ -21,7 +21,7 @@ Local version: http://localhost:8080/swagger/index.html
 ```
 https://github.com/Dima12334/weather_forecast_sub.git
 ```
-2. Create .env file in the root directory and fill it with variables as in .env.example file
+2. Create .env.dev and .env.test files in the root directory and fill it with variables as in .env.dev.example and .env.test.example files accordingly
 3. Build and up docker containers (app and db):
 ```
 make up-with-build
@@ -34,41 +34,18 @@ make migrate-up
 You can open http://localhost:8080/subscribe page and fill out the form.<br>
 After that you will receive email with a confirmation link, and after confirmation you will start receiving weather updates.<br>
 You can unsubscribe from the newsletter at any time by using the unsubscribe link in email.<br>
-6. Optionally you can run tests:
-```
-make test
-```
 
-### Commands:
-- Build and up docker containers:
-```
-make up-with-build
-```
-- Up docker containers without build:
-```
-make up
-```
-- Down docker containers:
-```
-make down
-```
-- Run tests:
+## Optionally you can
+1. Run tests:
 ```
 make test
 ```
-- Generate docs:
+2. Install and run linter:
+- Installation
 ```
-make swag
+curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.1.6
 ```
-- Create migrations:
+- Run
 ```
-make migration <migration_name>
-```
-- Apply migrations:
-```
-make migrate-up
-```
-- Rollback migrations:
-```
-make migrate-down
+make lint
 ```

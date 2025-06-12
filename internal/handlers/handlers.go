@@ -1,13 +1,15 @@
 package handlers
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
-	"net/http"
-	"weather_forecast_sub/internal/service"
 
 	_ "weather_forecast_sub/docs"
+	"weather_forecast_sub/internal/config"
+	"weather_forecast_sub/internal/service"
 )
 
 type Handler struct {
@@ -18,24 +20,28 @@ func NewHandler(services *service.Services) *Handler {
 	return &Handler{services: services}
 }
 
-func (h *Handler) Init() *gin.Engine {
+func (h *Handler) Init(cfg *config.Config) *gin.Engine {
+	if cfg.Environment == config.ProdEnvironment {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
 	router := gin.Default()
 	router.LoadHTMLGlob("templates/**/*.html")
 
 	// Init router
-	router.GET("ping", func(c *gin.Context) {
+	router.GET("/ping", func(c *gin.Context) {
 		c.String(http.StatusOK, "pong")
 	})
 
 	// Swagger docs
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-	h.initApi(router)
+	h.initAPI(router)
 
 	return router
 }
 
-func (h *Handler) initApi(router *gin.Engine) {
+func (h *Handler) initAPI(router *gin.Engine) {
 	router.GET("/subscribe", h.ShowSubscribePage)
 
 	api := router.Group("/api")

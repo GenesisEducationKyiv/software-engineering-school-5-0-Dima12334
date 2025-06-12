@@ -13,8 +13,11 @@ type Server struct {
 func NewServer(cfg *config.Config, handler http.Handler) *Server {
 	return &Server{
 		httpServer: &http.Server{
-			Addr:    ":" + cfg.HTTP.Port,
-			Handler: handler,
+			Addr:              ":" + cfg.HTTP.Port,
+			Handler:           handler,
+			ReadTimeout:       cfg.HTTP.ReadTimeout,
+			ReadHeaderTimeout: cfg.HTTP.ReadHeaderTimeout,
+			WriteTimeout:      cfg.HTTP.WriteTimeout,
 		},
 	}
 }

@@ -1,26 +1,22 @@
 package main
 
 import (
-	_ "github.com/golang-migrate/migrate/v4/source/file"
-	_ "github.com/lib/pq"
 	"log"
 	"os"
 	"weather_forecast_sub/internal/config"
 	"weather_forecast_sub/pkg/migrations"
-)
 
-const (
-	configsDir     = "configs"
-	devEnvironment = "dev"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
+	_ "github.com/lib/pq"
 )
 
 func main() {
 	environ := os.Getenv("ENV")
 	if environ == "" {
-		environ = devEnvironment
+		environ = config.DevEnvironment
 	}
 
-	cfg, err := config.Init(configsDir, environ)
+	cfg, err := config.Init(config.ConfigsDir, environ)
 	if err != nil {
 		log.Fatalf("failed to init configs: %v", err.Error())
 	}

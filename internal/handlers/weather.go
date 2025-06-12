@@ -2,10 +2,11 @@ package handlers
 
 import (
 	"errors"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"net/url"
 	customErrors "weather_forecast_sub/pkg/errors"
+
+	"github.com/gin-gonic/gin"
 )
 
 type weatherResponse struct {
@@ -33,13 +34,13 @@ func (h *Handler) GetWeather(c *gin.Context) {
 	}
 	escapedCity := url.QueryEscape(city)
 
-	weather, err := h.services.Weather.GetCurrentWeather(escapedCity)
+	weather, err := h.services.Weather.GetCurrentWeather(c, escapedCity)
 	if err != nil {
 		switch {
 		case errors.Is(err, customErrors.ErrCityNotFound):
 			c.Status(http.StatusNotFound)
 		default:
-			c.Status(http.StatusBadRequest)
+			c.Status(http.StatusInternalServerError)
 		}
 		return
 	}

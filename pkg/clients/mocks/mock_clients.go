@@ -10,6 +10,7 @@
 package mock_clients
 
 import (
+	context "context"
 	reflect "reflect"
 	clients "weather_forecast_sub/pkg/clients"
 
@@ -41,31 +42,31 @@ func (m *MockWeatherClient) EXPECT() *MockWeatherClientMockRecorder {
 }
 
 // GetAPICurrentWeather mocks base method.
-func (m *MockWeatherClient) GetAPICurrentWeather(city string) (*clients.WeatherResponse, error) {
+func (m *MockWeatherClient) GetAPICurrentWeather(ctx context.Context, city string) (*clients.WeatherResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAPICurrentWeather", city)
+	ret := m.ctrl.Call(m, "GetAPICurrentWeather", ctx, city)
 	ret0, _ := ret[0].(*clients.WeatherResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetAPICurrentWeather indicates an expected call of GetAPICurrentWeather.
-func (mr *MockWeatherClientMockRecorder) GetAPICurrentWeather(city any) *gomock.Call {
+func (mr *MockWeatherClientMockRecorder) GetAPICurrentWeather(ctx, city any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAPICurrentWeather", reflect.TypeOf((*MockWeatherClient)(nil).GetAPICurrentWeather), city)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAPICurrentWeather", reflect.TypeOf((*MockWeatherClient)(nil).GetAPICurrentWeather), ctx, city)
 }
 
 // GetAPIDayWeather mocks base method.
-func (m *MockWeatherClient) GetAPIDayWeather(city string) (*clients.DayWeatherResponse, error) {
+func (m *MockWeatherClient) GetAPIDayWeather(ctx context.Context, city string) (*clients.DayWeatherResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAPIDayWeather", city)
+	ret := m.ctrl.Call(m, "GetAPIDayWeather", ctx, city)
 	ret0, _ := ret[0].(*clients.DayWeatherResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetAPIDayWeather indicates an expected call of GetAPIDayWeather.
-func (mr *MockWeatherClientMockRecorder) GetAPIDayWeather(city any) *gomock.Call {
+func (mr *MockWeatherClientMockRecorder) GetAPIDayWeather(ctx, city any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAPIDayWeather", reflect.TypeOf((*MockWeatherClient)(nil).GetAPIDayWeather), city)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAPIDayWeather", reflect.TypeOf((*MockWeatherClient)(nil).GetAPIDayWeather), ctx, city)
 }
