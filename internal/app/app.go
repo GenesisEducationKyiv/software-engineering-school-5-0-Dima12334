@@ -25,7 +25,7 @@ import (
 type Application struct {
 	config     *config.Config
 	server     *server.Server
-	cronRunner *CronRunner
+	cronRunner Cron
 	dbConn     *sqlx.DB
 }
 
@@ -42,6 +42,34 @@ func NewApplicationBuilder() *ApplicationBuilder {
 	return &ApplicationBuilder{
 		configService: config.NewDefaultConfigService(),
 	}
+}
+
+func (ab *ApplicationBuilder) setupDependencies(app *Application) {
+	hasher := hash.NewSHA256Hasher()
+	emailSender := smtp.NewSMTPSender(
+		app.config.SMTP.From,
+		app.config.SMTP.FromName,
+		app.config.SMTP.Pass,
+		app.config.SMTP.Host,
+		app.config.SMTP.Port,
+	)
+	thirdPartyClients := clients.NewClients(app.config.ThirdParty)
+	repositories := repository.NewRepositories(app.dbConn)
+
+	services := service.NewServices(service.Deps{
+		Clients:            thirdPartyClients,
+		Repos:              repositories,
+		SubscriptionHasher: hasher,
+		EmailSender:        emailSender,
+		EmailConfig:        app.config.Email,
+		HTTPConfig:         app.config.HTTP,
+	})
+
+	app.cronRunner = NewCronRunner(services.CronJobs)
+
+	handler := handlers.NewHandler(services)
+
+	app.server = server.NewServer(app.config, handler.Init(app.config))
 }
 
 func (ab *ApplicationBuilder) Build(environment string) (*Application, error) {
@@ -66,34 +94,6 @@ func (ab *ApplicationBuilder) Build(environment string) (*Application, error) {
 	ab.setupDependencies(app)
 
 	return app, nil
-}
-
-func (ab *ApplicationBuilder) setupDependencies(app *Application) {
-	hasher := hash.NewSHA256Hasher()
-	emailSender := smtp.NewSMTPSender(
-		app.config.SMTP.From,
-		app.config.SMTP.FromName,
-		app.config.SMTP.Pass,
-		app.config.SMTP.Host,
-		app.config.SMTP.Port,
-	)
-	thirdPartyClients := clients.NewClients(app.config.ThirdParty)
-	repositories := repository.NewRepositories(app.dbConn)
-
-	services := service.NewServices(service.Deps{
-		Clients:            thirdPartyClients,
-		Repos:              repositories,
-		SubscriptionHasher: hasher,
-		EmailSender:        emailSender,
-		EmailConfig:        app.config.Email,
-		HTTPConfig:         app.config.HTTP,
-	})
-
-	app.cronRunner = NewCronRunner(services)
-
-	handler := handlers.NewHandler(services)
-
-	app.server = server.NewServer(app.config, handler.Init(app.config))
 }
 
 // @title Weather Forecast API
