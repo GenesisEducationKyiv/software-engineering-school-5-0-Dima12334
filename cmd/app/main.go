@@ -2,13 +2,12 @@ package main
 
 import (
 	"log"
-	"os"
 	"weather_forecast_sub/internal/app"
 	"weather_forecast_sub/internal/config"
 )
 
 func main() {
-	environ := getEnvironment()
+	environ := config.GetEnvironmentOrDefault(config.DevEnvironment)
 
 	application, err := app.NewApplication(environ)
 	if err != nil {
@@ -16,12 +15,4 @@ func main() {
 	}
 
 	application.Run()
-}
-
-func getEnvironment() string {
-	environ := os.Getenv("ENV")
-	if environ == "" {
-		return config.DevEnvironment
-	}
-	return environ
 }
