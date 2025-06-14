@@ -7,9 +7,9 @@ import (
 )
 
 func main() {
-	environ := config.GetEnvironmentOrDefault(config.DevEnvironment)
+	environment := config.GetEnvironmentOrDefault(config.DevEnvironment)
 
-	application, err := app.NewApplication(environ)
+	application, err := app.NewApplication(environment)
 	if err != nil {
 		log.Fatalf("failed to create application: %v", err)
 	}

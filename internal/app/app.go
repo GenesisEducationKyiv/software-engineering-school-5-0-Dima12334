@@ -110,6 +110,7 @@ func (ab *ApplicationBuilder) setupDependencies(app *Application) {
 // @tag.description Subscription management operations
 func (a *Application) Run() {
 	a.cronRunner.Start()
+	defer a.cronRunner.Stop()
 
 	go func() {
 		if err := a.server.Run(); !errors.Is(err, http.ErrServerClosed) {
