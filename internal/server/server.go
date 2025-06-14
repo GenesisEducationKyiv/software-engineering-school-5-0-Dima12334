@@ -10,14 +10,14 @@ type Server struct {
 	httpServer *http.Server
 }
 
-func NewServer(cfg *config.Config, handler http.Handler) *Server {
+func NewServer(cfgHTTP *config.HTTPConfig, handler http.Handler) *Server {
 	return &Server{
 		httpServer: &http.Server{
-			Addr:              ":" + cfg.HTTP.Port,
+			Addr:              ":" + cfgHTTP.Port,
 			Handler:           handler,
-			ReadTimeout:       cfg.HTTP.ReadTimeout,
-			ReadHeaderTimeout: cfg.HTTP.ReadHeaderTimeout,
-			WriteTimeout:      cfg.HTTP.WriteTimeout,
+			ReadTimeout:       cfgHTTP.ReadTimeout,
+			ReadHeaderTimeout: cfgHTTP.ReadHeaderTimeout,
+			WriteTimeout:      cfgHTTP.WriteTimeout,
 		},
 	}
 }

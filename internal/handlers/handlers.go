@@ -20,8 +20,8 @@ func NewHandler(services *service.Services) *Handler {
 	return &Handler{services: services}
 }
 
-func (h *Handler) Init(cfg *config.Config) *gin.Engine {
-	router := h.initGinRouter(cfg)
+func (h *Handler) Init(environment string) *gin.Engine {
+	router := h.initGinRouter(environment)
 
 	h.initBaseRoutes(router)
 	h.initHTMLRoutes(router)
@@ -30,8 +30,8 @@ func (h *Handler) Init(cfg *config.Config) *gin.Engine {
 	return router
 }
 
-func (h *Handler) initGinRouter(cfg *config.Config) *gin.Engine {
-	if cfg.Environment == config.ProdEnvironment {
+func (h *Handler) initGinRouter(environment string) *gin.Engine {
+	if environment == config.ProdEnvironment {
 		gin.SetMode(gin.ReleaseMode)
 	}
 

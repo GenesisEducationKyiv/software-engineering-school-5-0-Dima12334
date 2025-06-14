@@ -29,19 +29,11 @@ type Application struct {
 	dbConn     *sqlx.DB
 }
 
-type ApplicationBuilder struct {
-	configService *config.ConfigService
-}
+type ApplicationBuilder struct{}
 
 func NewApplication(environment string) (*Application, error) {
-	builder := NewApplicationBuilder()
+	builder := ApplicationBuilder{}
 	return builder.Build(environment)
-}
-
-func NewApplicationBuilder() *ApplicationBuilder {
-	return &ApplicationBuilder{
-		configService: config.NewDefaultConfigService(),
-	}
 }
 
 func (ab *ApplicationBuilder) setupDependencies(app *Application) {
@@ -69,11 +61,11 @@ func (ab *ApplicationBuilder) setupDependencies(app *Application) {
 
 	handler := handlers.NewHandler(services)
 
-	app.server = server.NewServer(app.config, handler.Init(app.config))
+	app.server = server.NewServer(&app.config.HTTP, handler.Init(app.config.Environment))
 }
 
 func (ab *ApplicationBuilder) Build(environment string) (*Application, error) {
-	cfg, err := ab.configService.LoadConfig(config.ConfigsDir, environment)
+	cfg, err := config.Init(config.ConfigsDir, environment)
 	if err != nil {
 		return nil, err
 	}

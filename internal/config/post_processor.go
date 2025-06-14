@@ -4,10 +4,6 @@ import "fmt"
 
 type DefaultConfigPostProcessor struct{}
 
-func NewDefaultConfigPostProcessor() *DefaultConfigPostProcessor {
-	return &DefaultConfigPostProcessor{}
-}
-
 func (p *DefaultConfigPostProcessor) ProcessHTTPConfig(cfg *Config) error {
 	if cfg.Environment == ProdEnvironment {
 		cfg.HTTP.Scheme = "https"

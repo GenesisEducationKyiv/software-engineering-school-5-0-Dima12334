@@ -1,9 +1,9 @@
 package config
 
 func NewDefaultConfigService() *ConfigService {
-	reader := NewViperConfigReader()
-	envLoader := NewGodotenvLoader()
-	postProcessor := NewDefaultConfigPostProcessor()
+	reader := &ViperConfigReader{}
+	envLoader := &GodotenvLoader{}
+	postProcessor := &DefaultConfigPostProcessor{}
 
 	return NewConfigService(reader, envLoader, postProcessor)
 }
