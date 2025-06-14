@@ -10,9 +10,6 @@ import (
 	"weather_forecast_sub/pkg/hash"
 )
 
-type WeatherFetcherFunc[T WeatherResponseType] func(ctx context.Context, city string) (T, error)
-type EmailSenderFunc[T WeatherResponseType] func(inp WeatherForecastEmailInput[T]) error
-
 type SubscriptionService struct {
 	repo           repository.SubscriptionRepository
 	hasher         hash.SubscriptionHasher

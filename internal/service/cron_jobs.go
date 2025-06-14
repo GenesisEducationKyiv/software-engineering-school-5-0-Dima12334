@@ -10,6 +10,11 @@ import (
 	"weather_forecast_sub/pkg/logger"
 )
 
+type (
+	WeatherFetcherFunc[T WeatherResponseType] func(ctx context.Context, city string) (T, error)
+	EmailSenderFunc[T WeatherResponseType]    func(inp WeatherForecastEmailInput[T]) error
+)
+
 type CronJobsService struct {
 	emailService     Emails
 	weatherService   Weather
