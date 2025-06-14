@@ -21,6 +21,16 @@ func NewHandler(services *service.Services) *Handler {
 }
 
 func (h *Handler) Init(cfg *config.Config) *gin.Engine {
+	router := h.initGinRouter(cfg)
+
+	h.initBaseRoutes(router)
+	h.initHTMLRoutes(router)
+	h.initAPI(router)
+
+	return router
+}
+
+func (h *Handler) initGinRouter(cfg *config.Config) *gin.Engine {
 	if cfg.Environment == config.ProdEnvironment {
 		gin.SetMode(gin.ReleaseMode)
 	}
@@ -28,22 +38,24 @@ func (h *Handler) Init(cfg *config.Config) *gin.Engine {
 	router := gin.Default()
 	router.LoadHTMLGlob("templates/**/*.html")
 
-	// Init router
+	return router
+}
+
+func (h *Handler) initBaseRoutes(router *gin.Engine) {
+	// Health check endpoint
 	router.GET("/ping", func(c *gin.Context) {
 		c.String(http.StatusOK, "pong")
 	})
 
 	// Swagger docs
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+}
 
-	h.initAPI(router)
-
-	return router
+func (h *Handler) initHTMLRoutes(router *gin.Engine) {
+	router.GET("/subscribe", h.ShowSubscribePage)
 }
 
 func (h *Handler) initAPI(router *gin.Engine) {
-	router.GET("/subscribe", h.ShowSubscribePage)
-
 	api := router.Group("/api")
 	{
 		weather := api.Group("/weather")
