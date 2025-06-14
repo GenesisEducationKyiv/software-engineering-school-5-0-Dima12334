@@ -1,0 +1,13 @@
+.idea
+.data
+.bin
+.DS_Store
+
+.env.dev
+.env.test
+cover.out
+
+# Visual Studio Settings
+.vscode
+
+.golangci.yaml
