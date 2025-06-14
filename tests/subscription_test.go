@@ -38,7 +38,7 @@ func setupTestEnvironment(
 	ctrl *gomock.Controller,
 ) (*gin.Engine, *mockSender.MockSender, func()) {
 	repo := repository.NewSubscriptionRepo(testDB)
-	hasher := hash.NewSHA256Hasher()
+	hasher := &hash.SHA256Hasher{}
 	cfg, err := config.Init(configsDir, config.TestEnvironment)
 	if err != nil {
 		t.Fatalf("failed to init configs: %v", err.Error())
@@ -63,10 +63,10 @@ func setupTestEnvironment(
 
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
-	router.GET("/subscribe", handler.ShowSubscribePage)
-	router.POST("/api/subscribe", handler.SubscribeEmail)
-	router.GET("/api/confirm/:token", handler.ConfirmEmail)
-	router.GET("/api/unsubscribe/:token", handler.UnsubscribeEmail)
+	router.GET("/subscribe", handler.SubscriptionHandler.ShowSubscribePage)
+	router.POST("/api/subscribe", handler.SubscriptionHandler.SubscribeEmail)
+	router.GET("/api/confirm/:token", handler.SubscriptionHandler.ConfirmEmail)
+	router.GET("/api/unsubscribe/:token", handler.SubscriptionHandler.UnsubscribeEmail)
 
 	// Create router with mock template
 	router.LoadHTMLGlob("../templates/**/*.html")
@@ -177,7 +177,7 @@ func testDuplicateSubscribe(t *testing.T) {
 	defer cleanup()
 
 	// Create existing subscription
-	hasher := hash.NewSHA256Hasher()
+	hasher := &hash.SHA256Hasher{}
 	token := hasher.GenerateSubscriptionHash("existing@example.com", "Kyiv", "daily")
 	_, err := testDB.Exec(`
 		INSERT INTO subscriptions (email, city, frequency, token, confirmed, created_at)
@@ -225,7 +225,7 @@ func testDuplicateEmailSubscribe(t *testing.T) {
 	var createdSubscriptions int
 
 	// Create existing subscription
-	hasher := hash.NewSHA256Hasher()
+	hasher := &hash.SHA256Hasher{}
 	token := hasher.GenerateSubscriptionHash("existing@example.com", "Kyiv", "daily")
 	_, err := testDB.Exec(`
 		INSERT INTO subscriptions (email, city, frequency, token, confirmed, created_at)
@@ -262,7 +262,7 @@ func testUnsubscribeSuccess(t *testing.T) {
 	defer cleanup()
 
 	// Insert subscription to be deleted
-	hasher := hash.NewSHA256Hasher()
+	hasher := &hash.SHA256Hasher{}
 	token := hasher.GenerateSubscriptionHash("unsubscribe@example.com", "Kyiv", "daily")
 
 	_, err := testDB.Exec(`
@@ -305,7 +305,7 @@ func testUnsubscribeNotFound(t *testing.T) {
 	handler, _, cleanup := setupTestEnvironment(t, ctrl)
 	defer cleanup()
 
-	hasher := hash.NewSHA256Hasher()
+	hasher := &hash.SHA256Hasher{}
 	token := hasher.GenerateSubscriptionHash("non-existen-email@example.com", "Kyiv", "daily")
 
 	// Execute
@@ -325,7 +325,7 @@ func testUnsubscribeInvalidToken(t *testing.T) {
 	defer cleanup()
 
 	// Insert subscription to be deleted
-	hasher := hash.NewSHA256Hasher()
+	hasher := &hash.SHA256Hasher{}
 	token := hasher.GenerateSubscriptionHash("unsubscribe@example.com", "Kyiv", "daily")
 
 	_, err := testDB.Exec(`
@@ -369,7 +369,7 @@ func testConfirmSuccess(t *testing.T) {
 	defer cleanup()
 
 	// Insert unconfirmed subscription
-	hasher := hash.NewSHA256Hasher()
+	hasher := &hash.SHA256Hasher{}
 	token := hasher.GenerateSubscriptionHash("confirm@example.com", "Kyiv", "daily")
 
 	_, err := testDB.Exec(`
@@ -410,7 +410,7 @@ func testConfirmNotFound(t *testing.T) {
 	router, _, cleanup := setupTestEnvironment(t, ctrl)
 	defer cleanup()
 
-	hasher := hash.NewSHA256Hasher()
+	hasher := &hash.SHA256Hasher{}
 	token := hasher.GenerateSubscriptionHash("non-existen-email@example.com", "Kyiv", "daily")
 
 	// Execute
@@ -429,7 +429,7 @@ func testConfirmInvalidToken(t *testing.T) {
 	defer cleanup()
 
 	// Insert unconfirmed subscription
-	hasher := hash.NewSHA256Hasher()
+	hasher := &hash.SHA256Hasher{}
 	token := hasher.GenerateSubscriptionHash("confirm@example.com", "Kyiv", "daily")
 
 	_, err := testDB.Exec(`
