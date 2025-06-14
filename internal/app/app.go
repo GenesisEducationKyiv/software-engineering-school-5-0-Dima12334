@@ -3,14 +3,101 @@ package app
 import (
 	"context"
 	"errors"
+	"github.com/jmoiron/sqlx"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+	"weather_forecast_sub/internal/config"
+	"weather_forecast_sub/internal/db"
+	"weather_forecast_sub/internal/handlers"
+	"weather_forecast_sub/internal/repository"
 	"weather_forecast_sub/internal/server"
+	"weather_forecast_sub/internal/service"
+	"weather_forecast_sub/pkg/clients"
+	"weather_forecast_sub/pkg/email/smtp"
+	"weather_forecast_sub/pkg/hash"
 	"weather_forecast_sub/pkg/logger"
 )
+
+type Application struct {
+	config     *config.Config
+	server     *server.Server
+	cronRunner *CronRunner
+	dbConn     *sqlx.DB
+}
+
+type ApplicationBuilder struct {
+	configService *config.ConfigService
+}
+
+func NewApplication(environment string) (*Application, error) {
+	builder := NewApplicationBuilder()
+	return builder.Build(environment)
+}
+
+func NewApplicationBuilder() *ApplicationBuilder {
+	return &ApplicationBuilder{
+		configService: config.NewDefaultConfigService(),
+	}
+}
+
+func (ab *ApplicationBuilder) Build(environment string) (*Application, error) {
+	cfg, err := ab.configService.LoadConfig(config.ConfigsDir, environment)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := logger.Init(cfg.Logger); err != nil {
+		return nil, err
+	}
+
+	dbConn, err := db.NewDBConnection(cfg.DB.DSN)
+	if err != nil {
+		return nil, err
+	}
+
+	app := &Application{
+		config: cfg,
+		dbConn: dbConn,
+	}
+	if err := ab.setupDependencies(app); err != nil {
+		return nil, err
+	}
+
+	return app, nil
+}
+
+func (ab *ApplicationBuilder) setupDependencies(app *Application) error {
+	hasher := hash.NewSHA256Hasher()
+	emailSender := smtp.NewSMTPSender(
+		app.config.SMTP.From,
+		app.config.SMTP.FromName,
+		app.config.SMTP.Pass,
+		app.config.SMTP.Host,
+		app.config.SMTP.Port,
+	)
+	thirdPartyClients := clients.NewClients(app.config.ThirdParty)
+	repositories := repository.NewRepositories(app.dbConn)
+
+	services := service.NewServices(service.Deps{
+		Clients:            thirdPartyClients,
+		Repos:              repositories,
+		SubscriptionHasher: hasher,
+		EmailSender:        emailSender,
+		EmailConfig:        app.config.Email,
+		HTTPConfig:         app.config.HTTP,
+	})
+
+	app.cronRunner = NewCronRunner(services)
+
+	handler := handlers.NewHandler(services)
+
+	app.server = server.NewServer(app.config, handler.Init(app.config))
+
+	return nil
+}
 
 // @title Weather Forecast API
 // @version 1.0
@@ -24,29 +111,42 @@ import (
 
 // @tag.name subscription
 // @tag.description Subscription management operations
+func (a *Application) Run() {
+	a.cronRunner.Start()
 
-// Run starts the server.
-func Run(srv *server.Server) {
 	go func() {
-		if err := srv.Run(); !errors.Is(err, http.ErrServerClosed) {
+		if err := a.server.Run(); !errors.Is(err, http.ErrServerClosed) {
 			logger.Errorf("error occurred while running http server: %s\n", err.Error())
 		}
 	}()
 	logger.Info("server started")
 
-	// Graceful Shutdown
+	a.waitForShutdown()
+}
+
+func (a *Application) waitForShutdown() {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
-
 	<-quit
 
-	const shutdownTimeout = 5 * time.Second
-	ctx, shutdown := context.WithTimeout(context.Background(), shutdownTimeout)
-	defer shutdown()
+	logger.Info("shutting down server...")
+	a.shutdown()
+}
 
-	if err := srv.Stop(ctx); err != nil {
+func (a *Application) shutdown() {
+	const shutdownTimeout = 5 * time.Second
+	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
+	defer cancel()
+
+	if err := a.server.Stop(ctx); err != nil {
 		logger.Errorf("failed to stop server: %v", err.Error())
 	} else {
 		logger.Info("server stopped successfully")
+	}
+
+	if err := a.dbConn.Close(); err != nil {
+		logger.Errorf("error occurred on db connection close: %s", err.Error())
+	} else {
+		logger.Info("db connection closed successfully")
 	}
 }
