@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 	"errors"
-	"github.com/jmoiron/sqlx"
 	"net/http"
 	"os"
 	"os/signal"
@@ -19,6 +18,8 @@ import (
 	"weather_forecast_sub/pkg/email/smtp"
 	"weather_forecast_sub/pkg/hash"
 	"weather_forecast_sub/pkg/logger"
+
+	"github.com/jmoiron/sqlx"
 )
 
 type Application struct {
@@ -62,14 +63,12 @@ func (ab *ApplicationBuilder) Build(environment string) (*Application, error) {
 		config: cfg,
 		dbConn: dbConn,
 	}
-	if err := ab.setupDependencies(app); err != nil {
-		return nil, err
-	}
+	ab.setupDependencies(app)
 
 	return app, nil
 }
 
-func (ab *ApplicationBuilder) setupDependencies(app *Application) error {
+func (ab *ApplicationBuilder) setupDependencies(app *Application) {
 	hasher := hash.NewSHA256Hasher()
 	emailSender := smtp.NewSMTPSender(
 		app.config.SMTP.From,
@@ -95,8 +94,6 @@ func (ab *ApplicationBuilder) setupDependencies(app *Application) error {
 	handler := handlers.NewHandler(services)
 
 	app.server = server.NewServer(app.config, handler.Init(app.config))
-
-	return nil
 }
 
 // @title Weather Forecast API
