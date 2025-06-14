@@ -2,6 +2,11 @@ package domain
 
 import "time"
 
+const (
+	DailyWeatherEmailFrequency  = "daily"
+	HourlyWeatherEmailFrequency = "hourly"
+)
+
 type Subscription struct {
 	ID         string     `json:"id" db:"id"`
 	CreatedAt  time.Time  `json:"created_at" db:"created_at"`

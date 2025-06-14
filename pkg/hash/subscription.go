@@ -14,10 +14,6 @@ type SubscriptionHasher interface {
 
 type SHA256Hasher struct{}
 
-func NewSHA256Hasher() *SHA256Hasher {
-	return &SHA256Hasher{}
-}
-
 func (h *SHA256Hasher) GenerateSubscriptionHash(email, city, frequency string) string {
 	data := []byte(email + city + frequency)
 	hash := sha256.Sum256(data)

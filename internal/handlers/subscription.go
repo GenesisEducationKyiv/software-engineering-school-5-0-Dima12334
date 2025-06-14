@@ -10,13 +10,23 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type SubscriptionHandler struct {
+	subscriptionService service.Subscription
+}
+
+func NewSubscriptionHandler(subscriptionService service.Subscription) *SubscriptionHandler {
+	return &SubscriptionHandler{
+		subscriptionService: subscriptionService,
+	}
+}
+
 type subscribeEmailInput struct {
 	Email     string `form:"email" json:"email" binding:"required,email,max=255"`
 	City      string `form:"city" json:"city" binding:"required,max=255"`
 	Frequency string `form:"frequency" json:"frequency" binding:"oneof=hourly daily"`
 }
 
-func (h *Handler) ShowSubscribePage(c *gin.Context) {
+func (h *SubscriptionHandler) ShowSubscribePage(c *gin.Context) {
 	c.HTML(http.StatusOK, "subscribe.html", gin.H{})
 }
 
@@ -34,7 +44,7 @@ func (h *Handler) ShowSubscribePage(c *gin.Context) {
 // @Failure 400 "Invalid input"
 // @Failure 409 "Email already subscribed"
 // @Router /subscribe [post]
-func (h *Handler) SubscribeEmail(c *gin.Context) {
+func (h *SubscriptionHandler) SubscribeEmail(c *gin.Context) {
 	var inp subscribeEmailInput
 
 	if err := c.ShouldBind(&inp); err != nil {
@@ -42,7 +52,7 @@ func (h *Handler) SubscribeEmail(c *gin.Context) {
 		return
 	}
 
-	err := h.services.Subscriptions.Create(
+	err := h.subscriptionService.Create(
 		c,
 		service.CreateSubscriptionInput{
 			Email:     inp.Email,
@@ -74,7 +84,7 @@ func (h *Handler) SubscribeEmail(c *gin.Context) {
 // @Failure 400 "Invalid token"
 // @Failure 404 "Token not found"
 // @Router /confirm/{token} [get]
-func (h *Handler) ConfirmEmail(c *gin.Context) {
+func (h *SubscriptionHandler) ConfirmEmail(c *gin.Context) {
 	token := c.Param("token")
 
 	if !hash.IsValidSHA256Hex(token) {
@@ -82,7 +92,7 @@ func (h *Handler) ConfirmEmail(c *gin.Context) {
 		return
 	}
 
-	err := h.services.Subscriptions.Confirm(c, token)
+	err := h.subscriptionService.Confirm(c, token)
 	if err != nil {
 		switch {
 		case errors.Is(err, customErrors.ErrSubscriptionNotFound):
@@ -107,7 +117,7 @@ func (h *Handler) ConfirmEmail(c *gin.Context) {
 // @Failure 400 "Invalid token"
 // @Failure 404 "Token not found"
 // @Router /unsubscribe/{token} [get]
-func (h *Handler) UnsubscribeEmail(c *gin.Context) {
+func (h *SubscriptionHandler) UnsubscribeEmail(c *gin.Context) {
 	token := c.Param("token")
 
 	if !hash.IsValidSHA256Hex(token) {
@@ -115,7 +125,7 @@ func (h *Handler) UnsubscribeEmail(c *gin.Context) {
 		return
 	}
 
-	err := h.services.Subscriptions.Delete(c, token)
+	err := h.subscriptionService.Delete(c, token)
 	if err != nil {
 		switch {
 		case errors.Is(err, customErrors.ErrSubscriptionNotFound):

@@ -84,8 +84,32 @@ func (mr *MockSubscriptionMockRecorder) Delete(ctx, token any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockSubscription)(nil).Delete), ctx, token)
 }
 
+// MockCronJobs is a mock of CronJobs interface.
+type MockCronJobs struct {
+	ctrl     *gomock.Controller
+	recorder *MockCronJobsMockRecorder
+	isgomock struct{}
+}
+
+// MockCronJobsMockRecorder is the mock recorder for MockCronJobs.
+type MockCronJobsMockRecorder struct {
+	mock *MockCronJobs
+}
+
+// NewMockCronJobs creates a new mock instance.
+func NewMockCronJobs(ctrl *gomock.Controller) *MockCronJobs {
+	mock := &MockCronJobs{ctrl: ctrl}
+	mock.recorder = &MockCronJobsMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockCronJobs) EXPECT() *MockCronJobsMockRecorder {
+	return m.recorder
+}
+
 // SendDailyWeatherForecast mocks base method.
-func (m *MockSubscription) SendDailyWeatherForecast(ctx context.Context) error {
+func (m *MockCronJobs) SendDailyWeatherForecast(ctx context.Context) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SendDailyWeatherForecast", ctx)
 	ret0, _ := ret[0].(error)
@@ -93,13 +117,13 @@ func (m *MockSubscription) SendDailyWeatherForecast(ctx context.Context) error {
 }
 
 // SendDailyWeatherForecast indicates an expected call of SendDailyWeatherForecast.
-func (mr *MockSubscriptionMockRecorder) SendDailyWeatherForecast(ctx any) *gomock.Call {
+func (mr *MockCronJobsMockRecorder) SendDailyWeatherForecast(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendDailyWeatherForecast", reflect.TypeOf((*MockSubscription)(nil).SendDailyWeatherForecast), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendDailyWeatherForecast", reflect.TypeOf((*MockCronJobs)(nil).SendDailyWeatherForecast), ctx)
 }
 
 // SendHourlyWeatherForecast mocks base method.
-func (m *MockSubscription) SendHourlyWeatherForecast(ctx context.Context) error {
+func (m *MockCronJobs) SendHourlyWeatherForecast(ctx context.Context) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SendHourlyWeatherForecast", ctx)
 	ret0, _ := ret[0].(error)
@@ -107,9 +131,9 @@ func (m *MockSubscription) SendHourlyWeatherForecast(ctx context.Context) error 
 }
 
 // SendHourlyWeatherForecast indicates an expected call of SendHourlyWeatherForecast.
-func (mr *MockSubscriptionMockRecorder) SendHourlyWeatherForecast(ctx any) *gomock.Call {
+func (mr *MockCronJobsMockRecorder) SendHourlyWeatherForecast(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendHourlyWeatherForecast", reflect.TypeOf((*MockSubscription)(nil).SendHourlyWeatherForecast), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendHourlyWeatherForecast", reflect.TypeOf((*MockCronJobs)(nil).SendHourlyWeatherForecast), ctx)
 }
 
 // MockWeather is a mock of Weather interface.

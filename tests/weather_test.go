@@ -26,7 +26,7 @@ func TestWeather(t *testing.T) {
 func setupTestRouter(h *handlers.Handler) *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
-	router.GET("/api/weather", h.GetWeather)
+	router.GET("/api/weather", h.WeatherHandler.GetWeather)
 	return router
 }
 
