@@ -8,7 +8,7 @@ func NewDefaultConfigService() *ConfigService {
 	return NewConfigService(reader, envLoader, postProcessor)
 }
 
-func Init(configDir, environ string) (*Config, error) {
+func Init(configDir, environment string) (*Config, error) {
 	service := NewDefaultConfigService()
-	return service.LoadConfig(configDir, environ)
+	return service.LoadConfig(configDir, environment)
 }

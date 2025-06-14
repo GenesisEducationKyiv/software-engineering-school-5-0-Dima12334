@@ -14,9 +14,9 @@ import (
 func main() {
 	cmd := parseArgs()
 
-	environ := config.GetEnvironmentOrDefault(config.DevEnvironment)
+	environment := config.GetEnvironmentOrDefault(config.DevEnvironment)
 
-	cfg, err := config.Init(config.ConfigsDir, environ)
+	cfg, err := config.Init(config.ConfigsDir, environment)
 	if err != nil {
 		log.Fatalf("failed to init config: %v", err)
 	}
