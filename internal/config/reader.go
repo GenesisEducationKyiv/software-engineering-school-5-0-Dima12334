@@ -11,10 +11,6 @@ const (
 
 type ViperConfigReader struct{}
 
-func NewViperConfigReader() *ViperConfigReader {
-	return &ViperConfigReader{}
-}
-
 func (r *ViperConfigReader) SetDefaults() {
 	viper.SetDefault("http_server.port", defaultHTTPPort)
 	viper.SetDefault("db.migrationsPath", defaultMigrationsPath)

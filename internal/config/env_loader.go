@@ -9,10 +9,6 @@ import (
 
 type GodotenvLoader struct{}
 
-func NewGodotenvLoader() *GodotenvLoader {
-	return &GodotenvLoader{}
-}
-
 func (e *GodotenvLoader) LoadEnvFile(filePath string) error {
 	if filePath == "" {
 		return nil
@@ -50,7 +46,7 @@ func (e *GodotenvLoader) GetRequiredEnvVars(environment string) map[string]strin
 func GetEnvironmentOrDefault(defaultEnvironment string) string {
 	environment := os.Getenv("ENV")
 	if environment == "" {
-		return environment
+		return defaultEnvironment
 	}
 	return environment
 }
