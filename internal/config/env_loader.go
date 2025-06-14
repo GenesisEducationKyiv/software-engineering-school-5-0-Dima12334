@@ -46,3 +46,11 @@ func (e *GodotenvLoader) GetRequiredEnvVars(environment string) map[string]strin
 
 	return result
 }
+
+func GetEnvironmentOrDefault(defaultEnviron string) string {
+	environ := os.Getenv("ENV")
+	if environ == "" {
+		return defaultEnviron
+	}
+	return environ
+}
