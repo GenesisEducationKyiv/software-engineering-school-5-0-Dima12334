@@ -9,15 +9,21 @@ import (
 	"github.com/robfig/cron/v3"
 )
 
-type CronRunner struct {
-	services *service.Services
-	cron     *cron.Cron
+type Cron interface {
+	Start()
+	Stop()
+	AddTask(schedule string, taskFunc func(), taskName string)
 }
 
-func NewCronRunner(services *service.Services) *CronRunner {
+type CronRunner struct {
+	service service.CronJobs
+	cron    *cron.Cron
+}
+
+func NewCronRunner(service service.CronJobs) *CronRunner {
 	return &CronRunner{
-		services: services,
-		cron:     cron.New(cron.WithLocation(time.UTC)),
+		service: service,
+		cron:    cron.New(cron.WithLocation(time.UTC)),
 	}
 }
 
@@ -32,12 +38,12 @@ func (c *CronRunner) Stop() {
 
 func (c *CronRunner) registerTasks() {
 	// Top of each hour (7:00, 8:00, 9:00, etc.)
-	c.addTask("0 * * * *", c.hourlyWeatherEmailTask, "hourly weather email sending")
+	c.AddTask("0 * * * *", c.hourlyWeatherEmailTask, "hourly weather email sending")
 	// Daily at 7AM
-	c.addTask("0 7 * * *", c.dailyWeatherEmailTask, "daily weather email sending")
+	c.AddTask("0 7 * * *", c.dailyWeatherEmailTask, "daily weather email sending")
 }
 
-func (c *CronRunner) addTask(schedule string, taskFunc func(), taskName string) {
+func (c *CronRunner) AddTask(schedule string, taskFunc func(), taskName string) {
 	_, err := c.cron.AddFunc(schedule, func() {
 		logger.Debugf("start %s", taskName)
 		taskFunc()
@@ -49,7 +55,7 @@ func (c *CronRunner) addTask(schedule string, taskFunc func(), taskName string) 
 
 func (c *CronRunner) hourlyWeatherEmailTask() {
 	ctx := context.Background()
-	err := c.services.Subscriptions.SendHourlyWeatherForecast(ctx)
+	err := c.service.SendHourlyWeatherForecast(ctx)
 	if err != nil {
 		logger.Errorf("hourly weather task error: %s", err.Error())
 	}
@@ -57,7 +63,7 @@ func (c *CronRunner) hourlyWeatherEmailTask() {
 
 func (c *CronRunner) dailyWeatherEmailTask() {
 	ctx := context.Background()
-	err := c.services.Subscriptions.SendDailyWeatherForecast(ctx)
+	err := c.service.SendDailyWeatherForecast(ctx)
 	if err != nil {
 		logger.Errorf("daily weather task error: %s", err.Error())
 	}
