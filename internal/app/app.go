@@ -37,7 +37,7 @@ func NewApplication(environment string) (*Application, error) {
 }
 
 func (ab *ApplicationBuilder) setupDependencies(app *Application) {
-	hasher := hash.NewSHA256Hasher()
+	hasher := &hash.SHA256Hasher{}
 	emailSender := smtp.NewSMTPSender(
 		app.config.SMTP.From,
 		app.config.SMTP.FromName,

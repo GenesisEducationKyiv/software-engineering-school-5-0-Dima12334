@@ -6,7 +6,6 @@ import (
 	"time"
 	"weather_forecast_sub/internal/domain"
 	"weather_forecast_sub/internal/repository"
-	"weather_forecast_sub/pkg/clients"
 	"weather_forecast_sub/pkg/logger"
 )
 
@@ -34,7 +33,7 @@ func NewCronJobsService(
 }
 
 func (s *CronJobsService) SendDailyWeatherForecast(ctx context.Context) error {
-	return sendWeatherForecast[*clients.DayWeatherResponse](
+	return sendWeatherForecast(
 		ctx,
 		s.subscriptionRepo,
 		domain.DailyWeatherEmailFrequency,
@@ -45,7 +44,7 @@ func (s *CronJobsService) SendDailyWeatherForecast(ctx context.Context) error {
 }
 
 func (s *CronJobsService) SendHourlyWeatherForecast(ctx context.Context) error {
-	return sendWeatherForecast[*clients.WeatherResponse](
+	return sendWeatherForecast(
 		ctx,
 		s.subscriptionRepo,
 		domain.HourlyWeatherEmailFrequency,

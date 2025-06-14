@@ -13,11 +13,15 @@ import (
 )
 
 type Handler struct {
-	services *service.Services
+	SubscriptionHandler *SubscriptionHandler
+	WeatherHandler      *WeatherHandler
 }
 
 func NewHandler(services *service.Services) *Handler {
-	return &Handler{services: services}
+	return &Handler{
+		SubscriptionHandler: NewSubscriptionHandler(services.Subscriptions),
+		WeatherHandler:      NewWeatherHandler(services.Weather),
+	}
 }
 
 func (h *Handler) Init(environment string) *gin.Engine {
@@ -52,7 +56,7 @@ func (h *Handler) initBaseRoutes(router *gin.Engine) {
 }
 
 func (h *Handler) initHTMLRoutes(router *gin.Engine) {
-	router.GET("/subscribe", h.ShowSubscribePage)
+	router.GET("/subscribe", h.SubscriptionHandler.ShowSubscribePage)
 }
 
 func (h *Handler) initAPI(router *gin.Engine) {
@@ -60,14 +64,14 @@ func (h *Handler) initAPI(router *gin.Engine) {
 	{
 		weather := api.Group("/weather")
 		{
-			weather.GET("/", h.GetWeather)
+			weather.GET("/", h.WeatherHandler.GetWeather)
 		}
 
 		subscription := api.Group("")
 		{
-			subscription.POST("/subscribe", h.SubscribeEmail)
-			subscription.GET("/confirm/:token", h.ConfirmEmail)
-			subscription.GET("/unsubscribe/:token", h.UnsubscribeEmail)
+			subscription.POST("/subscribe", h.SubscriptionHandler.SubscribeEmail)
+			subscription.GET("/confirm/:token", h.SubscriptionHandler.ConfirmEmail)
+			subscription.GET("/unsubscribe/:token", h.SubscriptionHandler.UnsubscribeEmail)
 		}
 	}
 }
