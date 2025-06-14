@@ -57,9 +57,7 @@ func (s *ConfigService) LoadConfig(configDir, environment string) (*Config, erro
 	}
 
 	// Load and set environment variables
-	if err := s.setEnvironmentVariables(cfg, environment); err != nil {
-		return nil, fmt.Errorf("failed to set environment variables: %w", err)
-	}
+	s.setEnvironmentVariables(cfg, environment)
 
 	// Post-process derived values
 	if err := s.postProcessor.ProcessHTTPConfig(cfg); err != nil {
@@ -95,7 +93,7 @@ func (s *ConfigService) getConfigFileName(environment string) string {
 	return "main"
 }
 
-func (s *ConfigService) setEnvironmentVariables(cfg *Config, environment string) error {
+func (s *ConfigService) setEnvironmentVariables(cfg *Config, environment string) {
 	envVars := s.envLoader.GetRequiredEnvVars(environment)
 
 	// Map environment variables to config fields
@@ -112,6 +110,4 @@ func (s *ConfigService) setEnvironmentVariables(cfg *Config, environment string)
 		cfg.ThirdParty.WeatherAPIKey = envVars["WEATHER_API_KEY"]
 		cfg.SMTP.Pass = envVars["SMTP_PASSWORD"]
 	}
-
-	return nil
 }
