@@ -3,10 +3,11 @@ package app_test
 import (
 	"context"
 	"errors"
-	"github.com/jmoiron/sqlx"
 	"testing"
 	"time"
 	"weather_forecast_sub/testutils"
+
+	"github.com/jmoiron/sqlx"
 
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"

@@ -2,7 +2,6 @@ package handlers_test
 
 import (
 	"bytes"
-	"github.com/jmoiron/sqlx"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -15,6 +14,8 @@ import (
 	mockSender "weather_forecast_sub/pkg/email/mocks"
 	"weather_forecast_sub/pkg/hash"
 	"weather_forecast_sub/testutils"
+
+	"github.com/jmoiron/sqlx"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
