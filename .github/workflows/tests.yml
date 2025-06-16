@@ -31,7 +31,7 @@ jobs:
         run: go mod tidy
 
       - name: Run unit tests
-        run: go test -v $(shell go list ./... | grep -v 'internal/app\|internal/handlers')
+        run: go test -v $(go list ./... | grep -v 'internal/app\|internal/handlers')
 
       - name: Run integration tests
         run: go test -v ./internal/app/... ./internal/handlers/...
