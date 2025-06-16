@@ -1,6 +1,8 @@
 package testutils
 
 import (
+	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/stretchr/testify/assert"
 	"testing"
 	"weather_forecast_sub/internal/config"
 	"weather_forecast_sub/pkg/migrations"
@@ -37,4 +39,13 @@ func SetupTestDB(t *testing.T) *sqlx.DB {
 	})
 
 	return db
+}
+
+func SetupMockDB(t *testing.T) (*sqlx.DB, sqlmock.Sqlmock) {
+	t.Helper()
+
+	db, mock, err := sqlmock.New()
+	assert.NoError(t, err)
+
+	return sqlx.NewDb(db, "postgres"), mock
 }

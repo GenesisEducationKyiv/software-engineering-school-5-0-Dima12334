@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	pgUniqueViolationCode = "23505"
+	PgUniqueViolationCode = "23505"
 )
 
 var (
@@ -20,7 +20,7 @@ var (
 func IsDuplicateDBError(err error) bool {
 	var pqErr *pq.Error
 	if errors.As(err, &pqErr) {
-		return pqErr.Code == pgUniqueViolationCode
+		return pqErr.Code == PgUniqueViolationCode
 	}
 	return false
 }

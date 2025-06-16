@@ -2,6 +2,7 @@ package email_test
 
 import (
 	"github.com/stretchr/testify/assert"
+	"os"
 	"testing"
 	"weather_forecast_sub/internal/service"
 	"weather_forecast_sub/pkg/clients"
@@ -10,12 +11,15 @@ import (
 )
 
 func TestGenerateBodyFromHTML(t *testing.T) {
-	t.Run("Generate HTML body for Subscription confirmation", testGenerateBodyFromHTMLSubscriptionConfirmation)
-	t.Run("Generate HTML body for Weather hourly email", testGenerateBodyFromHTMLWeatherHourly)
-	t.Run("Generate HTML body for Weather daily email", testGenerateBodyFromHTMLWeatherDaily)
+	t.Run("Generate HTML body for Subscription confirmation", testGenerateBodyFromHTML_SubscriptionConfirmation)
+	t.Run("Generate HTML body for Weather hourly email", testGenerateBodyFromHTML_WeatherHourly)
+	t.Run("Generate HTML body for Weather daily email", testGenerateBodyFromHTML_WeatherDaily)
+	t.Run("Template file does not exist", testGenerateBodyFromHTML_InvalidTemplateFile)
+	t.Run("Template execution error", testGenerateBodyFromHTML_TemplateExecutionError)
+
 }
 
-func testGenerateBodyFromHTMLSubscriptionConfirmation(t *testing.T) {
+func testGenerateBodyFromHTML_SubscriptionConfirmation(t *testing.T) {
 	cfg := testutils.SetupTestConfig(t)
 
 	input := &email.SendEmailInput{
@@ -32,7 +36,7 @@ func testGenerateBodyFromHTMLSubscriptionConfirmation(t *testing.T) {
 	assert.Contains(t, input.Body, "https://example.com/api/confirm")
 }
 
-func testGenerateBodyFromHTMLWeatherHourly(t *testing.T) {
+func testGenerateBodyFromHTML_WeatherHourly(t *testing.T) {
 	cfg := testutils.SetupTestConfig(t)
 
 	input := &email.SendEmailInput{
@@ -57,7 +61,7 @@ func testGenerateBodyFromHTMLWeatherHourly(t *testing.T) {
 	assert.Contains(t, input.Body, "2025-01-01")
 }
 
-func testGenerateBodyFromHTMLWeatherDaily(t *testing.T) {
+func testGenerateBodyFromHTML_WeatherDaily(t *testing.T) {
 	cfg := testutils.SetupTestConfig(t)
 
 	input := &email.SendEmailInput{
@@ -102,6 +106,51 @@ func testGenerateBodyFromHTMLWeatherDaily(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Contains(t, input.Body, "https://example.com/api/unsubscribe")
 	assert.Contains(t, input.Body, "2025-01-01")
+}
+
+func testGenerateBodyFromHTML_InvalidTemplateFile(t *testing.T) {
+	input := &email.SendEmailInput{
+		To:      "test@example.com",
+		Subject: "Invalid Template",
+	}
+
+	// Non-existent file
+	err := input.GenerateBodyFromHTML("non_existent_template.html", nil)
+
+	assert.Error(t, err)
+	assert.Empty(t, input.Body)
+}
+
+func testGenerateBodyFromHTML_TemplateExecutionError(t *testing.T) {
+	// Create a temporary file with an invalid template (refers to a missing field)
+	tmpFile, err := os.CreateTemp("", "bad_template_*.html")
+	assert.NoError(t, err)
+	defer func(name string) {
+		err := os.Remove(name)
+		if err != nil {
+			t.Fatalf("failed to remove temp file %s: %v", name, err)
+		}
+	}(tmpFile.Name())
+
+	// Write template with invalid field (e.g., {{.MissingField}})
+	content := `<!DOCTYPE html><html><body>{{.MissingField}}</body></html>`
+	_, err = tmpFile.Write([]byte(content))
+	assert.NoError(t, err)
+	err = tmpFile.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	input := &email.SendEmailInput{
+		To:      "test@example.com",
+		Subject: "Bad Execution",
+	}
+
+	// Pass data that doesn't have `.MissingField`
+	err = input.GenerateBodyFromHTML(tmpFile.Name(), struct{ ValidField string }{ValidField: "hello"})
+
+	assert.Error(t, err)
+	assert.Empty(t, input.Body)
 }
 
 func TestSendEmailInput_Validate(t *testing.T) {
