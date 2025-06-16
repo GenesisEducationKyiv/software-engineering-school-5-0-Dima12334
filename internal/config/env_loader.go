@@ -9,14 +9,16 @@ import (
 
 type GodotenvLoader struct{}
 
-func (e *GodotenvLoader) LoadEnvFile(filePath string) error {
-	if filePath == "" {
+func (e *GodotenvLoader) LoadEnvFile(fileName string) error {
+	if fileName == "" {
 		return nil
 	}
 
-	err := godotenv.Load(filePath)
+	envPath := GetOriginalPath(fileName)
+
+	err := godotenv.Load(envPath)
 	if err != nil {
-		log.Fatalf("error loading %s file: %v", filePath, err)
+		log.Fatalf("error loading %s file: %v", fileName, err)
 	}
 	return nil
 }

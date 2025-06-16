@@ -1,15 +1,16 @@
-package tests
+package app_test
 
 import (
 	"context"
 	"errors"
+	"github.com/jmoiron/sqlx"
 	"testing"
 	"time"
+	"weather_forecast_sub/testutils"
 
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 
-	"weather_forecast_sub/internal/config"
 	"weather_forecast_sub/internal/repository"
 	mockRepository "weather_forecast_sub/internal/repository/mocks"
 	"weather_forecast_sub/internal/service"
@@ -27,20 +28,19 @@ func TestSubscriptionCron(t *testing.T) {
 	t.Run("Send hourly weather forecast repo error", testSendHourlyWeatherForecastRepoError)
 }
 
-type CronTestEnv struct {
+type cronTestEnv struct {
+	TestDB             *sqlx.DB
 	CronJobService     *service.CronJobsService
 	MockWeatherService *mockService.MockWeather
 	MockEmailSender    *mockSender.MockSender
 	CleanupFunc        func()
 }
 
-func setupCronTestEnvironment(t *testing.T, ctrl *gomock.Controller) CronTestEnv {
-	subscriptionRepo := repository.NewSubscriptionRepo(testDB)
-	cfg, err := config.Init(configsDir, config.TestEnvironment)
-	if err != nil {
-		t.Fatalf("failed to init configs: %v", err.Error())
-	}
+func setupCronTestEnvironment(t *testing.T, ctrl *gomock.Controller) cronTestEnv {
+	cfg := testutils.SetupTestConfig(t)
+	testDB := testutils.SetupTestDB(t)
 
+	subscriptionRepo := repository.NewSubscriptionRepo(testDB)
 	mockEmailSender := mockSender.NewMockSender(ctrl)
 	mockWeatherService := mockService.NewMockWeather(ctrl)
 	emailsService := service.NewEmailsService(mockEmailSender, cfg.Email, cfg.HTTP)
@@ -58,7 +58,8 @@ func setupCronTestEnvironment(t *testing.T, ctrl *gomock.Controller) CronTestEnv
 		}
 	}
 
-	return CronTestEnv{
+	return cronTestEnv{
+		TestDB:             testDB,
 		CronJobService:     s,
 		MockWeatherService: mockWeatherService,
 		MockEmailSender:    mockEmailSender,
@@ -71,18 +72,18 @@ func testSendDailyWeatherForecastSuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	// Setup
-	cronTestEnv := setupCronTestEnvironment(t, ctrl)
-	defer cronTestEnv.CleanupFunc()
+	testSettings := setupCronTestEnvironment(t, ctrl)
+	defer testSettings.CleanupFunc()
 
 	// Insert test subscription
-	_, err := testDB.Exec(`
+	_, err := testSettings.TestDB.Exec(`
         INSERT INTO subscriptions (email, city, frequency, token, confirmed, created_at)
         VALUES ('daily@example.com', 'Kyiv', 'daily', 'token1', true, NOW())
     `)
 	assert.NoError(t, err)
 
 	// Mock expectations
-	cronTestEnv.MockWeatherService.EXPECT().
+	testSettings.MockWeatherService.EXPECT().
 		GetDayWeather(context.Background(), "Kyiv").
 		Return(&clients.DayWeatherResponse{
 			SevenAM: clients.WeatherResponse{Temperature: 20, Humidity: 60, Description: "Sunny"},
@@ -90,25 +91,25 @@ func testSendDailyWeatherForecastSuccess(t *testing.T) {
 			// ... other times
 		}, nil)
 
-	cronTestEnv.MockEmailSender.EXPECT().
+	testSettings.MockEmailSender.EXPECT().
 		Send(gomock.Any()).
 		Return(nil)
 
 	var lastSentAt *time.Time
-	err = testDB.QueryRowx(`
+	err = testSettings.TestDB.QueryRowx(`
         SELECT last_sent_at FROM subscriptions WHERE email = 'daily@example.com'
     `).Scan(&lastSentAt)
 	assert.NoError(t, err)
 	assert.Nil(t, lastSentAt)
 
 	// Execute
-	err = cronTestEnv.CronJobService.SendDailyWeatherForecast(context.Background())
+	err = testSettings.CronJobService.SendDailyWeatherForecast(context.Background())
 
 	// Verify
 	assert.NoError(t, err)
 
 	// Check last_sent_at was updated
-	err = testDB.QueryRowx(`
+	err = testSettings.TestDB.QueryRowx(`
         SELECT last_sent_at FROM subscriptions WHERE email = 'daily@example.com'
     `).Scan(&lastSentAt)
 	assert.NoError(t, err)
@@ -120,11 +121,11 @@ func testSendDailyWeatherForecastNoSubs(t *testing.T) {
 	defer ctrl.Finish()
 
 	// Setup
-	cronTestEnv := setupCronTestEnvironment(t, ctrl)
-	defer cronTestEnv.CleanupFunc()
+	testSettings := setupCronTestEnvironment(t, ctrl)
+	defer testSettings.CleanupFunc()
 
 	// Execute
-	err := cronTestEnv.CronJobService.SendDailyWeatherForecast(context.Background())
+	err := testSettings.CronJobService.SendDailyWeatherForecast(context.Background())
 
 	// Verify
 	assert.NoError(t, err)
@@ -157,18 +158,18 @@ func testSendHourlyWeatherForecastSuccess(t *testing.T) {
 	defer ctrl.Finish()
 
 	// Setup
-	cronTestEnv := setupCronTestEnvironment(t, ctrl)
-	defer cronTestEnv.CleanupFunc()
+	testSettings := setupCronTestEnvironment(t, ctrl)
+	defer testSettings.CleanupFunc()
 
 	// Insert test subscription
-	_, err := testDB.Exec(`
+	_, err := testSettings.TestDB.Exec(`
         INSERT INTO subscriptions (email, city, frequency, token, confirmed, created_at)
         VALUES ('hourly@example.com', 'Kyiv', 'hourly', 'token2', true, NOW())
     `)
 	assert.NoError(t, err)
 
 	// Mock expectations
-	cronTestEnv.MockWeatherService.EXPECT().
+	testSettings.MockWeatherService.EXPECT().
 		GetCurrentWeather(context.Background(), "Kyiv").
 		Return(&clients.WeatherResponse{
 			Temperature: 21.5,
@@ -176,25 +177,25 @@ func testSendHourlyWeatherForecastSuccess(t *testing.T) {
 			Description: "Partly Cloudy",
 		}, nil)
 
-	cronTestEnv.MockEmailSender.EXPECT().
+	testSettings.MockEmailSender.EXPECT().
 		Send(gomock.Any()).
 		Return(nil)
 
 	var lastSentAt *time.Time
-	err = testDB.QueryRowx(`
+	err = testSettings.TestDB.QueryRowx(`
         SELECT last_sent_at FROM subscriptions WHERE email = 'hourly@example.com'
     `).Scan(&lastSentAt)
 	assert.NoError(t, err)
 	assert.Nil(t, lastSentAt)
 
 	// Execute
-	err = cronTestEnv.CronJobService.SendHourlyWeatherForecast(context.Background())
+	err = testSettings.CronJobService.SendHourlyWeatherForecast(context.Background())
 
 	// Verify
 	assert.NoError(t, err)
 
 	// Check last_sent_at was updated
-	err = testDB.QueryRowx(`
+	err = testSettings.TestDB.QueryRowx(`
         SELECT last_sent_at FROM subscriptions WHERE email = 'hourly@example.com'
     `).Scan(&lastSentAt)
 	assert.NoError(t, err)
@@ -206,11 +207,11 @@ func testSendHourlyWeatherForecastNoSubs(t *testing.T) {
 	defer ctrl.Finish()
 
 	// Setup
-	cronTestEnv := setupCronTestEnvironment(t, ctrl)
-	defer cronTestEnv.CleanupFunc()
+	testSettings := setupCronTestEnvironment(t, ctrl)
+	defer testSettings.CleanupFunc()
 
 	// Execute
-	err := cronTestEnv.CronJobService.SendHourlyWeatherForecast(context.Background())
+	err := testSettings.CronJobService.SendHourlyWeatherForecast(context.Background())
 
 	// Verify
 	assert.NoError(t, err)

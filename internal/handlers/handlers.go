@@ -40,7 +40,7 @@ func (h *Handler) initGinRouter(environment string) *gin.Engine {
 	}
 
 	router := gin.Default()
-	router.LoadHTMLGlob("templates/**/*.html")
+	router.LoadHTMLGlob(config.GetOriginalPath("templates/**/*.html"))
 
 	return router
 }

@@ -1,10 +1,12 @@
 package config
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type DefaultConfigPostProcessor struct{}
 
-func (p *DefaultConfigPostProcessor) ProcessHTTPConfig(cfg *Config) error {
+func (p *DefaultConfigPostProcessor) processHTTPConfig(cfg *Config) {
 	if cfg.Environment == ProdEnvironment {
 		cfg.HTTP.Scheme = "https"
 		cfg.HTTP.Domain = cfg.HTTP.Host
@@ -13,10 +15,9 @@ func (p *DefaultConfigPostProcessor) ProcessHTTPConfig(cfg *Config) error {
 		cfg.HTTP.Domain = fmt.Sprintf("%s:%s", cfg.HTTP.Host, cfg.HTTP.Port)
 	}
 	cfg.HTTP.BaseURL = fmt.Sprintf("%s://%s", cfg.HTTP.Scheme, cfg.HTTP.Domain)
-	return nil
 }
 
-func (p *DefaultConfigPostProcessor) ProcessDatabaseConfig(cfg *Config) error {
+func (p *DefaultConfigPostProcessor) processDatabaseConfig(cfg *Config) {
 	cfg.DB.DSN = fmt.Sprintf(
 		"postgres://%s:%s@%s:%s/%s?sslmode=%s",
 		cfg.DB.User,
@@ -26,5 +27,19 @@ func (p *DefaultConfigPostProcessor) ProcessDatabaseConfig(cfg *Config) error {
 		cfg.DB.DBName,
 		cfg.DB.SSLMode,
 	)
-	return nil
+
+	migrationsPath := "file://" + GetOriginalPath("migrations")
+	cfg.DB.MigrationsPath = migrationsPath
+}
+
+func (p *DefaultConfigPostProcessor) processEmailConfig(cfg *Config) {
+	cfg.Email.Templates.Confirmation = GetOriginalPath(cfg.Email.Templates.Confirmation)
+	cfg.Email.Templates.WeatherForecastDaily = GetOriginalPath(cfg.Email.Templates.WeatherForecastDaily)
+	cfg.Email.Templates.WeatherForecastHourly = GetOriginalPath(cfg.Email.Templates.WeatherForecastHourly)
+}
+
+func (p *DefaultConfigPostProcessor) ProcessConfig(cfg *Config) {
+	p.processHTTPConfig(cfg)
+	p.processDatabaseConfig(cfg)
+	p.processEmailConfig(cfg)
 }
