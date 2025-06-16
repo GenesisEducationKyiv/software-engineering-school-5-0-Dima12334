@@ -1,9 +1,10 @@
 package hash_test
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
 	"weather_forecast_sub/pkg/hash"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGenerateSubscriptionHash(t *testing.T) {

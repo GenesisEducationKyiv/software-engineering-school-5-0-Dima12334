@@ -1,11 +1,12 @@
 package testutils
 
 import (
-	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/stretchr/testify/assert"
 	"testing"
 	"weather_forecast_sub/internal/config"
 	"weather_forecast_sub/pkg/migrations"
+
+	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -41,6 +42,7 @@ func SetupTestDB(t *testing.T) *sqlx.DB {
 	return db
 }
 
+//nolint:ireturn
 func SetupMockDB(t *testing.T) (*sqlx.DB, sqlmock.Sqlmock) {
 	t.Helper()
 

@@ -3,12 +3,13 @@ package repository_test
 import (
 	"context"
 	"database/sql"
-	"fmt"
-	"github.com/lib/pq"
+	"errors"
 	"testing"
 	"time"
 	customErrors "weather_forecast_sub/pkg/errors"
 	"weather_forecast_sub/testutils"
+
+	"github.com/lib/pq"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
@@ -18,23 +19,23 @@ import (
 )
 
 func TestSubscriptionRepo(t *testing.T) {
-	t.Run("Create", testSubscriptionRepo_Create)
-	t.Run("Create Error", testSubscriptionRepo_Create_Error)
-	t.Run("Create Duplication Error", testSubscriptionRepo_Create_DuplicationError)
-	t.Run("GetByToken", testSubscriptionRepo_GetByToken)
-	t.Run("GetByToken Not Found", testSubscriptionRepo_GetByToken_NotFound)
-	t.Run("GetByToken DB Error", testSubscriptionRepo_GetByToken_DBError)
-	t.Run("Confirm", testSubscriptionRepo_Confirm)
-	t.Run("Confirm Error", testSubscriptionRepo_Confirm_Error)
-	t.Run("SetLastSentAt", testSubscriptionRepo_SetLastSentAt)
-	t.Run("SetLastSentAt Error", testSubscriptionRepo_SetLastSentAt_Error)
-	t.Run("Delete", testSubscriptionRepo_Delete)
-	t.Run("Delete Error", testSubscriptionRepo_Delete_Error)
-	t.Run("GetConfirmedByFrequency", testSubscriptionRepo_GetConfirmedByFrequency)
-	t.Run("GetConfirmedByFrequency Error", testSubscriptionRepo_GetConfirmedByFrequency_Error)
+	t.Run("Create", testSubscriptionRepoCreate)
+	t.Run("Create Error", testSubscriptionRepoCreateError)
+	t.Run("Create Duplication Error", testSubscriptionRepoCreateDuplicationError)
+	t.Run("GetByToken", testSubscriptionRepoGetByToken)
+	t.Run("GetByToken Not Found", testSubscriptionRepoGetByTokenNotFound)
+	t.Run("GetByToken DB Error", testSubscriptionRepoGetByTokenDBError)
+	t.Run("Confirm", testSubscriptionRepoConfirm)
+	t.Run("Confirm Error", testSubscriptionRepoConfirmError)
+	t.Run("SetLastSentAt", testSubscriptionRepoSetLastSentAt)
+	t.Run("SetLastSentAt Error", testSubscriptionRepoSetLastSentAtError)
+	t.Run("Delete", testSubscriptionRepoDelete)
+	t.Run("Delete Error", testSubscriptionRepoDeleteError)
+	t.Run("GetConfirmedByFrequency", testSubscriptionRepoGetConfirmedByFrequency)
+	t.Run("GetConfirmedByFrequency Error", testSubscriptionRepoGetConfirmedByFrequencyError)
 }
 
-func testSubscriptionRepo_Create(t *testing.T) {
+func testSubscriptionRepoCreate(t *testing.T) {
 	db, mock := testutils.SetupMockDB(t)
 	defer func() {
 		mock.ExpectClose()
@@ -67,7 +68,7 @@ func testSubscriptionRepo_Create(t *testing.T) {
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
-func testSubscriptionRepo_Create_Error(t *testing.T) {
+func testSubscriptionRepoCreateError(t *testing.T) {
 	db, mock := testutils.SetupMockDB(t)
 	defer func() {
 		mock.ExpectClose()
@@ -91,7 +92,7 @@ func testSubscriptionRepo_Create_Error(t *testing.T) {
 
 	mock.ExpectExec("INSERT INTO subscriptions").
 		WithArgs(sub.CreatedAt, sub.Email, sub.City, sub.Token, sub.Frequency, sub.Confirmed, sub.LastSentAt).
-		WillReturnError(fmt.Errorf("some db error"))
+		WillReturnError(errors.New("some db error"))
 
 	err := repo.Create(context.Background(), sub)
 	assert.Error(t, err)
@@ -99,7 +100,7 @@ func testSubscriptionRepo_Create_Error(t *testing.T) {
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
-func testSubscriptionRepo_Create_DuplicationError(t *testing.T) {
+func testSubscriptionRepoCreateDuplicationError(t *testing.T) {
 	db, mock := testutils.SetupMockDB(t)
 	defer func() {
 		mock.ExpectClose()
@@ -132,7 +133,7 @@ func testSubscriptionRepo_Create_DuplicationError(t *testing.T) {
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
-func testSubscriptionRepo_GetByToken(t *testing.T) {
+func testSubscriptionRepoGetByToken(t *testing.T) {
 	db, mock := testutils.SetupMockDB(t)
 	defer func() {
 		mock.ExpectClose()
@@ -174,7 +175,7 @@ func testSubscriptionRepo_GetByToken(t *testing.T) {
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
-func testSubscriptionRepo_GetByToken_NotFound(t *testing.T) {
+func testSubscriptionRepoGetByTokenNotFound(t *testing.T) {
 	db, mock := testutils.SetupMockDB(t)
 	defer func() {
 		mock.ExpectClose()
@@ -197,7 +198,7 @@ func testSubscriptionRepo_GetByToken_NotFound(t *testing.T) {
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
-func testSubscriptionRepo_GetByToken_DBError(t *testing.T) {
+func testSubscriptionRepoGetByTokenDBError(t *testing.T) {
 	db, mock := testutils.SetupMockDB(t)
 	defer func() {
 		mock.ExpectClose()
@@ -213,14 +214,14 @@ func testSubscriptionRepo_GetByToken_DBError(t *testing.T) {
 
 	mock.ExpectQuery("SELECT .* FROM subscriptions WHERE token =").
 		WithArgs(token).
-		WillReturnError(fmt.Errorf("db failure"))
+		WillReturnError(errors.New("db failure"))
 
 	_, err := repo.GetByToken(context.Background(), token)
 	assert.Error(t, err)
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
-func testSubscriptionRepo_Confirm(t *testing.T) {
+func testSubscriptionRepoConfirm(t *testing.T) {
 	db, mock := testutils.SetupMockDB(t)
 	defer func() {
 		mock.ExpectClose()
@@ -241,7 +242,7 @@ func testSubscriptionRepo_Confirm(t *testing.T) {
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
-func testSubscriptionRepo_Confirm_Error(t *testing.T) {
+func testSubscriptionRepoConfirmError(t *testing.T) {
 	db, mock := testutils.SetupMockDB(t)
 	defer func() {
 		mock.ExpectClose()
@@ -255,14 +256,14 @@ func testSubscriptionRepo_Confirm_Error(t *testing.T) {
 
 	mock.ExpectExec("UPDATE subscriptions SET confirmed = true").
 		WithArgs("token123").
-		WillReturnError(fmt.Errorf("update error"))
+		WillReturnError(errors.New("update error"))
 
 	err := repo.Confirm(context.Background(), "token123")
 	assert.Error(t, err)
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
-func testSubscriptionRepo_SetLastSentAt(t *testing.T) {
+func testSubscriptionRepoSetLastSentAt(t *testing.T) {
 	db, mock := testutils.SetupMockDB(t)
 	defer func() {
 		mock.ExpectClose()
@@ -286,7 +287,7 @@ func testSubscriptionRepo_SetLastSentAt(t *testing.T) {
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
-func testSubscriptionRepo_SetLastSentAt_Error(t *testing.T) {
+func testSubscriptionRepoSetLastSentAtError(t *testing.T) {
 	db, mock := testutils.SetupMockDB(t)
 	defer func() {
 		mock.ExpectClose()
@@ -303,14 +304,14 @@ func testSubscriptionRepo_SetLastSentAt_Error(t *testing.T) {
 
 	mock.ExpectExec("UPDATE subscriptions SET last_sent_at").
 		WithArgs(now, pq.Array(tokens)).
-		WillReturnError(fmt.Errorf("update error"))
+		WillReturnError(errors.New("update error"))
 
 	err := repo.SetLastSentAt(now, tokens)
 	assert.Error(t, err)
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
-func testSubscriptionRepo_Delete(t *testing.T) {
+func testSubscriptionRepoDelete(t *testing.T) {
 	db, mock := testutils.SetupMockDB(t)
 	defer func() {
 		mock.ExpectClose()
@@ -331,7 +332,7 @@ func testSubscriptionRepo_Delete(t *testing.T) {
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
-func testSubscriptionRepo_Delete_Error(t *testing.T) {
+func testSubscriptionRepoDeleteError(t *testing.T) {
 	db, mock := testutils.SetupMockDB(t)
 	defer func() {
 		mock.ExpectClose()
@@ -345,14 +346,14 @@ func testSubscriptionRepo_Delete_Error(t *testing.T) {
 
 	mock.ExpectExec("DELETE FROM subscriptions").
 		WithArgs("token123").
-		WillReturnError(fmt.Errorf("delete error"))
+		WillReturnError(errors.New("delete error"))
 
 	err := repo.Delete(context.Background(), "token123")
 	assert.Error(t, err)
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
-func testSubscriptionRepo_GetConfirmedByFrequency(t *testing.T) {
+func testSubscriptionRepoGetConfirmedByFrequency(t *testing.T) {
 	db, mock := testutils.SetupMockDB(t)
 	defer func() {
 		mock.ExpectClose()
@@ -394,7 +395,7 @@ func testSubscriptionRepo_GetConfirmedByFrequency(t *testing.T) {
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
-func testSubscriptionRepo_GetConfirmedByFrequency_Error(t *testing.T) {
+func testSubscriptionRepoGetConfirmedByFrequencyError(t *testing.T) {
 	db, mock := testutils.SetupMockDB(t)
 	defer func() {
 		mock.ExpectClose()
@@ -408,7 +409,7 @@ func testSubscriptionRepo_GetConfirmedByFrequency_Error(t *testing.T) {
 
 	mock.ExpectQuery("SELECT .* FROM subscriptions WHERE confirmed = true").
 		WithArgs("weekly").
-		WillReturnError(fmt.Errorf("query error"))
+		WillReturnError(errors.New("query error"))
 
 	_, err := repo.GetConfirmedByFrequency("weekly")
 	assert.Error(t, err)
