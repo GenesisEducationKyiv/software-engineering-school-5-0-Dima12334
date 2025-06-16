@@ -28,8 +28,12 @@ func SetupTestDB(t *testing.T) *sqlx.DB {
 	}
 
 	t.Cleanup(func() {
-		_ = db.Close()
-		_ = migrations.ApplyMigrations(cfg.DB.DSN, cfg.DB.MigrationsPath, "down")
+		if err := db.Close(); err != nil {
+			t.Logf("failed to close DB: %v", err)
+		}
+		if err := migrations.ApplyMigrations(cfg.DB.DSN, cfg.DB.MigrationsPath, "down"); err != nil {
+			t.Logf("failed to rollback migrations: %v", err)
+		}
 	})
 
 	return db
