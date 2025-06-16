@@ -21,7 +21,9 @@ migrate-down: ## Rollback last database migration
 	@docker-compose exec app ./bin/migrate down
 
 test: ## Run all tests
+	@docker-compose --env-file .env.dev up -d db_test
 	go test -v ./...
+	@docker-compose --env-file .env.dev stop db_test
 
 swag: ## Generate Swagger docs
 	swag init -g internal/app/app.go
