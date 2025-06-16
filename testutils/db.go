@@ -1,3 +1,4 @@
+//nolint:ireturn // SetupMockDB requires interface return (sqlmock.Sqlmock)
 package testutils
 
 import (
@@ -42,7 +43,6 @@ func SetupTestDB(t *testing.T) *sqlx.DB {
 	return db
 }
 
-//nolint:ireturn
 func SetupMockDB(t *testing.T) (*sqlx.DB, sqlmock.Sqlmock) {
 	t.Helper()
 
