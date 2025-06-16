@@ -25,6 +25,14 @@ test: ## Run all tests
 	go test -v ./...
 	@docker-compose --env-file .env.dev stop db_test
 
+test-unit: ## Run unit tests only
+	go test -v $(shell go list ./... | grep -v 'internal/app\|internal/handlers')
+
+test-integration: ## Run integration tests only (with DB)
+	@docker-compose --env-file .env.dev up -d db_test
+	go test -v ./internal/app/... ./internal/handlers/...
+	@docker-compose --env-file .env.dev stop db_test
+
 swag: ## Generate Swagger docs
 	swag init -g internal/app/app.go
 
