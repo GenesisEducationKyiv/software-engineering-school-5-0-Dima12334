@@ -1,10 +1,12 @@
 package config
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type ConfigReader interface {
 	SetDefaults()
-	ReadConfigFile(configDir, configName string) error
+	ReadConfigFile(configDirPath, configName string) error
 	Unmarshal(cfg interface{}) error
 }
 
@@ -14,8 +16,7 @@ type EnvLoader interface {
 }
 
 type ConfigPostProcessor interface {
-	ProcessHTTPConfig(cfg *Config) error
-	ProcessDatabaseConfig(cfg *Config) error
+	ProcessConfig(cfg *Config)
 }
 
 type ConfigService struct {
@@ -45,8 +46,8 @@ func (s *ConfigService) LoadConfig(configDir, environment string) (*Config, erro
 	}
 
 	// Read config file
-	configName := s.getConfigFileName(environment)
-	if err := s.reader.ReadConfigFile(configDir, configName); err != nil {
+	configDirPath := GetOriginalPath(configDir)
+	if err := s.reader.ReadConfigFile(configDirPath, "main"); err != nil {
 		return nil, fmt.Errorf("failed to read config file: %w", err)
 	}
 
@@ -60,13 +61,7 @@ func (s *ConfigService) LoadConfig(configDir, environment string) (*Config, erro
 	s.setEnvironmentVariables(cfg, environment)
 
 	// Post-process derived values
-	if err := s.postProcessor.ProcessHTTPConfig(cfg); err != nil {
-		return nil, fmt.Errorf("failed to process HTTP config: %w", err)
-	}
-
-	if err := s.postProcessor.ProcessDatabaseConfig(cfg); err != nil {
-		return nil, fmt.Errorf("failed to process database config: %w", err)
-	}
+	s.postProcessor.ProcessConfig(cfg)
 
 	return cfg, nil
 }
@@ -76,21 +71,14 @@ func (s *ConfigService) loadEnvironmentFile(environment string) error {
 
 	switch environment {
 	case TestEnvironment:
-		envFile = "../.env.test"
+		envFile = ".env.test"
 	case ProdEnvironment:
 		envFile = "" // No env file for production
 	default:
-		envFile = "./.env.dev"
+		envFile = ".env.dev"
 	}
 
 	return s.envLoader.LoadEnvFile(envFile)
-}
-
-func (s *ConfigService) getConfigFileName(environment string) string {
-	if environment == TestEnvironment {
-		return "test"
-	}
-	return "main"
 }
 
 func (s *ConfigService) setEnvironmentVariables(cfg *Config, environment string) {

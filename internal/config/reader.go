@@ -16,10 +16,10 @@ func (r *ViperConfigReader) SetDefaults() {
 	viper.SetDefault("db.migrationsPath", defaultMigrationsPath)
 }
 
-func (r *ViperConfigReader) ReadConfigFile(configDir, configName string) error {
+func (r *ViperConfigReader) ReadConfigFile(configDirPath, configName string) error {
 	viper.SetConfigName(configName)
 	viper.SetConfigType("yaml")
-	viper.AddConfigPath(configDir)
+	viper.AddConfigPath(configDirPath)
 	return viper.ReadInConfig()
 }
 
