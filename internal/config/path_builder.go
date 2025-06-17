@@ -6,24 +6,33 @@ import (
 	"path/filepath"
 )
 
+func fileExists(path string) bool {
+	info, err := os.Stat(path)
+	return err == nil && !info.IsDir()
+}
+
+func dirExists(path string) bool {
+	info, err := os.Stat(path)
+	return err == nil && info.IsDir()
+}
+
 func findProjectRoot() string {
 	dir, err := os.Getwd()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("failed to get working directory: %v", err)
 	}
 
 	for {
-		// Check if go.mod exists in this directory
-		modFile := filepath.Join(dir, "go.mod")
-		if _, err := os.Stat(modFile); err == nil {
+		goMod := filepath.Join(dir, "go.mod")
+		binDir := filepath.Join(dir, "bin")
+
+		if fileExists(goMod) || dirExists(binDir) {
 			return dir
 		}
 
-		// Move one directory up
 		parent := filepath.Dir(dir)
 		if parent == dir {
-			// Reached filesystem root, stop searching
-			log.Fatal("could not find go.mod; project root not found")
+			log.Fatal("could not find go.mod or bin directory; project root not found")
 		}
 		dir = parent
 	}

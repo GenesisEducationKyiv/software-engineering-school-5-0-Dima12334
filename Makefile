@@ -1,24 +1,26 @@
+ENV_FILE := .env.dev
+
 help:
 	@echo "Available commands:"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
 up: ## Up docker containers without build
-	docker-compose --env-file .env.dev up
+	docker-compose --env-file $(ENV_FILE) up
 
 up-with-build: ## Build and up docker containers
-	docker-compose --env-file .env.dev up --build
+	docker-compose --env-file $(ENV_FILE) up --build
 
 down: ## Down docker containers
-	docker-compose down
+	docker-compose --env-file $(ENV_FILE) down
 
 migration: ## Create a new SQL migration. Usage: make migration <name>
 	@migrate create -ext sql -dir ./migrations -seq $(filter-out $@,$(MAKECMDGOALS))
 
 migrate-up: ## Apply database migrations
-	@docker-compose exec app ./bin/migrate up
+	@docker-compose --env-file $(ENV_FILE) exec app ./bin/migrate up
 
 migrate-down: ## Rollback last database migration
-	@docker-compose exec app ./bin/migrate down
+	@docker-compose --env-file $(ENV_FILE) exec app ./bin/migrate down
 
 test: ## Run all tests
 	@docker-compose --env-file .env.dev up -d db_test
