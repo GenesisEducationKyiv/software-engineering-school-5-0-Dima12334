@@ -41,7 +41,7 @@ jobs:
       - name: Run integration tests
         run: go test -v ./internal/app/... ./internal/handlers/...
 
-      # Run  E2E tests using Newman
+      # Run  E2E tests using Postman
       - name: Install Postman CLI
         run: curl -o- "https://dl-cli.pstmn.io/install/linux64.sh" | sh
 
