@@ -12,7 +12,10 @@ import (
 )
 
 func main() {
-	cmd := parseArgs()
+	cmd, err := parseArgs()
+	if err != nil {
+		log.Fatalf("failed to parse command: %v", err)
+	}
 
 	environment := config.GetEnvironmentOrDefault(config.DevEnvironment)
 
@@ -28,15 +31,14 @@ func main() {
 	log.Printf("migration %s completed successfully", cmd)
 }
 
-func parseArgs() string {
+func parseArgs() (string, error) {
 	cmd := os.Args[len(os.Args)-1]
 
 	switch cmd {
 	case "up", "down":
-		return cmd
+		return cmd, nil
 	default:
-		log.Printf("unknown command: %s", cmd)
-		return ""
+		return "", fmt.Errorf("unknown command: %s", cmd)
 	}
 }
 
