@@ -30,8 +30,20 @@ jobs:
       - name: Install dependencies
         run: go mod tidy
 
+      # Run Unit tests
       - name: Run unit tests
         run: go test -v $(go list ./... | grep -v 'internal/app\|internal/handlers')
 
+      # Run Integration tests
       - name: Run integration tests
         run: go test -v ./internal/app/... ./internal/handlers/...
+
+      # Run  E2E tests using Newman
+      - name: Install Postman CLI
+        run: curl -o- "https://dl-cli.pstmn.io/install/linux64.sh" | sh
+
+      - name: Login to Postman CLI
+        run: postman login --with-api-key ${{ secrets.POSTMAN_API_KEY }}
+
+      - name: Run E2E tests
+        run: postman collection run "25524341-9be8d3fd-871f-4b5d-8765-49c908e55c40"
