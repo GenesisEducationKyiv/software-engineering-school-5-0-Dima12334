@@ -5,6 +5,9 @@ on:
     branches:
       - '**'
 
+env:
+  ENV: "test"
+
 jobs:
   tests:
     runs-on: ubuntu-latest
@@ -45,5 +48,9 @@ jobs:
       - name: Login to Postman CLI
         run: postman login --with-api-key ${{ secrets.POSTMAN_API_KEY }}
 
-      - name: Run E2E tests
-        run: postman collection run "25524341-9be8d3fd-871f-4b5d-8765-49c908e55c40"
+      - name: Run Go server and E2E tests
+        run: |
+          go run ./cmd/app/main.go &
+          SERVER_PID=$!
+          postman collection run "25524341-9be8d3fd-871f-4b5d-8765-49c908e55c40"
+          kill $SERVER_PID
