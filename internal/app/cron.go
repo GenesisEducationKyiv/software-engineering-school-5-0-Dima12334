@@ -16,11 +16,11 @@ type Cron interface {
 }
 
 type CronRunner struct {
-	service service.CronJobs
+	service service.WeatherForecastSender
 	cron    *cron.Cron
 }
 
-func NewCronRunner(service service.CronJobs) *CronRunner {
+func NewCronRunner(service service.WeatherForecastSender) *CronRunner {
 	return &CronRunner{
 		service: service,
 		cron:    cron.New(cron.WithLocation(time.UTC)),
