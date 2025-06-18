@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 	"time"
+	"weather_forecast_sub/internal/domain"
 	"weather_forecast_sub/testutils"
 
 	"github.com/jmoiron/sqlx"
@@ -16,7 +17,6 @@ import (
 	mockRepository "weather_forecast_sub/internal/repository/mocks"
 	"weather_forecast_sub/internal/service"
 	mockService "weather_forecast_sub/internal/service/mocks"
-	"weather_forecast_sub/pkg/clients"
 	mockSender "weather_forecast_sub/pkg/email/mocks"
 )
 
@@ -86,9 +86,9 @@ func testSendDailyWeatherForecastSuccess(t *testing.T) {
 	// Mock expectations
 	testSettings.MockWeatherService.EXPECT().
 		GetDayWeather(context.Background(), "Kyiv").
-		Return(&clients.DayWeatherResponse{
-			SevenAM: clients.WeatherResponse{Temperature: 20, Humidity: 60, Description: "Sunny"},
-			TenAM:   clients.WeatherResponse{Temperature: 22, Humidity: 55, Description: "Sunny"},
+		Return(&domain.DayWeatherResponse{
+			SevenAM: domain.WeatherResponse{Temperature: 20, Humidity: 60, Description: "Sunny"},
+			TenAM:   domain.WeatherResponse{Temperature: 22, Humidity: 55, Description: "Sunny"},
 			// ... other times
 		}, nil)
 
@@ -172,7 +172,7 @@ func testSendHourlyWeatherForecastSuccess(t *testing.T) {
 	// Mock expectations
 	testSettings.MockWeatherService.EXPECT().
 		GetCurrentWeather(context.Background(), "Kyiv").
-		Return(&clients.WeatherResponse{
+		Return(&domain.WeatherResponse{
 			Temperature: 21.5,
 			Humidity:    58,
 			Description: "Partly Cloudy",

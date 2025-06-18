@@ -1,20 +1,27 @@
 package handlers
 
 import (
+	"context"
 	"errors"
 	"net/http"
-	"weather_forecast_sub/internal/service"
+	"weather_forecast_sub/internal/domain"
 	customErrors "weather_forecast_sub/pkg/errors"
 	"weather_forecast_sub/pkg/hash"
 
 	"github.com/gin-gonic/gin"
 )
 
-type SubscriptionHandler struct {
-	subscriptionService service.Subscription
+type Subscription interface {
+	Create(ctx context.Context, inp domain.CreateSubscriptionInput) error
+	Confirm(ctx context.Context, token string) error
+	Delete(ctx context.Context, token string) error
 }
 
-func NewSubscriptionHandler(subscriptionService service.Subscription) *SubscriptionHandler {
+type SubscriptionHandler struct {
+	subscriptionService Subscription
+}
+
+func NewSubscriptionHandler(subscriptionService Subscription) *SubscriptionHandler {
 	return &SubscriptionHandler{
 		subscriptionService: subscriptionService,
 	}
@@ -54,7 +61,7 @@ func (h *SubscriptionHandler) SubscribeEmail(c *gin.Context) {
 
 	err := h.subscriptionService.Create(
 		c,
-		service.CreateSubscriptionInput{
+		domain.CreateSubscriptionInput{
 			Email:     inp.Email,
 			City:      inp.City,
 			Frequency: inp.Frequency,

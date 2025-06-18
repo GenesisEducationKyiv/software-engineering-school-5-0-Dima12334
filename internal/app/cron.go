@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 	"time"
-	"weather_forecast_sub/internal/service"
 	"weather_forecast_sub/pkg/logger"
 
 	"github.com/robfig/cron/v3"
@@ -15,12 +14,17 @@ type Cron interface {
 	AddTask(schedule string, taskFunc func(), taskName string)
 }
 
+type WeatherForecastSender interface {
+	SendHourlyWeatherForecast(ctx context.Context) error
+	SendDailyWeatherForecast(ctx context.Context) error
+}
+
 type CronRunner struct {
-	service service.WeatherForecastSender
+	service WeatherForecastSender
 	cron    *cron.Cron
 }
 
-func NewCronRunner(service service.WeatherForecastSender) *CronRunner {
+func NewCronRunner(service WeatherForecastSender) *CronRunner {
 	return &CronRunner{
 		service: service,
 		cron:    cron.New(cron.WithLocation(time.UTC)),

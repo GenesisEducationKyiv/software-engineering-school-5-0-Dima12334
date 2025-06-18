@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"weather_forecast_sub/internal/config"
 	"weather_forecast_sub/internal/domain"
-	"weather_forecast_sub/pkg/clients"
 	"weather_forecast_sub/pkg/email"
 	"weather_forecast_sub/pkg/logger"
 )
@@ -22,14 +21,14 @@ type confirmationEmailInput struct {
 type weatherForecastDailyEmailInput struct {
 	UnsubscribeLink string
 	City            string
-	Weather         clients.DayWeatherResponse
+	Weather         domain.DayWeatherResponse
 	Date            string
 }
 
 type weatherForecastHourlyEmailInput struct {
 	UnsubscribeLink string
 	City            string
-	Weather         clients.WeatherResponse
+	Weather         domain.WeatherResponse
 	Date            string
 }
 
@@ -90,7 +89,7 @@ func sendWeatherForecastEmail(
 }
 
 func (s *EmailService) SendWeatherForecastDailyEmail(
-	inp WeatherForecastEmailInput[*clients.DayWeatherResponse],
+	inp WeatherForecastEmailInput[*domain.DayWeatherResponse],
 ) error {
 	templateInput := weatherForecastDailyEmailInput{
 		UnsubscribeLink: s.createUnsubscribeLink(inp.Subscription.Token),
@@ -111,7 +110,7 @@ func (s *EmailService) SendWeatherForecastDailyEmail(
 }
 
 func (s *EmailService) SendWeatherForecastHourlyEmail(
-	inp WeatherForecastEmailInput[*clients.WeatherResponse],
+	inp WeatherForecastEmailInput[*domain.WeatherResponse],
 ) error {
 	templateInput := weatherForecastHourlyEmailInput{
 		UnsubscribeLink: s.createUnsubscribeLink(inp.Subscription.Token),

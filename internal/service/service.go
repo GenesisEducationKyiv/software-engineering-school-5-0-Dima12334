@@ -12,14 +12,8 @@ import (
 
 //go:generate mockgen -source=service.go -destination=mocks/mock_service.go
 
-type CreateSubscriptionInput struct {
-	Email     string `json:"email"`
-	City      string `json:"city"`
-	Frequency string `json:"frequency"`
-}
-
 type Subscription interface {
-	Create(ctx context.Context, inp CreateSubscriptionInput) error
+	Create(ctx context.Context, inp domain.CreateSubscriptionInput) error
 	Confirm(ctx context.Context, token string) error
 	Delete(ctx context.Context, token string) error
 }
@@ -30,12 +24,12 @@ type WeatherForecastSender interface {
 }
 
 type Weather interface {
-	GetCurrentWeather(ctx context.Context, city string) (*clients.WeatherResponse, error)
-	GetDayWeather(ctx context.Context, city string) (*clients.DayWeatherResponse, error)
+	GetCurrentWeather(ctx context.Context, city string) (*domain.WeatherResponse, error)
+	GetDayWeather(ctx context.Context, city string) (*domain.DayWeatherResponse, error)
 }
 
 type WeatherResponseType interface {
-	*clients.WeatherResponse | *clients.DayWeatherResponse
+	*domain.WeatherResponse | *domain.DayWeatherResponse
 }
 
 type ConfirmationEmailInput struct {
@@ -51,8 +45,8 @@ type WeatherForecastEmailInput[T WeatherResponseType] struct {
 
 type Emails interface {
 	SendConfirmationEmail(ConfirmationEmailInput) error
-	SendWeatherForecastDailyEmail(WeatherForecastEmailInput[*clients.DayWeatherResponse]) error
-	SendWeatherForecastHourlyEmail(WeatherForecastEmailInput[*clients.WeatherResponse]) error
+	SendWeatherForecastDailyEmail(WeatherForecastEmailInput[*domain.DayWeatherResponse]) error
+	SendWeatherForecastHourlyEmail(WeatherForecastEmailInput[*domain.WeatherResponse]) error
 }
 
 type Deps struct {

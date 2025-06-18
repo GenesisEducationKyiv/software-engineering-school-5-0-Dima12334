@@ -4,13 +4,19 @@ import (
 	"context"
 	"weather_forecast_sub/internal/config"
 	"weather_forecast_sub/internal/domain"
-	"weather_forecast_sub/internal/repository"
 	"weather_forecast_sub/pkg/email"
 	"weather_forecast_sub/pkg/hash"
 )
 
+type SubscriptionRepository interface {
+	Create(ctx context.Context, subscription domain.Subscription) error
+	GetByToken(ctx context.Context, token string) (domain.Subscription, error)
+	Confirm(ctx context.Context, token string) error
+	Delete(ctx context.Context, token string) error
+}
+
 type SubscriptionService struct {
-	repo           repository.SubscriptionRepository
+	repo           SubscriptionRepository
 	hasher         hash.SubscriptionHasher
 	emailSender    email.Sender
 	emailConfig    config.EmailConfig
@@ -20,7 +26,7 @@ type SubscriptionService struct {
 }
 
 func NewSubscriptionService(
-	repo repository.SubscriptionRepository,
+	repo SubscriptionRepository,
 	hasher hash.SubscriptionHasher,
 	emailSender email.Sender,
 	emailConfig config.EmailConfig,
@@ -39,7 +45,7 @@ func NewSubscriptionService(
 	}
 }
 
-func (s *SubscriptionService) Create(ctx context.Context, inp CreateSubscriptionInput) error {
+func (s *SubscriptionService) Create(ctx context.Context, inp domain.CreateSubscriptionInput) error {
 	token := s.hasher.GenerateSubscriptionHash(inp.Email, inp.City, inp.Frequency)
 
 	subscription := domain.NewSubscription(inp.Email, inp.City, inp.Frequency, token)

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 	"time"
+	"weather_forecast_sub/internal/domain"
 	customErrors "weather_forecast_sub/pkg/errors"
 	"weather_forecast_sub/pkg/logger"
 )
@@ -37,12 +38,6 @@ type weatherAPIErrorResponse struct {
 	} `json:"error"`
 }
 
-type WeatherResponse struct {
-	Temperature float32 `json:"temperature"`
-	Humidity    float32 `json:"humidity"`
-	Description string  `json:"description"`
-}
-
 type currentWeatherAPIResponse struct {
 	Current struct {
 		TempC     float32 `json:"temp_c"`
@@ -51,15 +46,6 @@ type currentWeatherAPIResponse struct {
 			Text string `json:"text"`
 		} `json:"condition"`
 	} `json:"current"`
-}
-
-type DayWeatherResponse struct {
-	SevenAM WeatherResponse `json:"seven_am"`
-	TenAM   WeatherResponse `json:"ten_am"`
-	OnePM   WeatherResponse `json:"one_pm"`
-	FourPM  WeatherResponse `json:"four_pm"`
-	SevenPM WeatherResponse `json:"seven_pm"`
-	TenPM   WeatherResponse `json:"ten_pm"`
 }
 
 type dayWeatherAPIResponse struct {
@@ -77,7 +63,9 @@ type dayWeatherAPIResponse struct {
 	} `json:"forecast"`
 }
 
-func (c *WeatherAPIClient) GetAPICurrentWeather(ctx context.Context, city string) (*WeatherResponse, error) {
+func (c *WeatherAPIClient) GetAPICurrentWeather(
+	ctx context.Context, city string,
+) (*domain.WeatherResponse, error) {
 	url := fmt.Sprintf("%s/current.json?key=%s&q=%s", c.BaseURL, c.APIKey, city)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
@@ -126,14 +114,16 @@ func (c *WeatherAPIClient) GetAPICurrentWeather(ctx context.Context, city string
 		return nil, customErrors.ErrWeatherAPIError
 	}
 
-	return &WeatherResponse{
+	return &domain.WeatherResponse{
 		Temperature: result.Current.TempC,
 		Humidity:    result.Current.Humidity,
 		Description: result.Current.Condition.Text,
 	}, nil
 }
 
-func (c *WeatherAPIClient) GetAPIDayWeather(ctx context.Context, city string) (*DayWeatherResponse, error) {
+func (c *WeatherAPIClient) GetAPIDayWeather(
+	ctx context.Context, city string,
+) (*domain.DayWeatherResponse, error) {
 	url := fmt.Sprintf("%s/forecast.json?key=%s&q=%s&days=1", c.BaseURL, c.APIKey, city)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
@@ -182,7 +172,7 @@ func (c *WeatherAPIClient) GetAPIDayWeather(ctx context.Context, city string) (*
 	}
 
 	// Map of required times
-	targetHours := map[string]*WeatherResponse{
+	targetHours := map[string]*domain.WeatherResponse{
 		"07:00": {},
 		"10:00": {},
 		"13:00": {},
@@ -206,7 +196,7 @@ func (c *WeatherAPIClient) GetAPIDayWeather(ctx context.Context, city string) (*
 		}
 	}
 
-	return &DayWeatherResponse{
+	return &domain.DayWeatherResponse{
 		SevenAM: *targetHours["07:00"],
 		TenAM:   *targetHours["10:00"],
 		OnePM:   *targetHours["13:00"],

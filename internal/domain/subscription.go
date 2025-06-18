@@ -29,3 +29,9 @@ func NewSubscription(email, city, frequency, token string) Subscription {
 		LastSentAt: nil,
 	}
 }
+
+type CreateSubscriptionInput struct {
+	Email     string
+	City      string
+	Frequency string
+}
