@@ -14,25 +14,25 @@ type (
 	EmailSenderFunc[T WeatherResponseType]    func(inp WeatherForecastEmailInput[T]) error
 )
 
-type CronJobsService struct {
+type WeatherForecastSenderService struct {
 	emailService     Emails
 	weatherService   Weather
 	subscriptionRepo repository.SubscriptionRepository
 }
 
-func NewCronJobsService(
+func NewWeatherForecastSenderService(
 	emailService Emails,
 	weatherService Weather,
 	subscriptionRepo repository.SubscriptionRepository,
-) *CronJobsService {
-	return &CronJobsService{
+) *WeatherForecastSenderService {
+	return &WeatherForecastSenderService{
 		emailService:     emailService,
 		weatherService:   weatherService,
 		subscriptionRepo: subscriptionRepo,
 	}
 }
 
-func (s *CronJobsService) SendDailyWeatherForecast(ctx context.Context) error {
+func (s *WeatherForecastSenderService) SendDailyWeatherForecast(ctx context.Context) error {
 	return sendWeatherForecast(
 		ctx,
 		s.subscriptionRepo,
@@ -43,7 +43,7 @@ func (s *CronJobsService) SendDailyWeatherForecast(ctx context.Context) error {
 	)
 }
 
-func (s *CronJobsService) SendHourlyWeatherForecast(ctx context.Context) error {
+func (s *WeatherForecastSenderService) SendHourlyWeatherForecast(ctx context.Context) error {
 	return sendWeatherForecast(
 		ctx,
 		s.subscriptionRepo,

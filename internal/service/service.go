@@ -24,7 +24,7 @@ type Subscription interface {
 	Delete(ctx context.Context, token string) error
 }
 
-type CronJobs interface {
+type WeatherForecastSender interface {
 	SendHourlyWeatherForecast(ctx context.Context) error
 	SendDailyWeatherForecast(ctx context.Context) error
 }
@@ -65,9 +65,9 @@ type Deps struct {
 }
 
 type Services struct {
-	Subscriptions Subscription
-	Weather       Weather
-	CronJobs      CronJobs
+	Subscriptions         Subscription
+	Weather               Weather
+	WeatherForecastSender WeatherForecastSender
 }
 
 func NewServices(deps Deps) *Services {
@@ -84,7 +84,7 @@ func NewServices(deps Deps) *Services {
 			weatherService,
 		),
 		Weather: weatherService,
-		CronJobs: NewCronJobsService(
+		WeatherForecastSender: NewWeatherForecastSenderService(
 			emailsService,
 			weatherService,
 			deps.Repos.Subscription,

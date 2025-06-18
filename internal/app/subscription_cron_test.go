@@ -30,11 +30,11 @@ func TestSubscriptionCron(t *testing.T) {
 }
 
 type cronTestEnv struct {
-	TestDB             *sqlx.DB
-	CronJobService     *service.CronJobsService
-	MockWeatherService *mockService.MockWeather
-	MockEmailSender    *mockSender.MockSender
-	CleanupFunc        func()
+	TestDB                       *sqlx.DB
+	WeatherForecastSenderService *service.WeatherForecastSenderService
+	MockWeatherService           *mockService.MockWeather
+	MockEmailSender              *mockSender.MockSender
+	CleanupFunc                  func()
 }
 
 func setupCronTestEnvironment(t *testing.T, ctrl *gomock.Controller) cronTestEnv {
@@ -46,7 +46,7 @@ func setupCronTestEnvironment(t *testing.T, ctrl *gomock.Controller) cronTestEnv
 	mockWeatherService := mockService.NewMockWeather(ctrl)
 	emailsService := service.NewEmailsService(mockEmailSender, cfg.Email, cfg.HTTP)
 
-	s := service.NewCronJobsService(
+	s := service.NewWeatherForecastSenderService(
 		emailsService,
 		mockWeatherService,
 		subscriptionRepo,
@@ -60,11 +60,11 @@ func setupCronTestEnvironment(t *testing.T, ctrl *gomock.Controller) cronTestEnv
 	}
 
 	return cronTestEnv{
-		TestDB:             testDB,
-		CronJobService:     s,
-		MockWeatherService: mockWeatherService,
-		MockEmailSender:    mockEmailSender,
-		CleanupFunc:        cleanupFunc,
+		TestDB:                       testDB,
+		WeatherForecastSenderService: s,
+		MockWeatherService:           mockWeatherService,
+		MockEmailSender:              mockEmailSender,
+		CleanupFunc:                  cleanupFunc,
 	}
 }
 
@@ -104,7 +104,7 @@ func testSendDailyWeatherForecastSuccess(t *testing.T) {
 	assert.Nil(t, lastSentAt)
 
 	// Execute
-	err = testSettings.CronJobService.SendDailyWeatherForecast(context.Background())
+	err = testSettings.WeatherForecastSenderService.SendDailyWeatherForecast(context.Background())
 
 	// Verify
 	assert.NoError(t, err)
@@ -126,7 +126,7 @@ func testSendDailyWeatherForecastNoSubs(t *testing.T) {
 	defer testSettings.CleanupFunc()
 
 	// Execute
-	err := testSettings.CronJobService.SendDailyWeatherForecast(context.Background())
+	err := testSettings.WeatherForecastSenderService.SendDailyWeatherForecast(context.Background())
 
 	// Verify
 	assert.NoError(t, err)
@@ -140,7 +140,7 @@ func testSendDailyWeatherForecastRepoError(t *testing.T) {
 	mockRepo := mockRepository.NewMockSubscriptionRepository(ctrl)
 	mockRepo.EXPECT().GetConfirmedByFrequency("daily").Return(nil, errors.New("database error"))
 
-	s := service.NewCronJobsService(
+	s := service.NewWeatherForecastSenderService(
 		mockService.NewMockEmails(ctrl),
 		mockService.NewMockWeather(ctrl),
 		mockRepo,
@@ -190,7 +190,7 @@ func testSendHourlyWeatherForecastSuccess(t *testing.T) {
 	assert.Nil(t, lastSentAt)
 
 	// Execute
-	err = testSettings.CronJobService.SendHourlyWeatherForecast(context.Background())
+	err = testSettings.WeatherForecastSenderService.SendHourlyWeatherForecast(context.Background())
 
 	// Verify
 	assert.NoError(t, err)
@@ -212,7 +212,7 @@ func testSendHourlyWeatherForecastNoSubs(t *testing.T) {
 	defer testSettings.CleanupFunc()
 
 	// Execute
-	err := testSettings.CronJobService.SendHourlyWeatherForecast(context.Background())
+	err := testSettings.WeatherForecastSenderService.SendHourlyWeatherForecast(context.Background())
 
 	// Verify
 	assert.NoError(t, err)
@@ -226,7 +226,7 @@ func testSendHourlyWeatherForecastRepoError(t *testing.T) {
 	mockRepo := mockRepository.NewMockSubscriptionRepository(ctrl)
 	mockRepo.EXPECT().GetConfirmedByFrequency("hourly").Return(nil, errors.New("database error"))
 
-	s := service.NewCronJobsService(
+	s := service.NewWeatherForecastSenderService(
 		mockService.NewMockEmails(ctrl),
 		mockService.NewMockWeather(ctrl),
 		mockRepo,
