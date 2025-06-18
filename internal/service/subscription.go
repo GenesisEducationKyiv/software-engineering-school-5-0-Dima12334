@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"time"
 	"weather_forecast_sub/internal/config"
 	"weather_forecast_sub/internal/domain"
 	"weather_forecast_sub/internal/repository"
@@ -43,15 +42,7 @@ func NewSubscriptionService(
 func (s *SubscriptionService) Create(ctx context.Context, inp CreateSubscriptionInput) error {
 	token := s.hasher.GenerateSubscriptionHash(inp.Email, inp.City, inp.Frequency)
 
-	subscription := domain.Subscription{
-		CreatedAt:  time.Now(),
-		Email:      inp.Email,
-		City:       inp.City,
-		Frequency:  inp.Frequency,
-		Token:      token,
-		Confirmed:  false,
-		LastSentAt: nil,
-	}
+	subscription := domain.NewSubscription(inp.Email, inp.City, inp.Frequency, token)
 	err := s.repo.Create(ctx, subscription)
 
 	if err != nil {
