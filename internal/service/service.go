@@ -43,8 +43,11 @@ type WeatherForecastEmailInput[T WeatherResponseType] struct {
 	Date         string
 }
 
-type Emails interface {
+type SubscriptionEmails interface {
 	SendConfirmationEmail(ConfirmationEmailInput) error
+}
+
+type WeatherEmails interface {
 	SendWeatherForecastDailyEmail(WeatherForecastEmailInput[*domain.DayWeatherResponse]) error
 	SendWeatherForecastHourlyEmail(WeatherForecastEmailInput[*domain.WeatherResponse]) error
 }

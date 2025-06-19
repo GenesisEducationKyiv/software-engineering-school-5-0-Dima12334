@@ -19,13 +19,13 @@ type SubscriptionSenderRepository interface {
 }
 
 type WeatherForecastSenderService struct {
-	emailService           Emails
+	emailService           WeatherEmails
 	weatherService         Weather
 	subscriptionSenderRepo SubscriptionSenderRepository
 }
 
 func NewWeatherForecastSenderService(
-	emailService Emails,
+	emailService WeatherEmails,
 	weatherService Weather,
 	subscriptionSenderRepo SubscriptionSenderRepository,
 ) *WeatherForecastSenderService {

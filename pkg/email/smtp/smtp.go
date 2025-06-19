@@ -21,10 +21,6 @@ func NewSMTPSender(from, fromName, password, host string, port int) *SMTPSender 
 }
 
 func (s *SMTPSender) Send(input email.SendEmailInput) error {
-	if err := input.Validate(); err != nil {
-		return err
-	}
-
 	msg := gomail.NewMessage()
 	msg.SetHeader("From", msg.FormatAddress(s.from, s.fromName))
 	msg.SetHeader("To", input.To)

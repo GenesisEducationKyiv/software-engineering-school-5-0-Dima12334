@@ -21,7 +21,7 @@ type SubscriptionService struct {
 	emailSender    email.Sender
 	emailConfig    config.EmailConfig
 	httpConfig     config.HTTPConfig
-	emailService   Emails
+	emailService   SubscriptionEmails
 	weatherService Weather
 }
 
@@ -31,7 +31,7 @@ func NewSubscriptionService(
 	emailSender email.Sender,
 	emailConfig config.EmailConfig,
 	httpConfig config.HTTPConfig,
-	emailService Emails,
+	emailService SubscriptionEmails,
 	weatherService Weather,
 ) *SubscriptionService {
 	return &SubscriptionService{

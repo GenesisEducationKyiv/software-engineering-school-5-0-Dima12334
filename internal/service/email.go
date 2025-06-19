@@ -60,6 +60,10 @@ func (s *EmailService) SendConfirmationEmail(inp ConfirmationEmailInput) error {
 		return err
 	}
 
+	if err := sendInput.Validate(); err != nil {
+		return err
+	}
+
 	return s.sender.Send(sendInput)
 }
 
@@ -82,6 +86,10 @@ func sendWeatherForecastEmail(
 
 	if err := sendInput.GenerateBodyFromHTML(templateName, templateData); err != nil {
 		logger.Errorf("failed to generate weather email body (%s): %s", templateName, err.Error())
+		return err
+	}
+
+	if err := sendInput.Validate(); err != nil {
 		return err
 	}
 
