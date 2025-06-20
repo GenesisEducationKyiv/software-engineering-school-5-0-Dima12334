@@ -24,20 +24,24 @@ migrate-down: ## Rollback last database migration
 	@docker-compose --env-file $(ENV_FILE) exec app ./bin/migrate down
 
 test: ## Run all tests
-	@docker-compose -f docker-compose-test.yaml --env-file $(TEST_ENV_FILE) up -d db_test
-	go test -v ./...
-	@docker-compose -f docker-compose-test.yaml --env-file $(TEST_ENV_FILE) stop db_test
+	@bash -c '\
+		docker-compose -f docker-compose-test.yaml --env-file $(TEST_ENV_FILE) up -d db_test; \
+		trap "docker-compose -f docker-compose-test.yaml --env-file $(TEST_ENV_FILE) stop db_test" EXIT; \
+		go test -v ./... \
+	'
 
 test-unit: ## Run unit tests only
 	go test -v $(shell go list ./... | grep -v 'internal/app\|internal/handlers')
 
 test-integration: ## Run integration tests only (with DB)
-	@docker-compose -f docker-compose-test.yaml --env-file $(TEST_ENV_FILE) up -d db_test
-	go test -v ./internal/app/... ./internal/handlers/...
-	@docker-compose -f docker-compose-test.yaml --env-file $(TEST_ENV_FILE) stop db_test
+	@bash -c '\
+		docker-compose -f docker-compose-test.yaml --env-file $(TEST_ENV_FILE) up -d db_test; \
+		trap "docker-compose -f docker-compose-test.yaml --env-file $(TEST_ENV_FILE) stop db_test" EXIT; \
+		go test -v ./internal/app/... ./internal/handlers/... \
+	'
 
 swag: ## Generate Swagger docs
 	swag init -g internal/app/app.go
 
 lint: ## Run golangci-lint with remote config (first you need to install this linter on you, look Readme.md)
-	bash -c 'golangci-lint run --config <(curl -sSfL https://raw.githubusercontent.com/fabl3ss/genesis-se-school-linter/refs/heads/main/.golangci.yaml)'
+	@bash -c 'golangci-lint run --config <(curl -sSfL https://raw.githubusercontent.com/fabl3ss/genesis-se-school-linter/refs/heads/main/.golangci.yaml)'
