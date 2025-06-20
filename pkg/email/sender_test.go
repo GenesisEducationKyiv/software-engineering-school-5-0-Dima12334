@@ -3,8 +3,8 @@ package email_test
 import (
 	"os"
 	"testing"
+	"weather_forecast_sub/internal/domain"
 	"weather_forecast_sub/internal/service"
-	"weather_forecast_sub/pkg/clients"
 	"weather_forecast_sub/pkg/email"
 	"weather_forecast_sub/testutils"
 
@@ -49,7 +49,7 @@ func testGenerateBodyFromHTMLWeatherHourly(t *testing.T) {
 	templateData := service.WeatherForecastHourlyEmailTemplateInput{
 		UnsubscribeLink: "https://example.com/api/unsubscribe",
 		City:            "London",
-		Weather: clients.WeatherResponse{
+		Weather: domain.WeatherResponse{
 			Temperature: 20.5,
 			Humidity:    65,
 			Description: "Sunny",
@@ -74,29 +74,29 @@ func testGenerateBodyFromHTMLWeatherDaily(t *testing.T) {
 	templateData := service.WeatherForecastDailyEmailTemplateInput{
 		UnsubscribeLink: "https://example.com/api/unsubscribe",
 		City:            "London",
-		Weather: clients.DayWeatherResponse{
-			SevenAM: clients.WeatherResponse{
+		Weather: domain.DayWeatherResponse{
+			SevenAM: domain.WeatherResponse{
 				Temperature: 18.0,
 				Humidity:    70,
 				Description: "Cloudy",
 			},
-			TenAM: clients.WeatherResponse{
+			TenAM: domain.WeatherResponse{
 				Temperature: 18.0,
 				Humidity:    70,
 				Description: "Cloudy"},
-			OnePM: clients.WeatherResponse{
+			OnePM: domain.WeatherResponse{
 				Temperature: 18.0,
 				Humidity:    70,
 				Description: "Cloudy"},
-			FourPM: clients.WeatherResponse{
+			FourPM: domain.WeatherResponse{
 				Temperature: 18.0,
 				Humidity:    70,
 				Description: "Cloudy"},
-			SevenPM: clients.WeatherResponse{
+			SevenPM: domain.WeatherResponse{
 				Temperature: 18.0,
 				Humidity:    70,
 				Description: "Cloudy"},
-			TenPM: clients.WeatherResponse{
+			TenPM: domain.WeatherResponse{
 				Temperature: 18.0,
 				Humidity:    70,
 				Description: "Cloudy"},
