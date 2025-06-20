@@ -1,20 +1,26 @@
 package handlers
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"net/url"
-	"weather_forecast_sub/internal/service"
+	"weather_forecast_sub/internal/domain"
 	customErrors "weather_forecast_sub/pkg/errors"
 
 	"github.com/gin-gonic/gin"
 )
 
-type WeatherHandler struct {
-	weatherService service.Weather
+type Weather interface {
+	GetCurrentWeather(ctx context.Context, city string) (*domain.WeatherResponse, error)
+	GetDayWeather(ctx context.Context, city string) (*domain.DayWeatherResponse, error)
 }
 
-func NewWeatherHandler(weatherService service.Weather) *WeatherHandler {
+type WeatherHandler struct {
+	weatherService Weather
+}
+
+func NewWeatherHandler(weatherService Weather) *WeatherHandler {
 	return &WeatherHandler{
 		weatherService: weatherService,
 	}

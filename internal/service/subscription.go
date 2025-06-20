@@ -2,31 +2,36 @@ package service
 
 import (
 	"context"
-	"time"
 	"weather_forecast_sub/internal/config"
 	"weather_forecast_sub/internal/domain"
-	"weather_forecast_sub/internal/repository"
 	"weather_forecast_sub/pkg/email"
 	"weather_forecast_sub/pkg/hash"
 )
 
+type SubscriptionRepository interface {
+	Create(ctx context.Context, subscription domain.Subscription) error
+	GetByToken(ctx context.Context, token string) (domain.Subscription, error)
+	Confirm(ctx context.Context, token string) error
+	Delete(ctx context.Context, token string) error
+}
+
 type SubscriptionService struct {
-	repo           repository.SubscriptionRepository
+	repo           SubscriptionRepository
 	hasher         hash.SubscriptionHasher
 	emailSender    email.Sender
 	emailConfig    config.EmailConfig
 	httpConfig     config.HTTPConfig
-	emailService   Emails
+	emailService   SubscriptionEmails
 	weatherService Weather
 }
 
 func NewSubscriptionService(
-	repo repository.SubscriptionRepository,
+	repo SubscriptionRepository,
 	hasher hash.SubscriptionHasher,
 	emailSender email.Sender,
 	emailConfig config.EmailConfig,
 	httpConfig config.HTTPConfig,
-	emailService Emails,
+	emailService SubscriptionEmails,
 	weatherService Weather,
 ) *SubscriptionService {
 	return &SubscriptionService{
@@ -40,18 +45,10 @@ func NewSubscriptionService(
 	}
 }
 
-func (s *SubscriptionService) Create(ctx context.Context, inp CreateSubscriptionInput) error {
+func (s *SubscriptionService) Create(ctx context.Context, inp domain.CreateSubscriptionInput) error {
 	token := s.hasher.GenerateSubscriptionHash(inp.Email, inp.City, inp.Frequency)
 
-	subscription := domain.Subscription{
-		CreatedAt:  time.Now(),
-		Email:      inp.Email,
-		City:       inp.City,
-		Frequency:  inp.Frequency,
-		Token:      token,
-		Confirmed:  false,
-		LastSentAt: nil,
-	}
+	subscription := domain.NewSubscription(inp.Email, inp.City, inp.Frequency, token)
 	err := s.repo.Create(ctx, subscription)
 
 	if err != nil {

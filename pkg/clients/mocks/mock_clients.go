@@ -12,7 +12,7 @@ package mock_clients
 import (
 	context "context"
 	reflect "reflect"
-	clients "weather_forecast_sub/pkg/clients"
+	domain "weather_forecast_sub/internal/domain"
 
 	gomock "go.uber.org/mock/gomock"
 )
@@ -42,10 +42,10 @@ func (m *MockWeatherClient) EXPECT() *MockWeatherClientMockRecorder {
 }
 
 // GetAPICurrentWeather mocks base method.
-func (m *MockWeatherClient) GetAPICurrentWeather(ctx context.Context, city string) (*clients.WeatherResponse, error) {
+func (m *MockWeatherClient) GetAPICurrentWeather(ctx context.Context, city string) (*domain.WeatherResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAPICurrentWeather", ctx, city)
-	ret0, _ := ret[0].(*clients.WeatherResponse)
+	ret0, _ := ret[0].(*domain.WeatherResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -57,10 +57,10 @@ func (mr *MockWeatherClientMockRecorder) GetAPICurrentWeather(ctx, city any) *go
 }
 
 // GetAPIDayWeather mocks base method.
-func (m *MockWeatherClient) GetAPIDayWeather(ctx context.Context, city string) (*clients.DayWeatherResponse, error) {
+func (m *MockWeatherClient) GetAPIDayWeather(ctx context.Context, city string) (*domain.DayWeatherResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAPIDayWeather", ctx, city)
-	ret0, _ := ret[0].(*clients.DayWeatherResponse)
+	ret0, _ := ret[0].(*domain.DayWeatherResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

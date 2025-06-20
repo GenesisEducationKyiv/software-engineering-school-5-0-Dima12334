@@ -12,30 +12,24 @@ import (
 
 //go:generate mockgen -source=service.go -destination=mocks/mock_service.go
 
-type CreateSubscriptionInput struct {
-	Email     string `json:"email"`
-	City      string `json:"city"`
-	Frequency string `json:"frequency"`
-}
-
 type Subscription interface {
-	Create(ctx context.Context, inp CreateSubscriptionInput) error
+	Create(ctx context.Context, inp domain.CreateSubscriptionInput) error
 	Confirm(ctx context.Context, token string) error
 	Delete(ctx context.Context, token string) error
 }
 
-type CronJobs interface {
+type WeatherForecastSender interface {
 	SendHourlyWeatherForecast(ctx context.Context) error
 	SendDailyWeatherForecast(ctx context.Context) error
 }
 
 type Weather interface {
-	GetCurrentWeather(ctx context.Context, city string) (*clients.WeatherResponse, error)
-	GetDayWeather(ctx context.Context, city string) (*clients.DayWeatherResponse, error)
+	GetCurrentWeather(ctx context.Context, city string) (*domain.WeatherResponse, error)
+	GetDayWeather(ctx context.Context, city string) (*domain.DayWeatherResponse, error)
 }
 
 type WeatherResponseType interface {
-	*clients.WeatherResponse | *clients.DayWeatherResponse
+	*domain.WeatherResponse | *domain.DayWeatherResponse
 }
 
 type ConfirmationEmailInput struct {
@@ -49,10 +43,13 @@ type WeatherForecastEmailInput[T WeatherResponseType] struct {
 	Date         string
 }
 
-type Emails interface {
+type SubscriptionEmails interface {
 	SendConfirmationEmail(ConfirmationEmailInput) error
-	SendWeatherForecastDailyEmail(WeatherForecastEmailInput[*clients.DayWeatherResponse]) error
-	SendWeatherForecastHourlyEmail(WeatherForecastEmailInput[*clients.WeatherResponse]) error
+}
+
+type WeatherEmails interface {
+	SendWeatherForecastDailyEmail(WeatherForecastEmailInput[*domain.DayWeatherResponse]) error
+	SendWeatherForecastHourlyEmail(WeatherForecastEmailInput[*domain.WeatherResponse]) error
 }
 
 type Deps struct {
@@ -65,9 +62,9 @@ type Deps struct {
 }
 
 type Services struct {
-	Subscriptions Subscription
-	Weather       Weather
-	CronJobs      CronJobs
+	Subscriptions         Subscription
+	Weather               Weather
+	WeatherForecastSender WeatherForecastSender
 }
 
 func NewServices(deps Deps) *Services {
@@ -84,7 +81,7 @@ func NewServices(deps Deps) *Services {
 			weatherService,
 		),
 		Weather: weatherService,
-		CronJobs: NewCronJobsService(
+		WeatherForecastSender: NewWeatherForecastSenderService(
 			emailsService,
 			weatherService,
 			deps.Repos.Subscription,

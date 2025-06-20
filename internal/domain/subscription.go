@@ -17,3 +17,21 @@ type Subscription struct {
 	Confirmed  bool       `json:"confirmed" db:"confirmed"`
 	LastSentAt *time.Time `json:"last_sent_at" db:"last_sent_at"`
 }
+
+func NewSubscription(email, city, frequency, token string) Subscription {
+	return Subscription{
+		CreatedAt:  time.Now(),
+		Email:      email,
+		City:       city,
+		Frequency:  frequency,
+		Token:      token,
+		Confirmed:  false,
+		LastSentAt: nil,
+	}
+}
+
+type CreateSubscriptionInput struct {
+	Email     string
+	City      string
+	Frequency string
+}

@@ -5,7 +5,6 @@ import (
 	"net/url"
 	"time"
 	"weather_forecast_sub/internal/domain"
-	"weather_forecast_sub/internal/repository"
 	"weather_forecast_sub/pkg/logger"
 )
 
@@ -14,28 +13,33 @@ type (
 	EmailSenderFunc[T WeatherResponseType]    func(inp WeatherForecastEmailInput[T]) error
 )
 
-type CronJobsService struct {
-	emailService     Emails
-	weatherService   Weather
-	subscriptionRepo repository.SubscriptionRepository
+type SubscriptionSenderRepository interface {
+	SetLastSentAt(lastSentAt time.Time, tokens []string) error
+	GetConfirmedByFrequency(frequency string) ([]domain.Subscription, error)
 }
 
-func NewCronJobsService(
-	emailService Emails,
+type WeatherForecastSenderService struct {
+	emailService           WeatherEmails
+	weatherService         Weather
+	subscriptionSenderRepo SubscriptionSenderRepository
+}
+
+func NewWeatherForecastSenderService(
+	emailService WeatherEmails,
 	weatherService Weather,
-	subscriptionRepo repository.SubscriptionRepository,
-) *CronJobsService {
-	return &CronJobsService{
-		emailService:     emailService,
-		weatherService:   weatherService,
-		subscriptionRepo: subscriptionRepo,
+	subscriptionSenderRepo SubscriptionSenderRepository,
+) *WeatherForecastSenderService {
+	return &WeatherForecastSenderService{
+		emailService:           emailService,
+		weatherService:         weatherService,
+		subscriptionSenderRepo: subscriptionSenderRepo,
 	}
 }
 
-func (s *CronJobsService) SendDailyWeatherForecast(ctx context.Context) error {
+func (s *WeatherForecastSenderService) SendDailyWeatherForecast(ctx context.Context) error {
 	return sendWeatherForecast(
 		ctx,
-		s.subscriptionRepo,
+		s.subscriptionSenderRepo,
 		domain.DailyWeatherEmailFrequency,
 		time.DateOnly,
 		s.weatherService.GetDayWeather,
@@ -43,10 +47,10 @@ func (s *CronJobsService) SendDailyWeatherForecast(ctx context.Context) error {
 	)
 }
 
-func (s *CronJobsService) SendHourlyWeatherForecast(ctx context.Context) error {
+func (s *WeatherForecastSenderService) SendHourlyWeatherForecast(ctx context.Context) error {
 	return sendWeatherForecast(
 		ctx,
-		s.subscriptionRepo,
+		s.subscriptionSenderRepo,
 		domain.HourlyWeatherEmailFrequency,
 		time.DateTime,
 		s.weatherService.GetCurrentWeather,
@@ -56,13 +60,13 @@ func (s *CronJobsService) SendHourlyWeatherForecast(ctx context.Context) error {
 
 func sendWeatherForecast[T WeatherResponseType](
 	ctx context.Context,
-	subscriptionRepo repository.SubscriptionRepository,
+	subscriptionSenderRepo SubscriptionSenderRepository,
 	frequency string,
 	dateFormat string,
 	getWeatherFunc WeatherFetcherFunc[T],
 	sendEmailFunc EmailSenderFunc[T],
 ) error {
-	subs, err := subscriptionRepo.GetConfirmedByFrequency(frequency)
+	subs, err := subscriptionSenderRepo.GetConfirmedByFrequency(frequency)
 	if err != nil {
 		logger.Errorf("failed to get subscriptions (%s): %s", frequency, err.Error())
 		return err
@@ -107,5 +111,5 @@ func sendWeatherForecast[T WeatherResponseType](
 		return nil
 	}
 
-	return subscriptionRepo.SetLastSentAt(time.Now(), subscriptionsToUpdate)
+	return subscriptionSenderRepo.SetLastSentAt(time.Now(), subscriptionsToUpdate)
 }

@@ -57,7 +57,7 @@ func (ab *ApplicationBuilder) setupDependencies(app *Application) {
 		HTTPConfig:         app.config.HTTP,
 	})
 
-	app.cronRunner = NewCronRunner(services.CronJobs)
+	app.cronRunner = NewCronRunner(services.WeatherForecastSender)
 
 	handler := handlers.NewHandler(services)
 
