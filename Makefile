@@ -1,4 +1,5 @@
 ENV_FILE := .env.dev
+TEST_ENV_FILE := .env.test
 
 help:
 	@echo "Available commands:"
@@ -23,17 +24,17 @@ migrate-down: ## Rollback last database migration
 	@docker-compose --env-file $(ENV_FILE) exec app ./bin/migrate down
 
 test: ## Run all tests
-	@docker-compose --env-file $(ENV_FILE) up -d db_test
+	@docker-compose -f docker-compose-test.yaml --env-file $(TEST_ENV_FILE) up -d db_test
 	go test -v ./...
-	@docker-compose --env-file $(ENV_FILE) stop db_test
+	@docker-compose -f docker-compose-test.yaml --env-file $(TEST_ENV_FILE) stop db_test
 
 test-unit: ## Run unit tests only
 	go test -v $(shell go list ./... | grep -v 'internal/app\|internal/handlers')
 
 test-integration: ## Run integration tests only (with DB)
-	@docker-compose --env-file $(ENV_FILE) up -d db_test
+	@docker-compose -f docker-compose-test.yaml --env-file $(TEST_ENV_FILE) up -d db_test
 	go test -v ./internal/app/... ./internal/handlers/...
-	@docker-compose --env-file $(ENV_FILE) stop db_test
+	@docker-compose -f docker-compose-test.yaml --env-file $(TEST_ENV_FILE) stop db_test
 
 swag: ## Generate Swagger docs
 	swag init -g internal/app/app.go
