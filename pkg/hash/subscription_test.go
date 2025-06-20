@@ -8,6 +8,8 @@ import (
 )
 
 func TestGenerateSubscriptionHash(t *testing.T) {
+	t.Parallel()
+
 	hasher := &hash.SHA256Hasher{}
 
 	email := "user@example.com"
@@ -21,6 +23,8 @@ func TestGenerateSubscriptionHash(t *testing.T) {
 }
 
 func TestIsValidSHA256Hex(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		input    string
 		expected bool

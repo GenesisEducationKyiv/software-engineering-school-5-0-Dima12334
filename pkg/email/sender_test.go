@@ -23,6 +23,8 @@ func TestGenerateBodyFromHTML(t *testing.T) {
 }
 
 func testGenerateBodyFromHTMLSubscriptionConfirmation(t *testing.T) {
+	t.Parallel()
+
 	cfg := testutils.SetupTestConfig(t)
 
 	input := &email.SendEmailInput{
@@ -40,6 +42,8 @@ func testGenerateBodyFromHTMLSubscriptionConfirmation(t *testing.T) {
 }
 
 func testGenerateBodyFromHTMLWeatherHourly(t *testing.T) {
+	t.Parallel()
+
 	cfg := testutils.SetupTestConfig(t)
 
 	input := &email.SendEmailInput{
@@ -65,6 +69,8 @@ func testGenerateBodyFromHTMLWeatherHourly(t *testing.T) {
 }
 
 func testGenerateBodyFromHTMLWeatherDaily(t *testing.T) {
+	t.Parallel()
+
 	cfg := testutils.SetupTestConfig(t)
 
 	input := &email.SendEmailInput{
@@ -112,6 +118,8 @@ func testGenerateBodyFromHTMLWeatherDaily(t *testing.T) {
 }
 
 func testGenerateBodyFromHTMLInvalidTemplateFile(t *testing.T) {
+	t.Parallel()
+
 	input := &email.SendEmailInput{
 		To:      "test@example.com",
 		Subject: "Invalid Template",
@@ -125,6 +133,8 @@ func testGenerateBodyFromHTMLInvalidTemplateFile(t *testing.T) {
 }
 
 func testGenerateBodyFromHTMLTemplateExecutionError(t *testing.T) {
+	t.Parallel()
+
 	// Create a temporary file with an invalid template (refers to a missing field)
 	tmpFile, err := os.CreateTemp("", "bad_template_*.html")
 	assert.NoError(t, err)
@@ -157,6 +167,8 @@ func testGenerateBodyFromHTMLTemplateExecutionError(t *testing.T) {
 }
 
 func TestSendEmailInput_Validate(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name    string
 		input   email.SendEmailInput

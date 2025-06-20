@@ -36,6 +36,8 @@ func TestSubscriptionRepo(t *testing.T) {
 }
 
 func testSubscriptionRepoCreate(t *testing.T) {
+	t.Parallel()
+
 	db, mock := testutils.SetupMockDB(t)
 	defer func() {
 		mock.ExpectClose()
@@ -69,6 +71,8 @@ func testSubscriptionRepoCreate(t *testing.T) {
 }
 
 func testSubscriptionRepoCreateError(t *testing.T) {
+	t.Parallel()
+
 	db, mock := testutils.SetupMockDB(t)
 	defer func() {
 		mock.ExpectClose()
@@ -101,6 +105,8 @@ func testSubscriptionRepoCreateError(t *testing.T) {
 }
 
 func testSubscriptionRepoCreateDuplicationError(t *testing.T) {
+	t.Parallel()
+
 	db, mock := testutils.SetupMockDB(t)
 	defer func() {
 		mock.ExpectClose()
@@ -134,6 +140,8 @@ func testSubscriptionRepoCreateDuplicationError(t *testing.T) {
 }
 
 func testSubscriptionRepoGetByToken(t *testing.T) {
+	t.Parallel()
+
 	db, mock := testutils.SetupMockDB(t)
 	defer func() {
 		mock.ExpectClose()
@@ -176,6 +184,8 @@ func testSubscriptionRepoGetByToken(t *testing.T) {
 }
 
 func testSubscriptionRepoGetByTokenNotFound(t *testing.T) {
+	t.Parallel()
+
 	db, mock := testutils.SetupMockDB(t)
 	defer func() {
 		mock.ExpectClose()
@@ -199,6 +209,8 @@ func testSubscriptionRepoGetByTokenNotFound(t *testing.T) {
 }
 
 func testSubscriptionRepoGetByTokenDBError(t *testing.T) {
+	t.Parallel()
+
 	db, mock := testutils.SetupMockDB(t)
 	defer func() {
 		mock.ExpectClose()
@@ -222,6 +234,8 @@ func testSubscriptionRepoGetByTokenDBError(t *testing.T) {
 }
 
 func testSubscriptionRepoConfirm(t *testing.T) {
+	t.Parallel()
+
 	db, mock := testutils.SetupMockDB(t)
 	defer func() {
 		mock.ExpectClose()
@@ -243,6 +257,8 @@ func testSubscriptionRepoConfirm(t *testing.T) {
 }
 
 func testSubscriptionRepoConfirmError(t *testing.T) {
+	t.Parallel()
+
 	db, mock := testutils.SetupMockDB(t)
 	defer func() {
 		mock.ExpectClose()
@@ -264,6 +280,8 @@ func testSubscriptionRepoConfirmError(t *testing.T) {
 }
 
 func testSubscriptionRepoSetLastSentAt(t *testing.T) {
+	t.Parallel()
+
 	db, mock := testutils.SetupMockDB(t)
 	defer func() {
 		mock.ExpectClose()
@@ -288,6 +306,8 @@ func testSubscriptionRepoSetLastSentAt(t *testing.T) {
 }
 
 func testSubscriptionRepoSetLastSentAtError(t *testing.T) {
+	t.Parallel()
+
 	db, mock := testutils.SetupMockDB(t)
 	defer func() {
 		mock.ExpectClose()
@@ -312,6 +332,8 @@ func testSubscriptionRepoSetLastSentAtError(t *testing.T) {
 }
 
 func testSubscriptionRepoDelete(t *testing.T) {
+	t.Parallel()
+
 	db, mock := testutils.SetupMockDB(t)
 	defer func() {
 		mock.ExpectClose()
@@ -333,6 +355,8 @@ func testSubscriptionRepoDelete(t *testing.T) {
 }
 
 func testSubscriptionRepoDeleteError(t *testing.T) {
+	t.Parallel()
+
 	db, mock := testutils.SetupMockDB(t)
 	defer func() {
 		mock.ExpectClose()
@@ -354,6 +378,8 @@ func testSubscriptionRepoDeleteError(t *testing.T) {
 }
 
 func testSubscriptionRepoGetConfirmedByFrequency(t *testing.T) {
+	t.Parallel()
+
 	db, mock := testutils.SetupMockDB(t)
 	defer func() {
 		mock.ExpectClose()
@@ -396,6 +422,8 @@ func testSubscriptionRepoGetConfirmedByFrequency(t *testing.T) {
 }
 
 func testSubscriptionRepoGetConfirmedByFrequencyError(t *testing.T) {
+	t.Parallel()
+
 	db, mock := testutils.SetupMockDB(t)
 	defer func() {
 		mock.ExpectClose()
