@@ -1,6 +1,7 @@
 package email_test
 
 import (
+	"errors"
 	"os"
 	"testing"
 	"weather_forecast_sub/internal/domain"
@@ -172,43 +173,42 @@ func TestSendEmailInput_Validate(t *testing.T) {
 	tests := []struct {
 		name    string
 		input   email.SendEmailInput
-		wantErr string
+		wantErr error
 	}{
 		{
 			name:    "All fields valid",
 			input:   email.SendEmailInput{To: "user@example.com", Subject: "Hello", Body: "Body content"},
-			wantErr: "",
+			wantErr: nil,
 		},
 		{
 			name:    "Missing To",
 			input:   email.SendEmailInput{Subject: "Hello", Body: "Body content"},
-			wantErr: "email 'To' field is required",
+			wantErr: errors.New("email 'To' field is required"),
 		},
 		{
 			name:    "Missing Subject",
 			input:   email.SendEmailInput{To: "user@example.com", Body: "Body content"},
-			wantErr: "email 'Subject' field is required",
+			wantErr: errors.New("email 'Subject' field is required"),
 		},
 		{
 			name:    "Missing Body",
 			input:   email.SendEmailInput{To: "user@example.com", Subject: "Hello"},
-			wantErr: "email 'Body' field is required",
+			wantErr: errors.New("email 'Body' field is required"),
 		},
 		{
 			name:    "Whitespace To field",
 			input:   email.SendEmailInput{To: "   ", Subject: "Hello", Body: "Body content"},
-			wantErr: "email 'To' field is required",
+			wantErr: errors.New("email 'To' field is required"),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.input.Validate()
-			if tt.wantErr == "" {
+			if tt.wantErr == nil {
 				assert.NoError(t, err)
 			} else {
-				assert.Error(t, err)
-				assert.EqualError(t, err, tt.wantErr)
+				assert.ErrorIs(t, err, tt.wantErr)
 			}
 		})
 	}
