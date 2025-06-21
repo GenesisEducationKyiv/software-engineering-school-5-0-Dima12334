@@ -10,7 +10,6 @@ import (
 	"weather_forecast_sub/internal/handlers"
 	"weather_forecast_sub/internal/repository"
 	"weather_forecast_sub/internal/service"
-	mockService "weather_forecast_sub/internal/service/mocks"
 	mockSender "weather_forecast_sub/pkg/email/mocks"
 	"weather_forecast_sub/pkg/hash"
 	"weather_forecast_sub/testutils"
@@ -52,16 +51,11 @@ func setupTestEnvironment(t *testing.T, ctrl *gomock.Controller) subscriptionTes
 
 	mockEmailSender := mockSender.NewMockSender(ctrl)
 	emailsService := service.NewEmailsService(mockEmailSender, cfg.Email, cfg.HTTP)
-	mockWeatherService := mockService.NewMockWeather(ctrl)
 
 	subService := service.NewSubscriptionService(
 		repo,
 		hasher,
-		mockEmailSender,
-		cfg.Email,
-		cfg.HTTP,
 		emailsService,
-		mockWeatherService,
 	)
 	services := &service.Services{Subscriptions: subService}
 

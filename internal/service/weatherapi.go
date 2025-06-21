@@ -3,18 +3,14 @@ package service
 import (
 	"context"
 	"weather_forecast_sub/internal/domain"
+	"weather_forecast_sub/pkg/clients"
 )
 
-type WeatherClient interface {
-	GetAPICurrentWeather(ctx context.Context, city string) (*domain.WeatherResponse, error)
-	GetAPIDayWeather(ctx context.Context, city string) (*domain.DayWeatherResponse, error)
-}
-
 type WeatherService struct {
-	client WeatherClient
+	client clients.WeatherClient
 }
 
-func NewWeatherService(client WeatherClient) *WeatherService {
+func NewWeatherService(client clients.WeatherClient) *WeatherService {
 	return &WeatherService{client: client}
 }
 

@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"errors"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -45,11 +46,18 @@ func (ab *ApplicationBuilder) setupDependencies(app *Application) {
 		app.config.SMTP.Host,
 		app.config.SMTP.Port,
 	)
-	thirdPartyClients := clients.NewClients(app.config.ThirdParty)
+
+	primaryWeatherClient := clients.NewWeatherAPIClient(app.config.ThirdParty.WeatherAPIKey)
+	fallbackWeatherClients := []clients.WeatherClient{
+		clients.NewVisualCrossingClient(app.config.ThirdParty.VisualCrossingAPIKey),
+	}
+	allWeatherClients := append([]clients.WeatherClient{primaryWeatherClient}, fallbackWeatherClients...)
+	thirdPartyWeatherClients := clients.NewChainWeatherClient(allWeatherClients)
+
 	repositories := repository.NewRepositories(app.dbConn)
 
 	services := service.NewServices(service.Deps{
-		Clients:            thirdPartyClients,
+		ChainWeatherClient: thirdPartyWeatherClients,
 		Repos:              repositories,
 		SubscriptionHasher: hasher,
 		EmailSender:        emailSender,
@@ -77,6 +85,10 @@ func (ab *ApplicationBuilder) Build(environment string) (*Application, error) {
 	dbConn, err := db.NewDBConnection(cfg.DB.DSN)
 	if err != nil {
 		return nil, err
+	}
+	err = db.ValidateDBConnection(dbConn)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	app := &Application{

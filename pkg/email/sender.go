@@ -2,8 +2,9 @@ package email
 
 import (
 	"bytes"
-	"errors"
 	"html/template"
+	"strings"
+	customErrors "weather_forecast_sub/pkg/errors"
 	"weather_forecast_sub/pkg/logger"
 )
 
@@ -37,12 +38,13 @@ func (e *SendEmailInput) GenerateBodyFromHTML(templateFileName string, data any)
 }
 
 func (e *SendEmailInput) Validate() error {
-	if e.To == "" {
-		return errors.New("empty email to")
-	}
-
-	if e.Subject == "" || e.Body == "" {
-		return errors.New("empty email subject/body")
+	switch {
+	case strings.TrimSpace(e.To) == "":
+		return customErrors.ErrEmailToRequired
+	case strings.TrimSpace(e.Subject) == "":
+		return customErrors.ErrEmailSubjectRequired
+	case strings.TrimSpace(e.Body) == "":
+		return customErrors.ErrEmailBodyRequired
 	}
 
 	return nil

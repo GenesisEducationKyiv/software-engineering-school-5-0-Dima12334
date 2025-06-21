@@ -190,32 +190,32 @@ func (mr *MockWeatherMockRecorder) GetDayWeather(ctx, city any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDayWeather", reflect.TypeOf((*MockWeather)(nil).GetDayWeather), ctx, city)
 }
 
-// MockEmails is a mock of Emails interface.
-type MockEmails struct {
+// MockSubscriptionEmails is a mock of SubscriptionEmails interface.
+type MockSubscriptionEmails struct {
 	ctrl     *gomock.Controller
-	recorder *MockEmailsMockRecorder
+	recorder *MockSubscriptionEmailsMockRecorder
 	isgomock struct{}
 }
 
-// MockEmailsMockRecorder is the mock recorder for MockEmails.
-type MockEmailsMockRecorder struct {
-	mock *MockEmails
+// MockSubscriptionEmailsMockRecorder is the mock recorder for MockSubscriptionEmails.
+type MockSubscriptionEmailsMockRecorder struct {
+	mock *MockSubscriptionEmails
 }
 
-// NewMockEmails creates a new mock instance.
-func NewMockEmails(ctrl *gomock.Controller) *MockEmails {
-	mock := &MockEmails{ctrl: ctrl}
-	mock.recorder = &MockEmailsMockRecorder{mock}
+// NewMockSubscriptionEmails creates a new mock instance.
+func NewMockSubscriptionEmails(ctrl *gomock.Controller) *MockSubscriptionEmails {
+	mock := &MockSubscriptionEmails{ctrl: ctrl}
+	mock.recorder = &MockSubscriptionEmailsMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockEmails) EXPECT() *MockEmailsMockRecorder {
+func (m *MockSubscriptionEmails) EXPECT() *MockSubscriptionEmailsMockRecorder {
 	return m.recorder
 }
 
 // SendConfirmationEmail mocks base method.
-func (m *MockEmails) SendConfirmationEmail(arg0 service.ConfirmationEmailInput) error {
+func (m *MockSubscriptionEmails) SendConfirmationEmail(arg0 service.ConfirmationEmailInput) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SendConfirmationEmail", arg0)
 	ret0, _ := ret[0].(error)
@@ -223,13 +223,37 @@ func (m *MockEmails) SendConfirmationEmail(arg0 service.ConfirmationEmailInput) 
 }
 
 // SendConfirmationEmail indicates an expected call of SendConfirmationEmail.
-func (mr *MockEmailsMockRecorder) SendConfirmationEmail(arg0 any) *gomock.Call {
+func (mr *MockSubscriptionEmailsMockRecorder) SendConfirmationEmail(arg0 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendConfirmationEmail", reflect.TypeOf((*MockEmails)(nil).SendConfirmationEmail), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendConfirmationEmail", reflect.TypeOf((*MockSubscriptionEmails)(nil).SendConfirmationEmail), arg0)
+}
+
+// MockWeatherEmails is a mock of WeatherEmails interface.
+type MockWeatherEmails struct {
+	ctrl     *gomock.Controller
+	recorder *MockWeatherEmailsMockRecorder
+	isgomock struct{}
+}
+
+// MockWeatherEmailsMockRecorder is the mock recorder for MockWeatherEmails.
+type MockWeatherEmailsMockRecorder struct {
+	mock *MockWeatherEmails
+}
+
+// NewMockWeatherEmails creates a new mock instance.
+func NewMockWeatherEmails(ctrl *gomock.Controller) *MockWeatherEmails {
+	mock := &MockWeatherEmails{ctrl: ctrl}
+	mock.recorder = &MockWeatherEmailsMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockWeatherEmails) EXPECT() *MockWeatherEmailsMockRecorder {
+	return m.recorder
 }
 
 // SendWeatherForecastDailyEmail mocks base method.
-func (m *MockEmails) SendWeatherForecastDailyEmail(arg0 service.WeatherForecastEmailInput[*domain.DayWeatherResponse]) error {
+func (m *MockWeatherEmails) SendWeatherForecastDailyEmail(arg0 service.WeatherForecastEmailInput[*domain.DayWeatherResponse]) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SendWeatherForecastDailyEmail", arg0)
 	ret0, _ := ret[0].(error)
@@ -237,13 +261,13 @@ func (m *MockEmails) SendWeatherForecastDailyEmail(arg0 service.WeatherForecastE
 }
 
 // SendWeatherForecastDailyEmail indicates an expected call of SendWeatherForecastDailyEmail.
-func (mr *MockEmailsMockRecorder) SendWeatherForecastDailyEmail(arg0 any) *gomock.Call {
+func (mr *MockWeatherEmailsMockRecorder) SendWeatherForecastDailyEmail(arg0 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendWeatherForecastDailyEmail", reflect.TypeOf((*MockEmails)(nil).SendWeatherForecastDailyEmail), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendWeatherForecastDailyEmail", reflect.TypeOf((*MockWeatherEmails)(nil).SendWeatherForecastDailyEmail), arg0)
 }
 
 // SendWeatherForecastHourlyEmail mocks base method.
-func (m *MockEmails) SendWeatherForecastHourlyEmail(arg0 service.WeatherForecastEmailInput[*domain.WeatherResponse]) error {
+func (m *MockWeatherEmails) SendWeatherForecastHourlyEmail(arg0 service.WeatherForecastEmailInput[*domain.WeatherResponse]) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SendWeatherForecastHourlyEmail", arg0)
 	ret0, _ := ret[0].(error)
@@ -251,7 +275,7 @@ func (m *MockEmails) SendWeatherForecastHourlyEmail(arg0 service.WeatherForecast
 }
 
 // SendWeatherForecastHourlyEmail indicates an expected call of SendWeatherForecastHourlyEmail.
-func (mr *MockEmailsMockRecorder) SendWeatherForecastHourlyEmail(arg0 any) *gomock.Call {
+func (mr *MockWeatherEmailsMockRecorder) SendWeatherForecastHourlyEmail(arg0 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendWeatherForecastHourlyEmail", reflect.TypeOf((*MockEmails)(nil).SendWeatherForecastHourlyEmail), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendWeatherForecastHourlyEmail", reflect.TypeOf((*MockWeatherEmails)(nil).SendWeatherForecastHourlyEmail), arg0)
 }

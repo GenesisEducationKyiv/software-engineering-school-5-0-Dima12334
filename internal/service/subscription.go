@@ -2,9 +2,7 @@ package service
 
 import (
 	"context"
-	"weather_forecast_sub/internal/config"
 	"weather_forecast_sub/internal/domain"
-	"weather_forecast_sub/pkg/email"
 	"weather_forecast_sub/pkg/hash"
 )
 
@@ -16,32 +14,18 @@ type SubscriptionRepository interface {
 }
 
 type SubscriptionService struct {
-	repo           SubscriptionRepository
-	hasher         hash.SubscriptionHasher
-	emailSender    email.Sender
-	emailConfig    config.EmailConfig
-	httpConfig     config.HTTPConfig
-	emailService   SubscriptionEmails
-	weatherService Weather
+	repo         SubscriptionRepository
+	hasher       hash.SubscriptionHasher
+	emailService SubscriptionEmails
 }
 
 func NewSubscriptionService(
-	repo SubscriptionRepository,
-	hasher hash.SubscriptionHasher,
-	emailSender email.Sender,
-	emailConfig config.EmailConfig,
-	httpConfig config.HTTPConfig,
-	emailService SubscriptionEmails,
-	weatherService Weather,
+	repo SubscriptionRepository, hasher hash.SubscriptionHasher, emailService SubscriptionEmails,
 ) *SubscriptionService {
 	return &SubscriptionService{
-		repo:           repo,
-		hasher:         hasher,
-		emailSender:    emailSender,
-		emailConfig:    emailConfig,
-		httpConfig:     httpConfig,
-		emailService:   emailService,
-		weatherService: weatherService,
+		repo:         repo,
+		hasher:       hasher,
+		emailService: emailService,
 	}
 }
 

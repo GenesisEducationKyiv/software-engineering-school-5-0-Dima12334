@@ -30,7 +30,14 @@ func (e *GodotenvLoader) GetRequiredEnvVars(environment string) map[string]strin
 	allVars = append(allVars, baseVars...)
 
 	if environment != TestEnvironment {
-		allVars = append(allVars, "LOGG_ENV", "HTTP_HOST", "WEATHER_API_KEY", "SMTP_PASSWORD")
+		allVars = append(
+			allVars,
+			"LOGG_ENV",
+			"HTTP_HOST",
+			"WEATHER_API_KEY",
+			"VISUAL_CROSSING_API_KEY",
+			"SMTP_PASSWORD",
+		)
 	}
 
 	result := make(map[string]string)
