@@ -20,12 +20,7 @@ func (p *DefaultConfigPostProcessor) processHTTPConfig(cfg *Config) {
 func (p *DefaultConfigPostProcessor) processDatabaseConfig(cfg *Config) {
 	cfg.DB.DSN = fmt.Sprintf(
 		"postgres://%s:%s@%s:%s/%s?sslmode=%s",
-		cfg.DB.User,
-		cfg.DB.Password,
-		cfg.DB.Host,
-		cfg.DB.Port,
-		cfg.DB.DBName,
-		cfg.DB.SSLMode,
+		cfg.DB.User, cfg.DB.Password, cfg.DB.Host, cfg.DB.Port, cfg.DB.DBName, cfg.DB.SSLMode,
 	)
 
 	migrationsPath := "file://" + GetOriginalPath("migrations")
