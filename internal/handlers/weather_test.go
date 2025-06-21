@@ -1,6 +1,7 @@
 package handlers_test
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -9,6 +10,7 @@ import (
 	"weather_forecast_sub/internal/domain"
 	"weather_forecast_sub/internal/handlers"
 	"weather_forecast_sub/internal/service"
+	"weather_forecast_sub/pkg/clients"
 	mockClients "weather_forecast_sub/pkg/clients/mocks"
 	customErrors "weather_forecast_sub/pkg/errors"
 
@@ -19,6 +21,10 @@ import (
 
 func TestWeather(t *testing.T) {
 	t.Run("Successful weather request", testSuccessfulWeatherRequest)
+	t.Run(
+		"Successful weather request with fallback to second client",
+		testSuccessfulWeatherRequestFallbackToSecondClient,
+	)
 	t.Run("Empty city parameter", testEmptyCityParameter)
 	t.Run("City not found", testCityNotFound)
 }
@@ -41,9 +47,9 @@ func testSuccessfulWeatherRequest(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	// Setup mock client
-	mockClient := mockClients.NewMockWeatherClient(ctrl)
-	mockClient.EXPECT().
+	// Setup mock primary client (will return successful response)
+	primaryMock := mockClients.NewMockWeatherClient(ctrl)
+	primaryMock.EXPECT().
 		GetAPICurrentWeather(gomock.Any(), "Kyiv").
 		Return(&domain.WeatherResponse{
 			Temperature: 25.4,
@@ -51,8 +57,16 @@ func testSuccessfulWeatherRequest(t *testing.T) {
 			Description: "Sunny",
 		}, nil)
 
+	// Setup mock fallback client (should NOT be called)
+	fallbackMock := mockClients.NewMockWeatherClient(ctrl)
+	fallbackMock.EXPECT().
+		GetAPICurrentWeather(gomock.Any(), "Kyiv").
+		Times(0) // assert it was not used
+
+	chainClient := clients.NewChainWeatherClient([]clients.WeatherClient{primaryMock, fallbackMock})
+
 	// Setup service and handler
-	weatherService := service.NewWeatherService(mockClient)
+	weatherService := service.NewWeatherService(chainClient)
 	h := handlers.NewHandler(&service.Services{Weather: weatherService})
 
 	// Setup router
@@ -66,6 +80,48 @@ func testSuccessfulWeatherRequest(t *testing.T) {
 	assert.JSONEq(
 		t,
 		`{"temperature":25.4,"humidity":70,"description":"Sunny"}`,
+		strings.TrimSpace(w.Body.String()),
+	)
+}
+
+func testSuccessfulWeatherRequestFallbackToSecondClient(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	// Setup mock clients
+	primaryMock := mockClients.NewMockWeatherClient(ctrl)
+	fallbackMock := mockClients.NewMockWeatherClient(ctrl)
+
+	// Expect primary to be called and return an error
+	primaryMock.EXPECT().
+		GetAPICurrentWeather(gomock.Any(), "Kyiv").
+		Return(nil, fmt.Errorf("primary failed"))
+
+	// Expect fallback to be called and return valid data
+	fallbackMock.EXPECT().
+		GetAPICurrentWeather(gomock.Any(), "Kyiv").
+		Return(&domain.WeatherResponse{
+			Temperature: 18.5,
+			Humidity:    60,
+			Description: "Partly cloudy",
+		}, nil)
+
+	// Create chain client and inject into service
+	chainClient := clients.NewChainWeatherClient([]clients.WeatherClient{primaryMock, fallbackMock})
+	weatherService := service.NewWeatherService(chainClient)
+	h := handlers.NewHandler(&service.Services{Weather: weatherService})
+
+	// Setup router
+	router := setupTestRouter(h)
+
+	// Perform request
+	w := performRequest(router, "/api/weather?city=Kyiv")
+
+	// Assert fallback result
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.JSONEq(
+		t,
+		`{"temperature":18.5,"humidity":60,"description":"Partly cloudy"}`,
 		strings.TrimSpace(w.Body.String()),
 	)
 }
@@ -96,14 +152,22 @@ func testCityNotFound(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	// Setup mock client
-	mockClient := mockClients.NewMockWeatherClient(ctrl)
-	mockClient.EXPECT().
+	// Mock primary client returns ErrCityNotFound
+	primaryMock := mockClients.NewMockWeatherClient(ctrl)
+	primaryMock.EXPECT().
 		GetAPICurrentWeather(gomock.Any(), url.QueryEscape("Київ")).
 		Return(nil, customErrors.ErrCityNotFound)
 
+	// Mock fallback client also returns ErrCityNotFound
+	fallbackMock := mockClients.NewMockWeatherClient(ctrl)
+	fallbackMock.EXPECT().
+		GetAPICurrentWeather(gomock.Any(), url.QueryEscape("Київ")).
+		Return(nil, customErrors.ErrCityNotFound)
+
+	chainClient := clients.NewChainWeatherClient([]clients.WeatherClient{primaryMock, fallbackMock})
+
 	// Setup service and handler
-	weatherService := service.NewWeatherService(mockClient)
+	weatherService := service.NewWeatherService(chainClient)
 	h := handlers.NewHandler(&service.Services{Weather: weatherService})
 
 	// Setup router
