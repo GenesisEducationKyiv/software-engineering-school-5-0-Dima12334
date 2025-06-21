@@ -3,21 +3,31 @@ package app
 import (
 	"context"
 	"time"
-	"weather_forecast_sub/internal/service"
 	"weather_forecast_sub/pkg/logger"
 
 	"github.com/robfig/cron/v3"
 )
 
-type CronRunner struct {
-	services *service.Services
-	cron     *cron.Cron
+type Cron interface {
+	Start()
+	Stop()
+	AddTask(schedule string, taskFunc func(), taskName string)
 }
 
-func NewCronRunner(services *service.Services) *CronRunner {
+type WeatherForecastSender interface {
+	SendHourlyWeatherForecast(ctx context.Context) error
+	SendDailyWeatherForecast(ctx context.Context) error
+}
+
+type CronRunner struct {
+	service WeatherForecastSender
+	cron    *cron.Cron
+}
+
+func NewCronRunner(service WeatherForecastSender) *CronRunner {
 	return &CronRunner{
-		services: services,
-		cron:     cron.New(cron.WithLocation(time.UTC)),
+		service: service,
+		cron:    cron.New(cron.WithLocation(time.UTC)),
 	}
 }
 
@@ -26,14 +36,18 @@ func (c *CronRunner) Start() {
 	c.cron.Start()
 }
 
-func (c *CronRunner) registerTasks() {
-	// Top of each hour (7:00, 8:00, 9:00, etc.)
-	c.addTask("0 * * * *", c.hourlyWeatherEmailTask, "hourly weather email sending")
-	// Daily at 7AM
-	c.addTask("0 7 * * *", c.dailyWeatherEmailTask, "daily weather email sending")
+func (c *CronRunner) Stop() {
+	c.cron.Stop().Done()
 }
 
-func (c *CronRunner) addTask(schedule string, taskFunc func(), taskName string) {
+func (c *CronRunner) registerTasks() {
+	// Top of each hour (7:00, 8:00, 9:00, etc.)
+	c.AddTask("0 * * * *", c.hourlyWeatherEmailTask, "hourly weather email sending")
+	// Daily at 7AM
+	c.AddTask("0 7 * * *", c.dailyWeatherEmailTask, "daily weather email sending")
+}
+
+func (c *CronRunner) AddTask(schedule string, taskFunc func(), taskName string) {
 	_, err := c.cron.AddFunc(schedule, func() {
 		logger.Debugf("start %s", taskName)
 		taskFunc()
@@ -45,7 +59,7 @@ func (c *CronRunner) addTask(schedule string, taskFunc func(), taskName string) 
 
 func (c *CronRunner) hourlyWeatherEmailTask() {
 	ctx := context.Background()
-	err := c.services.Subscriptions.SendHourlyWeatherForecast(ctx)
+	err := c.service.SendHourlyWeatherForecast(ctx)
 	if err != nil {
 		logger.Errorf("hourly weather task error: %s", err.Error())
 	}
@@ -53,7 +67,7 @@ func (c *CronRunner) hourlyWeatherEmailTask() {
 
 func (c *CronRunner) dailyWeatherEmailTask() {
 	ctx := context.Background()
-	err := c.services.Subscriptions.SendDailyWeatherForecast(ctx)
+	err := c.service.SendDailyWeatherForecast(ctx)
 	if err != nil {
 		logger.Errorf("daily weather task error: %s", err.Error())
 	}

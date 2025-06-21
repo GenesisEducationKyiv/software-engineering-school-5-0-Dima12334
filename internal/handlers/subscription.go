@@ -1,14 +1,31 @@
 package handlers
 
 import (
+	"context"
 	"errors"
 	"net/http"
-	"weather_forecast_sub/internal/service"
+	"weather_forecast_sub/internal/domain"
 	customErrors "weather_forecast_sub/pkg/errors"
 	"weather_forecast_sub/pkg/hash"
 
 	"github.com/gin-gonic/gin"
 )
+
+type Subscription interface {
+	Create(ctx context.Context, inp domain.CreateSubscriptionInput) error
+	Confirm(ctx context.Context, token string) error
+	Delete(ctx context.Context, token string) error
+}
+
+type SubscriptionHandler struct {
+	subscriptionService Subscription
+}
+
+func NewSubscriptionHandler(subscriptionService Subscription) *SubscriptionHandler {
+	return &SubscriptionHandler{
+		subscriptionService: subscriptionService,
+	}
+}
 
 type subscribeEmailInput struct {
 	Email     string `form:"email" json:"email" binding:"required,email,max=255"`
@@ -16,7 +33,7 @@ type subscribeEmailInput struct {
 	Frequency string `form:"frequency" json:"frequency" binding:"oneof=hourly daily"`
 }
 
-func (h *Handler) ShowSubscribePage(c *gin.Context) {
+func (h *SubscriptionHandler) ShowSubscribePage(c *gin.Context) {
 	c.HTML(http.StatusOK, "subscribe.html", gin.H{})
 }
 
@@ -34,7 +51,7 @@ func (h *Handler) ShowSubscribePage(c *gin.Context) {
 // @Failure 400 "Invalid input"
 // @Failure 409 "Email already subscribed"
 // @Router /subscribe [post]
-func (h *Handler) SubscribeEmail(c *gin.Context) {
+func (h *SubscriptionHandler) SubscribeEmail(c *gin.Context) {
 	var inp subscribeEmailInput
 
 	if err := c.ShouldBind(&inp); err != nil {
@@ -42,9 +59,9 @@ func (h *Handler) SubscribeEmail(c *gin.Context) {
 		return
 	}
 
-	err := h.services.Subscriptions.Create(
+	err := h.subscriptionService.Create(
 		c,
-		service.CreateSubscriptionInput{
+		domain.CreateSubscriptionInput{
 			Email:     inp.Email,
 			City:      inp.City,
 			Frequency: inp.Frequency,
@@ -74,7 +91,7 @@ func (h *Handler) SubscribeEmail(c *gin.Context) {
 // @Failure 400 "Invalid token"
 // @Failure 404 "Token not found"
 // @Router /confirm/{token} [get]
-func (h *Handler) ConfirmEmail(c *gin.Context) {
+func (h *SubscriptionHandler) ConfirmEmail(c *gin.Context) {
 	token := c.Param("token")
 
 	if !hash.IsValidSHA256Hex(token) {
@@ -82,7 +99,7 @@ func (h *Handler) ConfirmEmail(c *gin.Context) {
 		return
 	}
 
-	err := h.services.Subscriptions.Confirm(c, token)
+	err := h.subscriptionService.Confirm(c, token)
 	if err != nil {
 		switch {
 		case errors.Is(err, customErrors.ErrSubscriptionNotFound):
@@ -107,7 +124,7 @@ func (h *Handler) ConfirmEmail(c *gin.Context) {
 // @Failure 400 "Invalid token"
 // @Failure 404 "Token not found"
 // @Router /unsubscribe/{token} [get]
-func (h *Handler) UnsubscribeEmail(c *gin.Context) {
+func (h *SubscriptionHandler) UnsubscribeEmail(c *gin.Context) {
 	token := c.Param("token")
 
 	if !hash.IsValidSHA256Hex(token) {
@@ -115,7 +132,7 @@ func (h *Handler) UnsubscribeEmail(c *gin.Context) {
 		return
 	}
 
-	err := h.services.Subscriptions.Delete(c, token)
+	err := h.subscriptionService.Delete(c, token)
 	if err != nil {
 		switch {
 		case errors.Is(err, customErrors.ErrSubscriptionNotFound):

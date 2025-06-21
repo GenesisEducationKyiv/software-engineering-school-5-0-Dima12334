@@ -1,4 +1,4 @@
-package tests
+package handlers_test
 
 import (
 	"net/http"
@@ -6,9 +6,9 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+	"weather_forecast_sub/internal/domain"
 	"weather_forecast_sub/internal/handlers"
 	"weather_forecast_sub/internal/service"
-	"weather_forecast_sub/pkg/clients"
 	mockClients "weather_forecast_sub/pkg/clients/mocks"
 	customErrors "weather_forecast_sub/pkg/errors"
 
@@ -26,7 +26,7 @@ func TestWeather(t *testing.T) {
 func setupTestRouter(h *handlers.Handler) *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
-	router.GET("/api/weather", h.GetWeather)
+	router.GET("/api/weather", h.WeatherHandler.GetWeather)
 	return router
 }
 
@@ -45,7 +45,7 @@ func testSuccessfulWeatherRequest(t *testing.T) {
 	mockClient := mockClients.NewMockWeatherClient(ctrl)
 	mockClient.EXPECT().
 		GetAPICurrentWeather(gomock.Any(), "Kyiv").
-		Return(&clients.WeatherResponse{
+		Return(&domain.WeatherResponse{
 			Temperature: 25.4,
 			Humidity:    70,
 			Description: "Sunny",

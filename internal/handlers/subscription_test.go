@@ -1,4 +1,4 @@
-package tests
+package handlers_test
 
 import (
 	"bytes"
@@ -13,6 +13,9 @@ import (
 	mockService "weather_forecast_sub/internal/service/mocks"
 	mockSender "weather_forecast_sub/pkg/email/mocks"
 	"weather_forecast_sub/pkg/hash"
+	"weather_forecast_sub/testutils"
+
+	"github.com/jmoiron/sqlx"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -33,16 +36,19 @@ func TestSubscription(t *testing.T) {
 	t.Run("Confirm invalid token", testConfirmInvalidToken)
 }
 
-func setupTestEnvironment(
-	t *testing.T,
-	ctrl *gomock.Controller,
-) (*gin.Engine, *mockSender.MockSender, func()) {
+type subscriptionTestEnv struct {
+	TestDB          *sqlx.DB
+	Router          *gin.Engine
+	MockEmailSender *mockSender.MockSender
+	CleanupFunc     func()
+}
+
+func setupTestEnvironment(t *testing.T, ctrl *gomock.Controller) subscriptionTestEnv {
+	cfg := testutils.SetupTestConfig(t)
+	testDB := testutils.SetupTestDB(t)
+
 	repo := repository.NewSubscriptionRepo(testDB)
-	hasher := hash.NewSHA256Hasher()
-	cfg, err := config.Init(configsDir, config.TestEnvironment)
-	if err != nil {
-		t.Fatalf("failed to init configs: %v", err.Error())
-	}
+	hasher := &hash.SHA256Hasher{}
 
 	mockEmailSender := mockSender.NewMockSender(ctrl)
 	emailsService := service.NewEmailsService(mockEmailSender, cfg.Email, cfg.HTTP)
@@ -63,13 +69,13 @@ func setupTestEnvironment(
 
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
-	router.GET("/subscribe", handler.ShowSubscribePage)
-	router.POST("/api/subscribe", handler.SubscribeEmail)
-	router.GET("/api/confirm/:token", handler.ConfirmEmail)
-	router.GET("/api/unsubscribe/:token", handler.UnsubscribeEmail)
+	router.GET("/subscribe", handler.SubscriptionHandler.ShowSubscribePage)
+	router.POST("/api/subscribe", handler.SubscriptionHandler.SubscribeEmail)
+	router.GET("/api/confirm/:token", handler.SubscriptionHandler.ConfirmEmail)
+	router.GET("/api/unsubscribe/:token", handler.SubscriptionHandler.UnsubscribeEmail)
 
 	// Create router with mock template
-	router.LoadHTMLGlob("../templates/**/*.html")
+	router.LoadHTMLGlob(config.GetOriginalPath("templates/**/*.html"))
 
 	cleanup := func() {
 		_, err := testDB.Exec(`DELETE FROM subscriptions;`)
@@ -78,7 +84,12 @@ func setupTestEnvironment(
 		}
 	}
 
-	return router, mockEmailSender, cleanup
+	return subscriptionTestEnv{
+		TestDB:          testDB,
+		Router:          router,
+		MockEmailSender: mockEmailSender,
+		CleanupFunc:     cleanup,
+	}
 }
 
 func testShowSubscribePageMocked(t *testing.T) {
@@ -86,13 +97,13 @@ func testShowSubscribePageMocked(t *testing.T) {
 	defer ctrl.Finish()
 
 	// Setup
-	handler, _, cleanup := setupTestEnvironment(t, ctrl)
-	defer cleanup()
+	testSettings := setupTestEnvironment(t, ctrl)
+	defer testSettings.CleanupFunc()
 
 	// Execute
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/subscribe", nil)
-	handler.ServeHTTP(w, req)
+	testSettings.Router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.Contains(t, w.Body.String(), "Subscribe to Weather updates")
@@ -103,11 +114,11 @@ func testSuccessfulSubscribe(t *testing.T) {
 	defer ctrl.Finish()
 
 	// Setup
-	handler, mockEmailSender, cleanup := setupTestEnvironment(t, ctrl)
-	defer cleanup()
+	testSettings := setupTestEnvironment(t, ctrl)
+	defer testSettings.CleanupFunc()
 
 	// Mock expectations
-	mockEmailSender.
+	testSettings.MockEmailSender.
 		EXPECT().
 		Send(gomock.Any()).
 		Return(nil)
@@ -119,14 +130,14 @@ func testSuccessfulSubscribe(t *testing.T) {
 	))
 	req.Header.Set("Content-Type", "application/json")
 
-	handler.ServeHTTP(w, req)
+	testSettings.Router.ServeHTTP(w, req)
 
 	// Verify
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	// Check database
 	var sub domain.Subscription
-	err := testDB.QueryRowx(`
+	err := testSettings.TestDB.QueryRowx(`
 		SELECT *
 		FROM subscriptions 
 		WHERE email = $1
@@ -143,8 +154,8 @@ func testInvalidSubscribeRequestBody(t *testing.T) {
 	defer ctrl.Finish()
 
 	// Setup
-	handler, _, cleanup := setupTestEnvironment(t, ctrl)
-	defer cleanup()
+	testSettings := setupTestEnvironment(t, ctrl)
+	defer testSettings.CleanupFunc()
 
 	// Execute
 	w := httptest.NewRecorder()
@@ -152,14 +163,14 @@ func testInvalidSubscribeRequestBody(t *testing.T) {
 		`{"email": "test@example.com", "city": "Kyiv", "frequency": "wrong_frequency"}`))
 	req.Header.Set("Content-Type", "application/json")
 
-	handler.ServeHTTP(w, req)
+	testSettings.Router.ServeHTTP(w, req)
 
 	// Verify
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 
 	// No database changes expected
 	var count int
-	err := testDB.QueryRowx(`
+	err := testSettings.TestDB.QueryRowx(`
 		SELECT COUNT(*) 
 		FROM subscriptions 
 		WHERE email = $1
@@ -173,13 +184,13 @@ func testDuplicateSubscribe(t *testing.T) {
 	defer ctrl.Finish()
 
 	// Setup
-	handler, _, cleanup := setupTestEnvironment(t, ctrl)
-	defer cleanup()
+	testSettings := setupTestEnvironment(t, ctrl)
+	defer testSettings.CleanupFunc()
 
 	// Create existing subscription
-	hasher := hash.NewSHA256Hasher()
+	hasher := &hash.SHA256Hasher{}
 	token := hasher.GenerateSubscriptionHash("existing@example.com", "Kyiv", "daily")
-	_, err := testDB.Exec(`
+	_, err := testSettings.TestDB.Exec(`
 		INSERT INTO subscriptions (email, city, frequency, token, confirmed, created_at)
 		VALUES ('existing@example.com', 'Kyiv', 'daily', $1, false, NOW())
 	`, token)
@@ -192,14 +203,14 @@ func testDuplicateSubscribe(t *testing.T) {
 	))
 	req.Header.Set("Content-Type", "application/json")
 
-	handler.ServeHTTP(w, req)
+	testSettings.Router.ServeHTTP(w, req)
 
 	// Verify
 	assert.Equal(t, http.StatusConflict, w.Code)
 
 	// Verify existing record wasn't modified
 	var originalToken string
-	err = testDB.QueryRowx(`
+	err = testSettings.TestDB.QueryRowx(`
 		SELECT token 
 		FROM subscriptions 
 		WHERE email = $1
@@ -213,11 +224,11 @@ func testDuplicateEmailSubscribe(t *testing.T) {
 	defer ctrl.Finish()
 
 	// Setup
-	handler, mockEmailSender, cleanup := setupTestEnvironment(t, ctrl)
-	defer cleanup()
+	testSettings := setupTestEnvironment(t, ctrl)
+	defer testSettings.CleanupFunc()
 
 	// Mock expectations
-	mockEmailSender.
+	testSettings.MockEmailSender.
 		EXPECT().
 		Send(gomock.Any()).
 		Return(nil)
@@ -225,9 +236,9 @@ func testDuplicateEmailSubscribe(t *testing.T) {
 	var createdSubscriptions int
 
 	// Create existing subscription
-	hasher := hash.NewSHA256Hasher()
+	hasher := &hash.SHA256Hasher{}
 	token := hasher.GenerateSubscriptionHash("existing@example.com", "Kyiv", "daily")
-	_, err := testDB.Exec(`
+	_, err := testSettings.TestDB.Exec(`
 		INSERT INTO subscriptions (email, city, frequency, token, confirmed, created_at)
 		VALUES ('existing@example.com', 'Kyiv', 'daily', $1, false, NOW())
 	`, token)
@@ -241,7 +252,7 @@ func testDuplicateEmailSubscribe(t *testing.T) {
 	))
 	req.Header.Set("Content-Type", "application/json")
 
-	handler.ServeHTTP(w, req)
+	testSettings.Router.ServeHTTP(w, req)
 
 	// Verify
 	assert.Equal(t, http.StatusOK, w.Code)
@@ -249,7 +260,7 @@ func testDuplicateEmailSubscribe(t *testing.T) {
 
 	// Verify existing record wasn't modified
 	var countSubscriptions int
-	err = testDB.QueryRowx(`SELECT COUNT(*) FROM subscriptions;`).Scan(&countSubscriptions)
+	err = testSettings.TestDB.QueryRowx(`SELECT COUNT(*) FROM subscriptions;`).Scan(&countSubscriptions)
 	assert.NoError(t, err)
 	assert.Equal(t, createdSubscriptions, countSubscriptions)
 }
@@ -258,21 +269,21 @@ func testUnsubscribeSuccess(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	handler, _, cleanup := setupTestEnvironment(t, ctrl)
-	defer cleanup()
+	testSettings := setupTestEnvironment(t, ctrl)
+	defer testSettings.CleanupFunc()
 
 	// Insert subscription to be deleted
-	hasher := hash.NewSHA256Hasher()
+	hasher := &hash.SHA256Hasher{}
 	token := hasher.GenerateSubscriptionHash("unsubscribe@example.com", "Kyiv", "daily")
 
-	_, err := testDB.Exec(`
+	_, err := testSettings.TestDB.Exec(`
 		INSERT INTO subscriptions (email, city, frequency, token, confirmed, created_at)
 		VALUES ('unsubscribe@example.com', 'Kyiv', 'daily', $1, false, NOW())
 	`, token)
 	assert.NoError(t, err)
 
 	var count int
-	err = testDB.QueryRowx(`
+	err = testSettings.TestDB.QueryRowx(`
 		SELECT COUNT(*) 
 		FROM subscriptions 
 		WHERE token = $1
@@ -283,12 +294,12 @@ func testUnsubscribeSuccess(t *testing.T) {
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/api/unsubscribe/"+token, nil)
 
-	handler.ServeHTTP(w, req)
+	testSettings.Router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	// Verify it's deleted
-	err = testDB.QueryRowx(`
+	err = testSettings.TestDB.QueryRowx(`
 		SELECT COUNT(*) 
 		FROM subscriptions 
 		WHERE token = $1
@@ -302,17 +313,17 @@ func testUnsubscribeNotFound(t *testing.T) {
 	defer ctrl.Finish()
 
 	// Setup
-	handler, _, cleanup := setupTestEnvironment(t, ctrl)
-	defer cleanup()
+	testSettings := setupTestEnvironment(t, ctrl)
+	defer testSettings.CleanupFunc()
 
-	hasher := hash.NewSHA256Hasher()
+	hasher := &hash.SHA256Hasher{}
 	token := hasher.GenerateSubscriptionHash("non-existen-email@example.com", "Kyiv", "daily")
 
 	// Execute
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/api/unsubscribe/"+token, nil)
 
-	handler.ServeHTTP(w, req)
+	testSettings.Router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusNotFound, w.Code)
 }
@@ -321,21 +332,21 @@ func testUnsubscribeInvalidToken(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	handler, _, cleanup := setupTestEnvironment(t, ctrl)
-	defer cleanup()
+	testSettings := setupTestEnvironment(t, ctrl)
+	defer testSettings.CleanupFunc()
 
 	// Insert subscription to be deleted
-	hasher := hash.NewSHA256Hasher()
+	hasher := &hash.SHA256Hasher{}
 	token := hasher.GenerateSubscriptionHash("unsubscribe@example.com", "Kyiv", "daily")
 
-	_, err := testDB.Exec(`
+	_, err := testSettings.TestDB.Exec(`
 		INSERT INTO subscriptions (email, city, frequency, token, confirmed, created_at)
 		VALUES ('unsubscribe@example.com', 'Kyiv', 'daily', $1, false, NOW())
 	`, token)
 	assert.NoError(t, err)
 
 	var count int
-	err = testDB.QueryRowx(`
+	err = testSettings.TestDB.QueryRowx(`
 		SELECT COUNT(*) 
 		FROM subscriptions 
 		WHERE token = $1
@@ -347,12 +358,12 @@ func testUnsubscribeInvalidToken(t *testing.T) {
 	// Add "bug" instead of valid token
 	req := httptest.NewRequest("GET", "/api/unsubscribe/"+"bug", nil)
 
-	handler.ServeHTTP(w, req)
+	testSettings.Router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 
 	// Verify it's not deleted
-	err = testDB.QueryRowx(`
+	err = testSettings.TestDB.QueryRowx(`
 		SELECT COUNT(*) 
 		FROM subscriptions 
 		WHERE token = $1
@@ -365,14 +376,14 @@ func testConfirmSuccess(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	router, _, cleanup := setupTestEnvironment(t, ctrl)
-	defer cleanup()
+	testSettings := setupTestEnvironment(t, ctrl)
+	defer testSettings.CleanupFunc()
 
 	// Insert unconfirmed subscription
-	hasher := hash.NewSHA256Hasher()
+	hasher := &hash.SHA256Hasher{}
 	token := hasher.GenerateSubscriptionHash("confirm@example.com", "Kyiv", "daily")
 
-	_, err := testDB.Exec(`
+	_, err := testSettings.TestDB.Exec(`
         INSERT INTO subscriptions (email, city, frequency, token, confirmed, created_at)
         VALUES ('confirm@example.com', 'Kyiv', 'daily', $1, false, NOW())
     `, token)
@@ -380,7 +391,7 @@ func testConfirmSuccess(t *testing.T) {
 
 	// Verify initial state
 	var confirmed bool
-	err = testDB.QueryRowx(`
+	err = testSettings.TestDB.QueryRowx(`
         SELECT confirmed FROM subscriptions WHERE token = $1
     `, token).Scan(&confirmed)
 	assert.NoError(t, err)
@@ -389,13 +400,13 @@ func testConfirmSuccess(t *testing.T) {
 	// Execute confirmation
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/api/confirm/"+token, nil)
-	router.ServeHTTP(w, req)
+	testSettings.Router.ServeHTTP(w, req)
 
 	// Verify response
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	// Verify it's confirmed in DB
-	err = testDB.QueryRowx(`
+	err = testSettings.TestDB.QueryRowx(`
         SELECT confirmed FROM subscriptions WHERE token = $1
     `, token).Scan(&confirmed)
 	assert.NoError(t, err)
@@ -407,16 +418,16 @@ func testConfirmNotFound(t *testing.T) {
 	defer ctrl.Finish()
 
 	// Setup
-	router, _, cleanup := setupTestEnvironment(t, ctrl)
-	defer cleanup()
+	testSettings := setupTestEnvironment(t, ctrl)
+	defer testSettings.CleanupFunc()
 
-	hasher := hash.NewSHA256Hasher()
+	hasher := &hash.SHA256Hasher{}
 	token := hasher.GenerateSubscriptionHash("non-existen-email@example.com", "Kyiv", "daily")
 
 	// Execute
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/api/confirm/"+token, nil)
-	router.ServeHTTP(w, req)
+	testSettings.Router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusNotFound, w.Code)
 }
@@ -425,14 +436,14 @@ func testConfirmInvalidToken(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	router, _, cleanup := setupTestEnvironment(t, ctrl)
-	defer cleanup()
+	testSettings := setupTestEnvironment(t, ctrl)
+	defer testSettings.CleanupFunc()
 
 	// Insert unconfirmed subscription
-	hasher := hash.NewSHA256Hasher()
+	hasher := &hash.SHA256Hasher{}
 	token := hasher.GenerateSubscriptionHash("confirm@example.com", "Kyiv", "daily")
 
-	_, err := testDB.Exec(`
+	_, err := testSettings.TestDB.Exec(`
         INSERT INTO subscriptions (email, city, frequency, token, confirmed, created_at)
         VALUES ('confirm@example.com', 'Kyiv', 'daily', $1, false, NOW())
     `, token)
@@ -440,7 +451,7 @@ func testConfirmInvalidToken(t *testing.T) {
 
 	// Verify initial state
 	var confirmed bool
-	err = testDB.QueryRowx(`
+	err = testSettings.TestDB.QueryRowx(`
         SELECT confirmed FROM subscriptions WHERE token = $1
     `, token).Scan(&confirmed)
 	assert.NoError(t, err)
@@ -450,13 +461,13 @@ func testConfirmInvalidToken(t *testing.T) {
 	w := httptest.NewRecorder()
 	// Add "bug" instead of valid token
 	req := httptest.NewRequest("GET", "/api/confirm/"+"bug", nil)
-	router.ServeHTTP(w, req)
+	testSettings.Router.ServeHTTP(w, req)
 
 	// Verify response
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 
 	// Verify it's not confirmed in DB
-	err = testDB.QueryRowx(`
+	err = testSettings.TestDB.QueryRowx(`
         SELECT confirmed FROM subscriptions WHERE token = $1
     `, token).Scan(&confirmed)
 	assert.NoError(t, err)

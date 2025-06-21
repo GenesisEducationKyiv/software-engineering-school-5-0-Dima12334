@@ -1,13 +1,30 @@
 package handlers
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"net/url"
+	"weather_forecast_sub/internal/domain"
 	customErrors "weather_forecast_sub/pkg/errors"
 
 	"github.com/gin-gonic/gin"
 )
+
+type Weather interface {
+	GetCurrentWeather(ctx context.Context, city string) (*domain.WeatherResponse, error)
+	GetDayWeather(ctx context.Context, city string) (*domain.DayWeatherResponse, error)
+}
+
+type WeatherHandler struct {
+	weatherService Weather
+}
+
+func NewWeatherHandler(weatherService Weather) *WeatherHandler {
+	return &WeatherHandler{
+		weatherService: weatherService,
+	}
+}
 
 type weatherResponse struct {
 	Temperature float32 `json:"temperature"`
@@ -26,7 +43,7 @@ type weatherResponse struct {
 // @Failure 400 "Invalid request"
 // @Failure 404 "City not found"
 // @Router /weather [get]
-func (h *Handler) GetWeather(c *gin.Context) {
+func (h *WeatherHandler) GetWeather(c *gin.Context) {
 	city := c.Query("city")
 	if city == "" {
 		c.Status(http.StatusBadRequest)
@@ -34,7 +51,7 @@ func (h *Handler) GetWeather(c *gin.Context) {
 	}
 	escapedCity := url.QueryEscape(city)
 
-	weather, err := h.services.Weather.GetCurrentWeather(c, escapedCity)
+	weather, err := h.weatherService.GetCurrentWeather(c, escapedCity)
 	if err != nil {
 		switch {
 		case errors.Is(err, customErrors.ErrCityNotFound):

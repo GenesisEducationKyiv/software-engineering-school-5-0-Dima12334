@@ -13,49 +13,65 @@ import (
 )
 
 type Handler struct {
-	services *service.Services
+	SubscriptionHandler *SubscriptionHandler
+	WeatherHandler      *WeatherHandler
 }
 
 func NewHandler(services *service.Services) *Handler {
-	return &Handler{services: services}
+	return &Handler{
+		SubscriptionHandler: NewSubscriptionHandler(services.Subscriptions),
+		WeatherHandler:      NewWeatherHandler(services.Weather),
+	}
 }
 
-func (h *Handler) Init(cfg *config.Config) *gin.Engine {
-	if cfg.Environment == config.ProdEnvironment {
+func (h *Handler) Init(environment string) *gin.Engine {
+	router := h.initGinRouter(environment)
+
+	h.initBaseRoutes(router)
+	h.initHTMLRoutes(router)
+	h.initAPI(router)
+
+	return router
+}
+
+func (h *Handler) initGinRouter(environment string) *gin.Engine {
+	if environment == config.ProdEnvironment {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
 	router := gin.Default()
-	router.LoadHTMLGlob("templates/**/*.html")
+	router.LoadHTMLGlob(config.GetOriginalPath("templates/**/*.html"))
 
-	// Init router
+	return router
+}
+
+func (h *Handler) initBaseRoutes(router *gin.Engine) {
+	// Health check endpoint
 	router.GET("/ping", func(c *gin.Context) {
 		c.String(http.StatusOK, "pong")
 	})
 
 	// Swagger docs
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+}
 
-	h.initAPI(router)
-
-	return router
+func (h *Handler) initHTMLRoutes(router *gin.Engine) {
+	router.GET("/subscribe", h.SubscriptionHandler.ShowSubscribePage)
 }
 
 func (h *Handler) initAPI(router *gin.Engine) {
-	router.GET("/subscribe", h.ShowSubscribePage)
-
 	api := router.Group("/api")
 	{
 		weather := api.Group("/weather")
 		{
-			weather.GET("/", h.GetWeather)
+			weather.GET("/", h.WeatherHandler.GetWeather)
 		}
 
 		subscription := api.Group("")
 		{
-			subscription.POST("/subscribe", h.SubscribeEmail)
-			subscription.GET("/confirm/:token", h.ConfirmEmail)
-			subscription.GET("/unsubscribe/:token", h.UnsubscribeEmail)
+			subscription.POST("/subscribe", h.SubscriptionHandler.SubscribeEmail)
+			subscription.GET("/confirm/:token", h.SubscriptionHandler.ConfirmEmail)
+			subscription.GET("/unsubscribe/:token", h.SubscriptionHandler.UnsubscribeEmail)
 		}
 	}
 }
