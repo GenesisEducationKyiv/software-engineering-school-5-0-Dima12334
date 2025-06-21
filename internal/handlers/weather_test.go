@@ -1,7 +1,7 @@
 package handlers_test
 
 import (
-	"fmt"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -95,7 +95,7 @@ func testSuccessfulWeatherRequestFallbackToSecondClient(t *testing.T) {
 	// Expect primary to be called and return an error
 	primaryMock.EXPECT().
 		GetAPICurrentWeather(gomock.Any(), "Kyiv").
-		Return(nil, fmt.Errorf("primary failed"))
+		Return(nil, errors.New("primary failed"))
 
 	// Expect fallback to be called and return valid data
 	fallbackMock.EXPECT().
