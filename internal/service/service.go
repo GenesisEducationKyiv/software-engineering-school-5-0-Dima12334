@@ -54,7 +54,7 @@ type WeatherEmails interface {
 
 type Deps struct {
 	Repos              *repository.Repositories
-	Clients            *clients.Clients
+	Clients            *clients.WeatherClients
 	SubscriptionHasher hash.SubscriptionHasher
 	EmailSender        email.Sender
 	EmailConfig        config.EmailConfig

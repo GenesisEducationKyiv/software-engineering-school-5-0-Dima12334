@@ -46,7 +46,7 @@ func (ab *ApplicationBuilder) setupDependencies(app *Application) {
 		app.config.SMTP.Host,
 		app.config.SMTP.Port,
 	)
-	thirdPartyClients := clients.NewClients(app.config.ThirdParty)
+	thirdPartyClients := clients.NewWeatherClients(app.config.ThirdParty)
 	repositories := repository.NewRepositories(app.dbConn)
 
 	services := service.NewServices(service.Deps{

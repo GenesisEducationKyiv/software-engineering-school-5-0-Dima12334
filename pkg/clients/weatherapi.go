@@ -63,6 +63,26 @@ type dayWeatherAPIResponse struct {
 	} `json:"forecast"`
 }
 
+func (c *WeatherAPIClient) processErrorResponse(resp *http.Response) error {
+	var apiErr weatherAPIErrorResponse
+	if err := json.NewDecoder(resp.Body).Decode(&apiErr); err != nil {
+		logger.Errorf("error decoding WeatherAPI error response: %s", err)
+		return customErrors.ErrWeatherDataError
+	}
+
+	if resp.StatusCode == http.StatusBadRequest && apiErr.Error.Code == weatherAPICityNotFoundCode {
+		return customErrors.ErrCityNotFound
+	}
+
+	logger.Errorf(
+		"WeatherAPI error. Status code: %d, api code: %d, message: %s",
+		resp.StatusCode,
+		apiErr.Error.Code,
+		apiErr.Error.Message,
+	)
+	return customErrors.ErrWeatherDataError
+}
+
 func (c *WeatherAPIClient) GetAPICurrentWeather(
 	ctx context.Context, city string,
 ) (*domain.WeatherResponse, error) {
@@ -79,39 +99,18 @@ func (c *WeatherAPIClient) GetAPICurrentWeather(
 		logger.Errorf("error making request to WeatherClient API: %s", err.Error())
 		return nil, err
 	}
-	defer func() {
-		if closeErr := resp.Body.Close(); closeErr != nil {
-			if err != nil {
-				err = fmt.Errorf("%w; failed to close response body: %w", err, closeErr)
-			} else {
-				err = fmt.Errorf("failed to close response body: %w", closeErr)
-			}
-		}
-	}()
+	defer closeBody(resp.Body, &err)
 
 	if resp.StatusCode != http.StatusOK {
-		var apiErr weatherAPIErrorResponse
-		if err = json.NewDecoder(resp.Body).Decode(&apiErr); err == nil {
-			if resp.StatusCode == http.StatusBadRequest && apiErr.Error.Code == weatherAPICityNotFoundCode {
-				return nil, customErrors.ErrCityNotFound
-			}
-			logger.Errorf(
-				"WeatherAPI error. Status code: %d, api code: %d, message: %s",
-				resp.StatusCode,
-				apiErr.Error.Code,
-				apiErr.Error.Message,
-			)
-			return nil, customErrors.ErrWeatherAPIError
-		}
-		logger.Errorf("WeatherAPI error. Status code: %d", resp.StatusCode)
-		return nil, customErrors.ErrWeatherAPIError
+		err = c.processErrorResponse(resp)
+		return nil, err
 	}
 
 	var result currentWeatherAPIResponse
 	err = json.NewDecoder(resp.Body).Decode(&result)
 	if err != nil {
 		logger.Errorf("error parsing WeatherAPI response: %s", err.Error())
-		return nil, customErrors.ErrWeatherAPIError
+		return nil, customErrors.ErrWeatherDataError
 	}
 
 	return &domain.WeatherResponse{
@@ -137,38 +136,17 @@ func (c *WeatherAPIClient) GetAPIDayWeather(
 		logger.Errorf("error making request to WeatherAPI: %s", err.Error())
 		return nil, err
 	}
-	defer func() {
-		if closeErr := resp.Body.Close(); closeErr != nil {
-			if err != nil {
-				err = fmt.Errorf("%w; failed to close response body: %w", err, closeErr)
-			} else {
-				err = fmt.Errorf("failed to close response body: %w", closeErr)
-			}
-		}
-	}()
+	defer closeBody(resp.Body, &err)
 
 	if resp.StatusCode != http.StatusOK {
-		var apiErr weatherAPIErrorResponse
-		if err = json.NewDecoder(resp.Body).Decode(&apiErr); err == nil {
-			if resp.StatusCode == http.StatusBadRequest && apiErr.Error.Code == weatherAPICityNotFoundCode {
-				return nil, customErrors.ErrCityNotFound
-			}
-			logger.Errorf(
-				"WeatherAPI error. Status code: %d, api code: %d, message: %s",
-				resp.StatusCode,
-				apiErr.Error.Code,
-				apiErr.Error.Message,
-			)
-			return nil, customErrors.ErrWeatherAPIError
-		}
-		logger.Errorf("WeatherAPI error. Status code: %d", resp.StatusCode)
-		return nil, customErrors.ErrWeatherAPIError
+		err = c.processErrorResponse(resp)
+		return nil, err
 	}
 
 	var result dayWeatherAPIResponse
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		logger.Errorf("error parsing WeatherAPI response: %s", err.Error())
-		return nil, customErrors.ErrWeatherAPIError
+		return nil, customErrors.ErrWeatherDataError
 	}
 
 	// Map of required times
