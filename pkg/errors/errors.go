@@ -14,7 +14,7 @@ var (
 	ErrSubscriptionNotFound      = errors.New("subscription doesn't exists")
 	ErrSubscriptionAlreadyExists = errors.New("subscription with such email already exists")
 
-	ErrCityNotFound    = errors.New("city doesn't exists")
+	ErrCityNotFound     = errors.New("city doesn't exists")
 	ErrWeatherDataError = errors.New("failed to get weather data")
 
 	ErrEmailToRequired      = errors.New("email 'To' field is required")
