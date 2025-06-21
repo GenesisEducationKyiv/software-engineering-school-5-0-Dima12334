@@ -6,6 +6,7 @@ import (
 	"weather_forecast_sub/internal/domain"
 	"weather_forecast_sub/internal/service"
 	"weather_forecast_sub/pkg/email"
+	customErrors "weather_forecast_sub/pkg/errors"
 	"weather_forecast_sub/testutils"
 
 	"github.com/stretchr/testify/assert"
@@ -172,43 +173,42 @@ func TestSendEmailInput_Validate(t *testing.T) {
 	tests := []struct {
 		name    string
 		input   email.SendEmailInput
-		wantErr string
+		wantErr error
 	}{
 		{
 			name:    "All fields valid",
 			input:   email.SendEmailInput{To: "user@example.com", Subject: "Hello", Body: "Body content"},
-			wantErr: "",
+			wantErr: nil,
 		},
 		{
 			name:    "Missing To",
 			input:   email.SendEmailInput{Subject: "Hello", Body: "Body content"},
-			wantErr: "email 'To' field is required",
+			wantErr: customErrors.ErrEmailToRequired,
 		},
 		{
 			name:    "Missing Subject",
 			input:   email.SendEmailInput{To: "user@example.com", Body: "Body content"},
-			wantErr: "email 'Subject' field is required",
+			wantErr: customErrors.ErrEmailSubjectRequired,
 		},
 		{
 			name:    "Missing Body",
 			input:   email.SendEmailInput{To: "user@example.com", Subject: "Hello"},
-			wantErr: "email 'Body' field is required",
+			wantErr: customErrors.ErrEmailBodyRequired,
 		},
 		{
 			name:    "Whitespace To field",
 			input:   email.SendEmailInput{To: "   ", Subject: "Hello", Body: "Body content"},
-			wantErr: "email 'To' field is required",
+			wantErr: customErrors.ErrEmailToRequired,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.input.Validate()
-			if tt.wantErr == "" {
+			if tt.wantErr == nil {
 				assert.NoError(t, err)
 			} else {
-				assert.Error(t, err)
-				assert.EqualError(t, err, tt.wantErr)
+				assert.ErrorIs(t, err, tt.wantErr)
 			}
 		})
 	}
