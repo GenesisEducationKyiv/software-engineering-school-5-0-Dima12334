@@ -1,0 +1,77 @@
+package service
+
+import (
+	"context"
+	"weather_forecast_sub/internal/config"
+	"weather_forecast_sub/internal/domain"
+	"weather_forecast_sub/pkg/email"
+	"weather_forecast_sub/pkg/hash"
+)
+
+type SubscriptionRepository interface {
+	Create(ctx context.Context, subscription domain.Subscription) error
+	GetByToken(ctx context.Context, token string) (domain.Subscription, error)
+	Confirm(ctx context.Context, token string) error
+	Delete(ctx context.Context, token string) error
+}
+
+type SubscriptionService struct {
+	repo           SubscriptionRepository
+	hasher         hash.SubscriptionHasher
+	emailSender    email.Sender
+	emailConfig    config.EmailConfig
+	httpConfig     config.HTTPConfig
+	emailService   SubscriptionEmails
+	weatherService Weather
+}
+
+func NewSubscriptionService(
+	repo SubscriptionRepository,
+	hasher hash.SubscriptionHasher,
+	emailSender email.Sender,
+	emailConfig config.EmailConfig,
+	httpConfig config.HTTPConfig,
+	emailService SubscriptionEmails,
+	weatherService Weather,
+) *SubscriptionService {
+	return &SubscriptionService{
+		repo:           repo,
+		hasher:         hasher,
+		emailSender:    emailSender,
+		emailConfig:    emailConfig,
+		httpConfig:     httpConfig,
+		emailService:   emailService,
+		weatherService: weatherService,
+	}
+}
+
+func (s *SubscriptionService) Create(ctx context.Context, inp domain.CreateSubscriptionInput) error {
+	token := s.hasher.GenerateSubscriptionHash(inp.Email, inp.City, inp.Frequency)
+
+	subscription := domain.NewSubscription(inp.Email, inp.City, inp.Frequency, token)
+	err := s.repo.Create(ctx, subscription)
+
+	if err != nil {
+		return err
+	}
+
+	return s.emailService.SendConfirmationEmail(ConfirmationEmailInput{Email: inp.Email, Token: token})
+}
+
+func (s *SubscriptionService) Confirm(ctx context.Context, token string) error {
+	_, err := s.repo.GetByToken(ctx, token)
+	if err != nil {
+		return err
+	}
+
+	return s.repo.Confirm(ctx, token)
+}
+
+func (s *SubscriptionService) Delete(ctx context.Context, token string) error {
+	_, err := s.repo.GetByToken(ctx, token)
+	if err != nil {
+		return err
+	}
+
+	return s.repo.Delete(ctx, token)
+}
