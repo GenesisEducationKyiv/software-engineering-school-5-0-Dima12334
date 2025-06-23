@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -106,9 +107,15 @@ func (c *WeatherAPIClient) GetAPICurrentWeather(
 		return nil, err
 	}
 
-	var result currentWeatherAPIResponse
-	err = json.NewDecoder(resp.Body).Decode(&result)
+	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
+		logger.Errorf("failed to read WeatherAPI response body: %s", err)
+		return nil, customErrors.ErrWeatherDataError
+	}
+	logger.Infof("WeatherAPI success response for city %s: %s", city, string(respBody))
+
+	var result currentWeatherAPIResponse
+	if err := json.Unmarshal(respBody, &result); err != nil {
 		logger.Errorf("error parsing WeatherAPI response: %s", err.Error())
 		return nil, customErrors.ErrWeatherDataError
 	}
@@ -143,8 +150,16 @@ func (c *WeatherAPIClient) GetAPIDayWeather(
 		return nil, err
 	}
 
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		logger.Errorf("failed to read WeatherAPI response body: %s", err)
+		return nil, customErrors.ErrWeatherDataError
+	}
+
+	logger.Infof("WeatherAPI success response for city %s: %s", city, string(respBody))
+
 	var result dayWeatherAPIResponse
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+	if err := json.Unmarshal(respBody, &result); err != nil {
 		logger.Errorf("error parsing WeatherAPI response: %s", err.Error())
 		return nil, customErrors.ErrWeatherDataError
 	}

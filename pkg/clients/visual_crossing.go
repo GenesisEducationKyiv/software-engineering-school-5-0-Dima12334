@@ -89,8 +89,16 @@ func (c *VisualCrossingClient) GetAPICurrentWeather(
 		return nil, err
 	}
 
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		logger.Errorf("failed to read VisualCrossing response body: %s", err)
+		return nil, customErrors.ErrWeatherDataError
+	}
+
+	logger.Infof("VisualCrossing API success response for city %s: %s", city, string(respBody))
+
 	var result visualCrossingResponse
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+	if err := json.Unmarshal(respBody, &result); err != nil {
 		logger.Errorf("error decoding VisualCrossing current weather: %s", err)
 		return nil, customErrors.ErrWeatherDataError
 	}
@@ -127,8 +135,16 @@ func (c *VisualCrossingClient) GetAPIDayWeather(
 		return nil, err
 	}
 
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		logger.Errorf("failed to read VisualCrossing response body: %s", err)
+		return nil, customErrors.ErrWeatherDataError
+	}
+
+	logger.Infof("VisualCrossing API success response for city %s: %s", city, string(respBody))
+
 	var result visualCrossingResponse
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+	if err := json.Unmarshal(respBody, &result); err != nil {
 		logger.Errorf("error decoding VisualCrossing forecast: %s", err)
 		return nil, customErrors.ErrWeatherDataError
 	}
