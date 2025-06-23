@@ -5,6 +5,9 @@ http_server:
   readHeaderTimeout: 5s
   writeTimeout: 10s
 
+logger:
+  file_path: ./logs/app.log
+
 smtp:
   host: "smtp.ukr.net"
   port: 465

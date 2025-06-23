@@ -11,8 +11,8 @@ const (
 
 type Config struct {
 	Environment string
-	HTTP        HTTPConfig `mapstructure:"http_server"`
-	Logger      LoggerConfig
+	HTTP        HTTPConfig     `mapstructure:"http_server"`
+	Logger      LoggerConfig   `mapstructure:"logger"`
 	DB          DatabaseConfig `mapstructure:"db"`
 	ThirdParty  ThirdPartyConfig
 	SMTP        SMTPConfig  `mapstructure:"smtp"`
@@ -38,6 +38,7 @@ type ThirdPartyConfig struct {
 
 type LoggerConfig struct {
 	LoggerEnv string
+	FilePath  string `mapstructure:"file_path"`
 }
 
 type DatabaseConfig struct {
