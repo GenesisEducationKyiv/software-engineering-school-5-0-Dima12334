@@ -48,16 +48,18 @@ func (ab *ApplicationBuilder) setupDependencies(app *Application) {
 	)
 
 	primaryWeatherClient := clients.NewWeatherAPIClient(app.config.ThirdParty.WeatherAPIKey)
-	fallbackWeatherClients := []clients.WeatherClient{
+	fallbackWeatherClients := []clients.ChainWeatherProvider{
 		clients.NewVisualCrossingClient(app.config.ThirdParty.VisualCrossingAPIKey),
 	}
-	allWeatherClients := append([]clients.WeatherClient{primaryWeatherClient}, fallbackWeatherClients...)
-	thirdPartyWeatherClients := clients.NewChainWeatherClient(allWeatherClients)
+	allWeatherClients := append(
+		[]clients.ChainWeatherProvider{primaryWeatherClient}, fallbackWeatherClients...,
+	)
+	chainWeatherClient := clients.NewChainWeatherClient(allWeatherClients)
 
 	repositories := repository.NewRepositories(app.dbConn)
 
 	services := service.NewServices(service.Deps{
-		ChainWeatherClient: thirdPartyWeatherClients,
+		WeatherClient:      chainWeatherClient,
 		Repos:              repositories,
 		SubscriptionHasher: hasher,
 		EmailSender:        emailSender,

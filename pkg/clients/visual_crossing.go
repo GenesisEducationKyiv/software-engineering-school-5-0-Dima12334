@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"reflect"
 	"time"
 	"weather_forecast_sub/internal/domain"
 	customErrors "weather_forecast_sub/pkg/errors"
@@ -21,6 +22,7 @@ type VisualCrossingClient struct {
 	APIKey     string
 	BaseURL    string
 	HTTPClient *http.Client
+	next       WeatherClient
 }
 
 func NewVisualCrossingClient(apiKey string) *VisualCrossingClient {
@@ -46,6 +48,10 @@ type visualCrossingResponse struct {
 			Conditions string  `json:"conditions"`
 		} `json:"hours"`
 	} `json:"days"`
+}
+
+func (c *VisualCrossingClient) setNext(next ChainWeatherProvider) {
+	c.next = next
 }
 
 func (c *VisualCrossingClient) processErrorResponse(resp *http.Response) error {
@@ -86,6 +92,17 @@ func (c *VisualCrossingClient) GetAPICurrentWeather(
 
 	if resp.StatusCode != http.StatusOK {
 		err = c.processErrorResponse(resp)
+
+		if c.next != nil {
+			nextClientName := reflect.TypeOf(c.next).Elem().Name()
+			logger.Warnf(
+				"VisualCrossingClient.GetAPICurrentWeather() error: %s.\n"+
+					"Passing request to next weather client in chain: %s",
+				err,
+				nextClientName,
+			)
+			return c.next.GetAPICurrentWeather(ctx, city)
+		}
 		return nil, err
 	}
 
@@ -134,6 +151,17 @@ func (c *VisualCrossingClient) GetAPIDayWeather(
 
 	if resp.StatusCode != http.StatusOK {
 		err = c.processErrorResponse(resp)
+
+		if c.next != nil {
+			nextClientName := reflect.TypeOf(c.next).Elem().Name()
+			logger.Warnf(
+				"VisualCrossingClient.GetAPIDayWeather() error: %s. "+
+					"Passing request to next weather client in chain: %s",
+				err,
+				nextClientName,
+			)
+			return c.next.GetAPIDayWeather(ctx, city)
+		}
 		return nil, err
 	}
 

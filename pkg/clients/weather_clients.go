@@ -3,59 +3,40 @@ package clients
 import (
 	"context"
 	"weather_forecast_sub/internal/domain"
-	"weather_forecast_sub/pkg/logger"
 )
-
-//go:generate mockgen -source=weather_clients.go -destination=mocks/mock_weather_clients.go
 
 type WeatherClient interface {
 	GetAPICurrentWeather(ctx context.Context, city string) (*domain.WeatherResponse, error)
 	GetAPIDayWeather(ctx context.Context, city string) (*domain.DayWeatherResponse, error)
 }
 
-type ChainWeatherClient struct {
-	// The first client in the list is considered the primary client.
-	clients []WeatherClient
+type ChainWeatherProvider interface {
+	WeatherClient
+	setNext(ChainWeatherProvider)
 }
 
-func NewChainWeatherClient(clients []WeatherClient) *ChainWeatherClient {
+type ChainWeatherClient struct {
+	primaryClient WeatherClient
+}
+
+func NewChainWeatherClient(clients []ChainWeatherProvider) *ChainWeatherClient {
+	for i := 0; i < len(clients)-1; i++ {
+		clients[i].setNext(clients[i+1])
+	}
+
 	return &ChainWeatherClient{
-		clients: clients,
+		primaryClient: clients[0],
 	}
 }
 
 func (c *ChainWeatherClient) GetAPICurrentWeather(
 	ctx context.Context, city string,
 ) (*domain.WeatherResponse, error) {
-	var lastErr error
-
-	for _, client := range c.clients {
-		response, err := client.GetAPICurrentWeather(ctx, city)
-		if err == nil {
-			return response, nil
-		}
-		logger.Errorf("error from client %T: %s", client, err.Error())
-		lastErr = err
-	}
-
-	logger.Errorf("all weather clients failed for city %s: %s", city, lastErr.Error())
-	return nil, lastErr
+	return c.primaryClient.GetAPICurrentWeather(ctx, city)
 }
 
 func (c *ChainWeatherClient) GetAPIDayWeather(
 	ctx context.Context, city string,
 ) (*domain.DayWeatherResponse, error) {
-	var lastErr error
-
-	for _, client := range c.clients {
-		response, err := client.GetAPIDayWeather(ctx, city)
-		if err == nil {
-			return response, nil
-		}
-		logger.Errorf("error from client %T: %s", client, err.Error())
-		lastErr = err
-	}
-
-	logger.Errorf("all weather clients failed for city %s: %s", city, lastErr.Error())
-	return nil, lastErr
+	return c.primaryClient.GetAPIDayWeather(ctx, city)
 }

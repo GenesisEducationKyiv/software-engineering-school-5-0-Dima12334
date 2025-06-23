@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"reflect"
 	"strings"
 	"time"
 	"weather_forecast_sub/internal/domain"
@@ -22,6 +23,7 @@ type WeatherAPIClient struct {
 	APIKey     string
 	BaseURL    string
 	HTTPClient *http.Client
+	next       WeatherClient
 }
 
 func NewWeatherAPIClient(apiKey string) *WeatherAPIClient {
@@ -64,6 +66,10 @@ type dayWeatherAPIResponse struct {
 	} `json:"forecast"`
 }
 
+func (c *WeatherAPIClient) setNext(next ChainWeatherProvider) {
+	c.next = next
+}
+
 func (c *WeatherAPIClient) processErrorResponse(resp *http.Response) error {
 	var apiErr weatherAPIErrorResponse
 	if err := json.NewDecoder(resp.Body).Decode(&apiErr); err != nil {
@@ -104,6 +110,17 @@ func (c *WeatherAPIClient) GetAPICurrentWeather(
 
 	if resp.StatusCode != http.StatusOK {
 		err = c.processErrorResponse(resp)
+
+		if c.next != nil {
+			nextClientName := reflect.TypeOf(c.next).Elem().Name()
+			logger.Warnf(
+				"WeatherAPIClient.GetAPICurrentWeather() error: %s. "+
+					"Passing request to next weather client in chain: %s",
+				err,
+				nextClientName,
+			)
+			return c.next.GetAPICurrentWeather(ctx, city)
+		}
 		return nil, err
 	}
 
@@ -147,6 +164,17 @@ func (c *WeatherAPIClient) GetAPIDayWeather(
 
 	if resp.StatusCode != http.StatusOK {
 		err = c.processErrorResponse(resp)
+
+		if c.next != nil {
+			nextClientName := reflect.TypeOf(c.next).Elem().Name()
+			logger.Warnf(
+				"WeatherAPIClient.GetAPIDayWeather() error: %s. "+
+					"Passing request to next weather client in chain: %s",
+				err,
+				nextClientName,
+			)
+			return c.next.GetAPIDayWeather(ctx, city)
+		}
 		return nil, err
 	}
 

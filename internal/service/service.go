@@ -54,7 +54,7 @@ type WeatherEmails interface {
 
 type Deps struct {
 	Repos              *repository.Repositories
-	ChainWeatherClient clients.WeatherClient
+	WeatherClient      clients.WeatherClient
 	SubscriptionHasher hash.SubscriptionHasher
 	EmailSender        email.Sender
 	EmailConfig        config.EmailConfig
@@ -69,7 +69,7 @@ type Services struct {
 
 func NewServices(deps Deps) *Services {
 	emailsService := NewEmailsService(deps.EmailSender, deps.EmailConfig, deps.HTTPConfig)
-	weatherService := NewWeatherService(deps.ChainWeatherClient)
+	weatherService := NewWeatherService(deps.WeatherClient)
 	return &Services{
 		Subscriptions: NewSubscriptionService(
 			deps.Repos.Subscription,
