@@ -95,7 +95,9 @@ func (c *VisualCrossingClient) GetAPICurrentWeather(
 		return nil, customErrors.ErrWeatherDataError
 	}
 
-	logger.Infof("VisualCrossing API success response for city %s: %s", city, string(respBody))
+	logger.Infof(
+		"VisualCrossing API success response for Current weather in city %s: %s", city, string(respBody),
+	)
 
 	var result visualCrossingResponse
 	if err := json.Unmarshal(respBody, &result); err != nil {
@@ -141,7 +143,7 @@ func (c *VisualCrossingClient) GetAPIDayWeather(
 		return nil, customErrors.ErrWeatherDataError
 	}
 
-	logger.Infof("VisualCrossing API success response for city %s: %s", city, string(respBody))
+	logger.Infof("VisualCrossing API success response for Day weather in city %s: %s", city, string(respBody))
 
 	var result visualCrossingResponse
 	if err := json.Unmarshal(respBody, &result); err != nil {

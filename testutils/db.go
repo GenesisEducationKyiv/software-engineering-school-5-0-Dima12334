@@ -1,4 +1,4 @@
-//nolint:ireturn // SetupMockDB requires interface return (sqlmock.Sqlmock)
+//nolint:ireturn // SetupMockDB requires interface return (sqlmock -> Sqlmock)
 package testutils
 
 import (

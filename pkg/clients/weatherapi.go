@@ -112,7 +112,7 @@ func (c *WeatherAPIClient) GetAPICurrentWeather(
 		logger.Errorf("failed to read WeatherAPI response body: %s", err)
 		return nil, customErrors.ErrWeatherDataError
 	}
-	logger.Infof("WeatherAPI success response for city %s: %s", city, string(respBody))
+	logger.Infof("WeatherAPI success response for Current weather in city %s: %s", city, string(respBody))
 
 	var result currentWeatherAPIResponse
 	if err := json.Unmarshal(respBody, &result); err != nil {
@@ -156,7 +156,7 @@ func (c *WeatherAPIClient) GetAPIDayWeather(
 		return nil, customErrors.ErrWeatherDataError
 	}
 
-	logger.Infof("WeatherAPI success response for city %s: %s", city, string(respBody))
+	logger.Infof("WeatherAPI success response for Day weather in city %s: %s", city, string(respBody))
 
 	var result dayWeatherAPIResponse
 	if err := json.Unmarshal(respBody, &result); err != nil {

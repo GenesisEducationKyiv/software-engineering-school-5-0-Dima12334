@@ -15,6 +15,11 @@ const (
 	devLogEnv  = "dev"
 )
 
+const (
+	dirPerm  = 0o750
+	filePerm = 0o600
+)
+
 func Init(loggerCfg config.LoggerConfig) error {
 	var core zapcore.Core
 
@@ -24,10 +29,10 @@ func Init(loggerCfg config.LoggerConfig) error {
 	switch loggerCfg.LoggerEnv {
 	case prodLogEnv:
 		logDir := filepath.Dir(loggerCfg.FilePath)
-		if err := os.MkdirAll(logDir, 0o755); err != nil {
+		if err := os.MkdirAll(logDir, dirPerm); err != nil {
 			return fmt.Errorf("failed to create log dir: %w", err)
 		}
-		logFile, err := os.OpenFile(loggerCfg.FilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
+		logFile, err := os.OpenFile(loggerCfg.FilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, filePerm)
 		if err != nil {
 			return err
 		}
