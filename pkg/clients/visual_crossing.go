@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"reflect"
 	"time"
 	"weather_forecast_sub/internal/domain"
@@ -73,11 +74,11 @@ func (c *VisualCrossingClient) processErrorResponse(resp *http.Response) error {
 func (c *VisualCrossingClient) GetAPICurrentWeather(
 	ctx context.Context, city string,
 ) (*domain.WeatherResponse, error) {
-	url := fmt.Sprintf(
+	requestURL := fmt.Sprintf(
 		"%s/%s/today?unitGroup=metric&include=current&key=%s", c.BaseURL, city, c.APIKey,
 	)
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, requestURL, nil)
 	if err != nil {
 		logger.Errorf("failed to create VisualCrossing request: %s", err)
 		return nil, err
@@ -112,8 +113,14 @@ func (c *VisualCrossingClient) GetAPICurrentWeather(
 		return nil, customErrors.ErrWeatherDataError
 	}
 
+	decodedCity, err := url.QueryUnescape(city)
+	if err != nil {
+		decodedCity = city
+	}
 	logger.Infof(
-		"VisualCrossing API success response for Current weather in city %s: %s", city, string(respBody),
+		"VisualCrossing API success response for Current weather in city %s: %s",
+		decodedCity,
+		string(respBody),
 	)
 
 	var result visualCrossingResponse
@@ -132,11 +139,11 @@ func (c *VisualCrossingClient) GetAPICurrentWeather(
 func (c *VisualCrossingClient) GetAPIDayWeather(
 	ctx context.Context, city string,
 ) (*domain.DayWeatherResponse, error) {
-	url := fmt.Sprintf(
+	requestURL := fmt.Sprintf(
 		"%s/%s/today?unitGroup=metric&include=hours&key=%s&contentType=json", c.BaseURL, city, c.APIKey,
 	)
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, requestURL, nil)
 	if err != nil {
 		logger.Errorf("failed to create VisualCrossing request: %s", err)
 		return nil, err
@@ -171,7 +178,15 @@ func (c *VisualCrossingClient) GetAPIDayWeather(
 		return nil, customErrors.ErrWeatherDataError
 	}
 
-	logger.Infof("VisualCrossing API success response for Day weather in city %s: %s", city, string(respBody))
+	decodedCity, err := url.QueryUnescape(city)
+	if err != nil {
+		decodedCity = city
+	}
+	logger.Infof(
+		"VisualCrossing API success response for Day weather in city %s: %s",
+		decodedCity,
+		string(respBody),
+	)
 
 	var result visualCrossingResponse
 	if err := json.Unmarshal(respBody, &result); err != nil {

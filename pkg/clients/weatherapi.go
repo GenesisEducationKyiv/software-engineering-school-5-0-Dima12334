@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"reflect"
 	"strings"
 	"time"
@@ -93,9 +94,9 @@ func (c *WeatherAPIClient) processErrorResponse(resp *http.Response) error {
 func (c *WeatherAPIClient) GetAPICurrentWeather(
 	ctx context.Context, city string,
 ) (*domain.WeatherResponse, error) {
-	url := fmt.Sprintf("%s/current.json?key=%s&q=%s", c.BaseURL, c.APIKey, city)
+	requestURL := fmt.Sprintf("%s/current.json?key=%s&q=%s", c.BaseURL, c.APIKey, city)
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, requestURL, nil)
 	if err != nil {
 		logger.Errorf("failed to create WeatherAPI request: %s", err)
 		return nil, err
@@ -129,7 +130,16 @@ func (c *WeatherAPIClient) GetAPICurrentWeather(
 		logger.Errorf("failed to read WeatherAPI response body: %s", err)
 		return nil, customErrors.ErrWeatherDataError
 	}
-	logger.Infof("WeatherAPI success response for Current weather in city %s: %s", city, string(respBody))
+
+	decodedCity, err := url.QueryUnescape(city)
+	if err != nil {
+		decodedCity = city
+	}
+	logger.Infof(
+		"WeatherAPI success response for Current weather in city %s: %s",
+		decodedCity,
+		string(respBody),
+	)
 
 	var result currentWeatherAPIResponse
 	if err := json.Unmarshal(respBody, &result); err != nil {
@@ -147,9 +157,9 @@ func (c *WeatherAPIClient) GetAPICurrentWeather(
 func (c *WeatherAPIClient) GetAPIDayWeather(
 	ctx context.Context, city string,
 ) (*domain.DayWeatherResponse, error) {
-	url := fmt.Sprintf("%s/forecast.json?key=%s&q=%s&days=1", c.BaseURL, c.APIKey, city)
+	requestURL := fmt.Sprintf("%s/forecast.json?key=%s&q=%s&days=1", c.BaseURL, c.APIKey, city)
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, requestURL, nil)
 	if err != nil {
 		logger.Errorf("failed to create WeatherAPI request: %s", err)
 		return nil, err
@@ -184,7 +194,15 @@ func (c *WeatherAPIClient) GetAPIDayWeather(
 		return nil, customErrors.ErrWeatherDataError
 	}
 
-	logger.Infof("WeatherAPI success response for Day weather in city %s: %s", city, string(respBody))
+	decodedCity, err := url.QueryUnescape(city)
+	if err != nil {
+		decodedCity = city
+	}
+	logger.Infof(
+		"WeatherAPI success response for Day weather in city %s: %s",
+		decodedCity,
+		string(respBody),
+	)
 
 	var result dayWeatherAPIResponse
 	if err := json.Unmarshal(respBody, &result); err != nil {
