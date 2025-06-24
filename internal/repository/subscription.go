@@ -48,7 +48,7 @@ func (r *SubscriptionRepo) GetByToken(ctx context.Context, token string) (domain
 
 	query := `
 		SELECT     
-		 id,
+		id,
 		created_at,
 		email,
 		city,
@@ -94,7 +94,7 @@ func (r *SubscriptionRepo) GetConfirmedByFrequency(frequency string) ([]domain.S
 
 	query := `
 		SELECT     
-		 id,
+		id,
 		created_at,
 		email,
 		city,

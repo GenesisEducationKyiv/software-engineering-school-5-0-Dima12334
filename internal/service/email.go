@@ -8,28 +8,28 @@ import (
 	"weather_forecast_sub/pkg/logger"
 )
 
-type EmailService struct {
-	sender      email.Sender
-	emailConfig config.EmailConfig
-	httpConfig  config.HTTPConfig
-}
-
-type confirmationEmailInput struct {
+type ConfirmationEmailTemplateInput struct {
 	ConfirmationLink string
 }
 
-type weatherForecastDailyEmailInput struct {
+type WeatherForecastDailyEmailTemplateInput struct {
 	UnsubscribeLink string
 	City            string
 	Weather         domain.DayWeatherResponse
 	Date            string
 }
 
-type weatherForecastHourlyEmailInput struct {
+type WeatherForecastHourlyEmailTemplateInput struct {
 	UnsubscribeLink string
 	City            string
 	Weather         domain.WeatherResponse
 	Date            string
+}
+
+type EmailService struct {
+	sender      email.Sender
+	emailConfig config.EmailConfig
+	httpConfig  config.HTTPConfig
 }
 
 func NewEmailsService(
@@ -47,7 +47,7 @@ func NewEmailsService(
 func (s *EmailService) SendConfirmationEmail(inp ConfirmationEmailInput) error {
 	subject := s.emailConfig.Subjects.Confirmation
 
-	templateInput := confirmationEmailInput{
+	templateInput := ConfirmationEmailTemplateInput{
 		ConfirmationLink: s.createConfirmationLink(inp.Token),
 	}
 	sendInput := email.SendEmailInput{Subject: subject, To: inp.Email}
@@ -99,7 +99,7 @@ func sendWeatherForecastEmail(
 func (s *EmailService) SendWeatherForecastDailyEmail(
 	inp WeatherForecastEmailInput[*domain.DayWeatherResponse],
 ) error {
-	templateInput := weatherForecastDailyEmailInput{
+	templateInput := WeatherForecastDailyEmailTemplateInput{
 		UnsubscribeLink: s.createUnsubscribeLink(inp.Subscription.Token),
 		City:            inp.Subscription.City,
 		Weather:         *inp.Weather,
@@ -120,7 +120,7 @@ func (s *EmailService) SendWeatherForecastDailyEmail(
 func (s *EmailService) SendWeatherForecastHourlyEmail(
 	inp WeatherForecastEmailInput[*domain.WeatherResponse],
 ) error {
-	templateInput := weatherForecastHourlyEmailInput{
+	templateInput := WeatherForecastHourlyEmailTemplateInput{
 		UnsubscribeLink: s.createUnsubscribeLink(inp.Subscription.Token),
 		City:            inp.Subscription.City,
 		Weather:         *inp.Weather,

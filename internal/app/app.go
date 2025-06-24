@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"errors"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -77,6 +78,10 @@ func (ab *ApplicationBuilder) Build(environment string) (*Application, error) {
 	dbConn, err := db.NewDBConnection(cfg.DB.DSN)
 	if err != nil {
 		return nil, err
+	}
+	err = db.ValidateDBConnection(dbConn)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	app := &Application{
