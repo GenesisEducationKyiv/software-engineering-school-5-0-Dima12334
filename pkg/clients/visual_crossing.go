@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"reflect"
 	"time"
 	"weather_forecast_sub/internal/domain"
@@ -28,9 +27,12 @@ type VisualCrossingClient struct {
 
 func NewVisualCrossingClient(apiKey string) *VisualCrossingClient {
 	return &VisualCrossingClient{
-		APIKey:     apiKey,
-		BaseURL:    "https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline",
-		HTTPClient: &http.Client{Timeout: visualCrossingTimeout},
+		APIKey:  apiKey,
+		BaseURL: "https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline",
+		HTTPClient: &http.Client{
+			Timeout:   visualCrossingTimeout,
+			Transport: NewLoggingRoundTripper("VisualCrossingClient"),
+		},
 	}
 }
 
@@ -58,7 +60,6 @@ func (c *VisualCrossingClient) setNext(next ChainWeatherProvider) {
 func (c *VisualCrossingClient) processErrorResponse(resp *http.Response) error {
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		logger.Errorf("error reading VisualCrossing response body: %s", err)
 		return customErrors.ErrWeatherDataError
 	}
 	bodyStr := string(body)
@@ -67,7 +68,6 @@ func (c *VisualCrossingClient) processErrorResponse(resp *http.Response) error {
 		return customErrors.ErrCityNotFound
 	}
 
-	logger.Errorf("VisualCrossing API error. Status code: %d, Message: %s", resp.StatusCode, bodyStr)
 	return customErrors.ErrWeatherDataError
 }
 
@@ -80,13 +80,11 @@ func (c *VisualCrossingClient) GetAPICurrentWeather(
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, requestURL, nil)
 	if err != nil {
-		logger.Errorf("failed to create VisualCrossing request: %s", err)
 		return nil, err
 	}
 
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
-		logger.Errorf("error making request to VisualCrossing API: %s", err)
 		return nil, err
 	}
 	defer closeBody(resp.Body, &err)
@@ -107,24 +105,8 @@ func (c *VisualCrossingClient) GetAPICurrentWeather(
 		return nil, err
 	}
 
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		logger.Errorf("failed to read VisualCrossing response body: %s", err)
-		return nil, customErrors.ErrWeatherDataError
-	}
-
-	decodedCity, err := url.QueryUnescape(city)
-	if err != nil {
-		decodedCity = city
-	}
-	logger.Infof(
-		"VisualCrossing API success response for Current weather in city %s: %s",
-		decodedCity,
-		string(respBody),
-	)
-
 	var result visualCrossingResponse
-	if err := json.Unmarshal(respBody, &result); err != nil {
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		logger.Errorf("error decoding VisualCrossing current weather: %s", err)
 		return nil, customErrors.ErrWeatherDataError
 	}
@@ -145,13 +127,11 @@ func (c *VisualCrossingClient) GetAPIDayWeather(
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, requestURL, nil)
 	if err != nil {
-		logger.Errorf("failed to create VisualCrossing request: %s", err)
 		return nil, err
 	}
 
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
-		logger.Errorf("error making request to VisualCrossing API: %s", err)
 		return nil, err
 	}
 	defer closeBody(resp.Body, &err)
@@ -172,24 +152,8 @@ func (c *VisualCrossingClient) GetAPIDayWeather(
 		return nil, err
 	}
 
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		logger.Errorf("failed to read VisualCrossing response body: %s", err)
-		return nil, customErrors.ErrWeatherDataError
-	}
-
-	decodedCity, err := url.QueryUnescape(city)
-	if err != nil {
-		decodedCity = city
-	}
-	logger.Infof(
-		"VisualCrossing API success response for Day weather in city %s: %s",
-		decodedCity,
-		string(respBody),
-	)
-
 	var result visualCrossingResponse
-	if err := json.Unmarshal(respBody, &result); err != nil {
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		logger.Errorf("error decoding VisualCrossing forecast: %s", err)
 		return nil, customErrors.ErrWeatherDataError
 	}

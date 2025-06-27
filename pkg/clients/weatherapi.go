@@ -4,9 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
-	"net/url"
 	"reflect"
 	"strings"
 	"time"
@@ -29,9 +27,12 @@ type WeatherAPIClient struct {
 
 func NewWeatherAPIClient(apiKey string) *WeatherAPIClient {
 	return &WeatherAPIClient{
-		APIKey:     apiKey,
-		BaseURL:    "https://api.weatherapi.com/v1",
-		HTTPClient: &http.Client{Timeout: weatherAPIClientTimeout},
+		APIKey:  apiKey,
+		BaseURL: "https://api.weatherapi.com/v1",
+		HTTPClient: &http.Client{
+			Timeout:   weatherAPIClientTimeout,
+			Transport: NewLoggingRoundTripper("WeatherAPIClient"),
+		},
 	}
 }
 
@@ -74,7 +75,7 @@ func (c *WeatherAPIClient) setNext(next ChainWeatherProvider) {
 func (c *WeatherAPIClient) processErrorResponse(resp *http.Response) error {
 	var apiErr weatherAPIErrorResponse
 	if err := json.NewDecoder(resp.Body).Decode(&apiErr); err != nil {
-		logger.Errorf("error decoding WeatherAPI error response: %s", err)
+		logger.Errorf("error parsing WeatherAPI error response: %s", err)
 		return customErrors.ErrWeatherDataError
 	}
 
@@ -82,12 +83,6 @@ func (c *WeatherAPIClient) processErrorResponse(resp *http.Response) error {
 		return customErrors.ErrCityNotFound
 	}
 
-	logger.Errorf(
-		"WeatherAPI error. Status code: %d, api code: %d, message: %s",
-		resp.StatusCode,
-		apiErr.Error.Code,
-		apiErr.Error.Message,
-	)
 	return customErrors.ErrWeatherDataError
 }
 
@@ -98,13 +93,11 @@ func (c *WeatherAPIClient) GetAPICurrentWeather(
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, requestURL, nil)
 	if err != nil {
-		logger.Errorf("failed to create WeatherAPI request: %s", err)
 		return nil, err
 	}
 
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
-		logger.Errorf("error making request to WeatherClient API: %s", err.Error())
 		return nil, err
 	}
 	defer closeBody(resp.Body, &err)
@@ -125,24 +118,8 @@ func (c *WeatherAPIClient) GetAPICurrentWeather(
 		return nil, err
 	}
 
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		logger.Errorf("failed to read WeatherAPI response body: %s", err)
-		return nil, customErrors.ErrWeatherDataError
-	}
-
-	decodedCity, err := url.QueryUnescape(city)
-	if err != nil {
-		decodedCity = city
-	}
-	logger.Infof(
-		"WeatherAPI success response for Current weather in city %s: %s",
-		decodedCity,
-		string(respBody),
-	)
-
 	var result currentWeatherAPIResponse
-	if err := json.Unmarshal(respBody, &result); err != nil {
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		logger.Errorf("error parsing WeatherAPI response: %s", err.Error())
 		return nil, customErrors.ErrWeatherDataError
 	}
@@ -161,13 +138,11 @@ func (c *WeatherAPIClient) GetAPIDayWeather(
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, requestURL, nil)
 	if err != nil {
-		logger.Errorf("failed to create WeatherAPI request: %s", err)
 		return nil, err
 	}
 
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
-		logger.Errorf("error making request to WeatherAPI: %s", err.Error())
 		return nil, err
 	}
 	defer closeBody(resp.Body, &err)
@@ -188,24 +163,8 @@ func (c *WeatherAPIClient) GetAPIDayWeather(
 		return nil, err
 	}
 
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		logger.Errorf("failed to read WeatherAPI response body: %s", err)
-		return nil, customErrors.ErrWeatherDataError
-	}
-
-	decodedCity, err := url.QueryUnescape(city)
-	if err != nil {
-		decodedCity = city
-	}
-	logger.Infof(
-		"WeatherAPI success response for Day weather in city %s: %s",
-		decodedCity,
-		string(respBody),
-	)
-
 	var result dayWeatherAPIResponse
-	if err := json.Unmarshal(respBody, &result); err != nil {
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		logger.Errorf("error parsing WeatherAPI response: %s", err.Error())
 		return nil, customErrors.ErrWeatherDataError
 	}
