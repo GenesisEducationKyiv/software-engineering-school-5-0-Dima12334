@@ -81,9 +81,12 @@ func testSuccessfulWeatherRequest(t *testing.T) {
 
 	primaryClient := fakeNewWeatherAPIClient(primaryServer)
 	fallbackClient := fakeNewVisualCrossingClient(fallbackServer)
-	chainClient := clients.NewChainWeatherClient(
+	chainClient, err := clients.NewChainWeatherClient(
 		[]clients.ChainWeatherProvider{primaryClient, fallbackClient},
 	)
+	if err != nil {
+		t.Fatalf("failed to create chain weather client: %v", err)
+	}
 
 	weatherService := service.NewWeatherService(chainClient)
 	h := handlers.NewHandler(&service.Services{Weather: weatherService})
@@ -131,9 +134,12 @@ func testSuccessfulWeatherRequestFallbackToSecondClient(t *testing.T) {
 
 	primaryClient := fakeNewWeatherAPIClient(primaryServer)
 	fallbackClient := fakeNewVisualCrossingClient(fallbackServer)
-	chainClient := clients.NewChainWeatherClient(
+	chainClient, err := clients.NewChainWeatherClient(
 		[]clients.ChainWeatherProvider{primaryClient, fallbackClient},
 	)
+	if err != nil {
+		t.Fatalf("failed to create chain weather client: %v", err)
+	}
 
 	weatherService := service.NewWeatherService(chainClient)
 	h := handlers.NewHandler(&service.Services{Weather: weatherService})
@@ -197,9 +203,12 @@ func testCityNotFound(t *testing.T) {
 	primaryClient := fakeNewWeatherAPIClient(primaryServer)
 	fallbackClient := fakeNewVisualCrossingClient(fallbackServer)
 
-	chainClient := clients.NewChainWeatherClient(
+	chainClient, err := clients.NewChainWeatherClient(
 		[]clients.ChainWeatherProvider{primaryClient, fallbackClient},
 	)
+	if err != nil {
+		t.Fatalf("failed to create chain weather client: %v", err)
+	}
 
 	weatherService := service.NewWeatherService(chainClient)
 	h := handlers.NewHandler(&service.Services{Weather: weatherService})

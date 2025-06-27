@@ -54,7 +54,10 @@ func (ab *ApplicationBuilder) setupDependencies(app *Application) {
 	allWeatherClients := append(
 		[]clients.ChainWeatherProvider{primaryWeatherClient}, fallbackWeatherClients...,
 	)
-	chainWeatherClient := clients.NewChainWeatherClient(allWeatherClients)
+	chainWeatherClient, err := clients.NewChainWeatherClient(allWeatherClients)
+	if err != nil {
+		log.Fatalf("failed to create chain weather client: %v", err)
+	}
 
 	repositories := repository.NewRepositories(app.dbConn)
 

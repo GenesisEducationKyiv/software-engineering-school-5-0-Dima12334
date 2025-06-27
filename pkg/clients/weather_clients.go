@@ -2,6 +2,7 @@ package clients
 
 import (
 	"context"
+	"errors"
 	"weather_forecast_sub/internal/domain"
 )
 
@@ -19,14 +20,18 @@ type ChainWeatherClient struct {
 	primaryClient WeatherClient
 }
 
-func NewChainWeatherClient(clients []ChainWeatherProvider) *ChainWeatherClient {
+func NewChainWeatherClient(clients []ChainWeatherProvider) (*ChainWeatherClient, error) {
+	if len(clients) == 0 {
+		return nil, errors.New("cannot create ChainWeatherClient with empty client list")
+	}
+
 	for i := 0; i < len(clients)-1; i++ {
 		clients[i].setNext(clients[i+1])
 	}
 
 	return &ChainWeatherClient{
 		primaryClient: clients[0],
-	}
+	}, nil
 }
 
 func (c *ChainWeatherClient) GetAPICurrentWeather(
