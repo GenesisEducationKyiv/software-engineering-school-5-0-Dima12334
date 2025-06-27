@@ -19,21 +19,37 @@ const (
 )
 
 type VisualCrossingClient struct {
-	APIKey     string
-	BaseURL    string
-	HTTPClient *http.Client
+	apiKey     string
+	baseURL    string
+	httpClient *http.Client
 	next       WeatherClient
 }
 
 func NewVisualCrossingClient(apiKey string) *VisualCrossingClient {
 	return &VisualCrossingClient{
-		APIKey:  apiKey,
-		BaseURL: "https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline",
-		HTTPClient: &http.Client{
+		apiKey:  apiKey,
+		baseURL: "https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline",
+		httpClient: &http.Client{
 			Timeout:   visualCrossingTimeout,
 			Transport: NewLoggingRoundTripper("VisualCrossingClient"),
 		},
 	}
+}
+
+// WithClient mostly used for testing purposes to inject a custom HTTP client.
+func (c *VisualCrossingClient) WithClient(client *http.Client) *VisualCrossingClient {
+	c.httpClient = client
+	return c
+}
+
+// WithBaseURL mostly used for testing purposes to inject a custom base URL.
+func (c *VisualCrossingClient) WithBaseURL(baseURL string) *VisualCrossingClient {
+	c.baseURL = baseURL
+	return c
+}
+
+func (c *VisualCrossingClient) setNext(next ChainWeatherProvider) {
+	c.next = next
 }
 
 type visualCrossingResponse struct {
@@ -51,10 +67,6 @@ type visualCrossingResponse struct {
 			Conditions string  `json:"conditions"`
 		} `json:"hours"`
 	} `json:"days"`
-}
-
-func (c *VisualCrossingClient) setNext(next ChainWeatherProvider) {
-	c.next = next
 }
 
 func (c *VisualCrossingClient) processErrorResponse(resp *http.Response) error {
@@ -75,7 +87,7 @@ func (c *VisualCrossingClient) GetAPICurrentWeather(
 	ctx context.Context, city string,
 ) (*domain.WeatherResponse, error) {
 	requestURL := fmt.Sprintf(
-		"%s/%s/today?unitGroup=metric&include=current&key=%s", c.BaseURL, city, c.APIKey,
+		"%s/%s/today?unitGroup=metric&include=current&key=%s", c.baseURL, city, c.apiKey,
 	)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, requestURL, nil)
@@ -83,7 +95,7 @@ func (c *VisualCrossingClient) GetAPICurrentWeather(
 		return nil, err
 	}
 
-	resp, err := c.HTTPClient.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +134,7 @@ func (c *VisualCrossingClient) GetAPIDayWeather(
 	ctx context.Context, city string,
 ) (*domain.DayWeatherResponse, error) {
 	requestURL := fmt.Sprintf(
-		"%s/%s/today?unitGroup=metric&include=hours&key=%s&contentType=json", c.BaseURL, city, c.APIKey,
+		"%s/%s/today?unitGroup=metric&include=hours&key=%s&contentType=json", c.baseURL, city, c.apiKey,
 	)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, requestURL, nil)
@@ -130,7 +142,7 @@ func (c *VisualCrossingClient) GetAPIDayWeather(
 		return nil, err
 	}
 
-	resp, err := c.HTTPClient.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}

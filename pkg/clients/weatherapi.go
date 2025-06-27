@@ -19,21 +19,37 @@ const (
 )
 
 type WeatherAPIClient struct {
-	APIKey     string
-	BaseURL    string
-	HTTPClient *http.Client
+	apiKey     string
+	baseURL    string
+	httpClient *http.Client
 	next       WeatherClient
 }
 
 func NewWeatherAPIClient(apiKey string) *WeatherAPIClient {
 	return &WeatherAPIClient{
-		APIKey:  apiKey,
-		BaseURL: "https://api.weatherapi.com/v1",
-		HTTPClient: &http.Client{
+		apiKey:  apiKey,
+		baseURL: "https://api.weatherapi.com/v1",
+		httpClient: &http.Client{
 			Timeout:   weatherAPIClientTimeout,
 			Transport: NewLoggingRoundTripper("WeatherAPIClient"),
 		},
 	}
+}
+
+// WithClient mostly used for testing purposes to inject a custom HTTP client.
+func (c *WeatherAPIClient) WithClient(client *http.Client) *WeatherAPIClient {
+	c.httpClient = client
+	return c
+}
+
+// WithBaseURL mostly used for testing purposes to inject a custom base URL.
+func (c *WeatherAPIClient) WithBaseURL(baseURL string) *WeatherAPIClient {
+	c.baseURL = baseURL
+	return c
+}
+
+func (c *WeatherAPIClient) setNext(next ChainWeatherProvider) {
+	c.next = next
 }
 
 type weatherAPIErrorResponse struct {
@@ -68,10 +84,6 @@ type dayWeatherAPIResponse struct {
 	} `json:"forecast"`
 }
 
-func (c *WeatherAPIClient) setNext(next ChainWeatherProvider) {
-	c.next = next
-}
-
 func (c *WeatherAPIClient) processErrorResponse(resp *http.Response) error {
 	var apiErr weatherAPIErrorResponse
 	if err := json.NewDecoder(resp.Body).Decode(&apiErr); err != nil {
@@ -89,14 +101,14 @@ func (c *WeatherAPIClient) processErrorResponse(resp *http.Response) error {
 func (c *WeatherAPIClient) GetAPICurrentWeather(
 	ctx context.Context, city string,
 ) (*domain.WeatherResponse, error) {
-	requestURL := fmt.Sprintf("%s/current.json?key=%s&q=%s", c.BaseURL, c.APIKey, city)
+	requestURL := fmt.Sprintf("%s/current.json?key=%s&q=%s", c.baseURL, c.apiKey, city)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, requestURL, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := c.HTTPClient.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -134,14 +146,14 @@ func (c *WeatherAPIClient) GetAPICurrentWeather(
 func (c *WeatherAPIClient) GetAPIDayWeather(
 	ctx context.Context, city string,
 ) (*domain.DayWeatherResponse, error) {
-	requestURL := fmt.Sprintf("%s/forecast.json?key=%s&q=%s&days=1", c.BaseURL, c.APIKey, city)
+	requestURL := fmt.Sprintf("%s/forecast.json?key=%s&q=%s&days=1", c.baseURL, c.apiKey, city)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, requestURL, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := c.HTTPClient.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}

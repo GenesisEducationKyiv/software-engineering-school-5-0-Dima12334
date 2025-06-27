@@ -38,19 +38,15 @@ func performRequest(router *gin.Engine, url string) *httptest.ResponseRecorder {
 }
 
 func fakeNewWeatherAPIClient(fakePrimaryServer *httptest.Server) *clients.WeatherAPIClient {
-	return &clients.WeatherAPIClient{
-		APIKey:     "dummy",
-		BaseURL:    fakePrimaryServer.URL,
-		HTTPClient: fakePrimaryServer.Client(),
-	}
+	return clients.NewWeatherAPIClient(
+		"dummy-key",
+	).WithBaseURL(fakePrimaryServer.URL).WithClient(fakePrimaryServer.Client())
 }
 
 func fakeNewVisualCrossingClient(fakePrimaryServer *httptest.Server) *clients.VisualCrossingClient {
-	return &clients.VisualCrossingClient{
-		APIKey:     "dummy",
-		BaseURL:    fakePrimaryServer.URL,
-		HTTPClient: fakePrimaryServer.Client(),
-	}
+	return clients.NewVisualCrossingClient(
+		"dummy-key",
+	).WithBaseURL(fakePrimaryServer.URL).WithClient(fakePrimaryServer.Client())
 }
 
 func testSuccessfulWeatherRequest(t *testing.T) {
