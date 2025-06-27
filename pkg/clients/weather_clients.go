@@ -17,7 +17,7 @@ type ChainWeatherProvider interface {
 }
 
 type ChainWeatherClient struct {
-	primaryClient WeatherClient
+	WeatherClient
 }
 
 func NewChainWeatherClient(clients []ChainWeatherProvider) (*ChainWeatherClient, error) {
@@ -30,18 +30,6 @@ func NewChainWeatherClient(clients []ChainWeatherProvider) (*ChainWeatherClient,
 	}
 
 	return &ChainWeatherClient{
-		primaryClient: clients[0],
+		WeatherClient: clients[0],
 	}, nil
-}
-
-func (c *ChainWeatherClient) GetAPICurrentWeather(
-	ctx context.Context, city string,
-) (*domain.WeatherResponse, error) {
-	return c.primaryClient.GetAPICurrentWeather(ctx, city)
-}
-
-func (c *ChainWeatherClient) GetAPIDayWeather(
-	ctx context.Context, city string,
-) (*domain.DayWeatherResponse, error) {
-	return c.primaryClient.GetAPIDayWeather(ctx, city)
 }
