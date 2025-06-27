@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"reflect"
 	"strings"
 	"time"
 	"weather_forecast_sub/internal/domain"
@@ -18,17 +19,37 @@ const (
 )
 
 type WeatherAPIClient struct {
-	APIKey     string
-	BaseURL    string
-	HTTPClient *http.Client
+	apiKey     string
+	baseURL    string
+	httpClient *http.Client
+	next       WeatherClient
 }
 
 func NewWeatherAPIClient(apiKey string) *WeatherAPIClient {
 	return &WeatherAPIClient{
-		APIKey:     apiKey,
-		BaseURL:    "https://api.weatherapi.com/v1",
-		HTTPClient: &http.Client{Timeout: weatherAPIClientTimeout},
+		apiKey:  apiKey,
+		baseURL: "https://api.weatherapi.com/v1",
+		httpClient: &http.Client{
+			Timeout:   weatherAPIClientTimeout,
+			Transport: NewLoggingRoundTripper("WeatherAPIClient"),
+		},
 	}
+}
+
+// WithClient mostly used for testing purposes to inject a custom HTTP client.
+func (c *WeatherAPIClient) WithClient(client *http.Client) *WeatherAPIClient {
+	c.httpClient = client
+	return c
+}
+
+// WithBaseURL mostly used for testing purposes to inject a custom base URL.
+func (c *WeatherAPIClient) WithBaseURL(baseURL string) *WeatherAPIClient {
+	c.baseURL = baseURL
+	return c
+}
+
+func (c *WeatherAPIClient) setNext(next ChainWeatherProvider) {
+	c.next = next
 }
 
 type weatherAPIErrorResponse struct {
@@ -63,55 +84,56 @@ type dayWeatherAPIResponse struct {
 	} `json:"forecast"`
 }
 
+func (c *WeatherAPIClient) processErrorResponse(resp *http.Response) error {
+	var apiErr weatherAPIErrorResponse
+	if err := json.NewDecoder(resp.Body).Decode(&apiErr); err != nil {
+		logger.Errorf("error parsing WeatherAPI error response: %s", err)
+		return customErrors.ErrWeatherDataError
+	}
+
+	if resp.StatusCode == http.StatusBadRequest && apiErr.Error.Code == weatherAPICityNotFoundCode {
+		return customErrors.ErrCityNotFound
+	}
+
+	return customErrors.ErrWeatherDataError
+}
+
 func (c *WeatherAPIClient) GetAPICurrentWeather(
 	ctx context.Context, city string,
 ) (*domain.WeatherResponse, error) {
-	url := fmt.Sprintf("%s/current.json?key=%s&q=%s", c.BaseURL, c.APIKey, city)
+	requestURL := fmt.Sprintf("%s/current.json?key=%s&q=%s", c.baseURL, c.apiKey, city)
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, requestURL, nil)
 	if err != nil {
-		logger.Errorf("failed to create WeatherAPI request: %s", err)
 		return nil, err
 	}
 
-	resp, err := c.HTTPClient.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		logger.Errorf("error making request to WeatherClient API: %s", err.Error())
 		return nil, err
 	}
-	defer func() {
-		if closeErr := resp.Body.Close(); closeErr != nil {
-			if err != nil {
-				err = fmt.Errorf("%w; failed to close response body: %w", err, closeErr)
-			} else {
-				err = fmt.Errorf("failed to close response body: %w", closeErr)
-			}
-		}
-	}()
+	defer closeBody(resp.Body, &err)
 
 	if resp.StatusCode != http.StatusOK {
-		var apiErr weatherAPIErrorResponse
-		if err = json.NewDecoder(resp.Body).Decode(&apiErr); err == nil {
-			if resp.StatusCode == http.StatusBadRequest && apiErr.Error.Code == weatherAPICityNotFoundCode {
-				return nil, customErrors.ErrCityNotFound
-			}
-			logger.Errorf(
-				"WeatherAPI error. Status code: %d, api code: %d, message: %s",
-				resp.StatusCode,
-				apiErr.Error.Code,
-				apiErr.Error.Message,
+		err = c.processErrorResponse(resp)
+
+		if c.next != nil {
+			nextClientName := reflect.TypeOf(c.next).Elem().Name()
+			logger.Warnf(
+				"WeatherAPIClient.GetAPICurrentWeather() error: %s. "+
+					"Passing request to next weather client in chain: %s",
+				err,
+				nextClientName,
 			)
-			return nil, customErrors.ErrWeatherAPIError
+			return c.next.GetAPICurrentWeather(ctx, city)
 		}
-		logger.Errorf("WeatherAPI error. Status code: %d", resp.StatusCode)
-		return nil, customErrors.ErrWeatherAPIError
+		return nil, err
 	}
 
 	var result currentWeatherAPIResponse
-	err = json.NewDecoder(resp.Body).Decode(&result)
-	if err != nil {
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		logger.Errorf("error parsing WeatherAPI response: %s", err.Error())
-		return nil, customErrors.ErrWeatherAPIError
+		return nil, customErrors.ErrWeatherDataError
 	}
 
 	return &domain.WeatherResponse{
@@ -124,51 +146,39 @@ func (c *WeatherAPIClient) GetAPICurrentWeather(
 func (c *WeatherAPIClient) GetAPIDayWeather(
 	ctx context.Context, city string,
 ) (*domain.DayWeatherResponse, error) {
-	url := fmt.Sprintf("%s/forecast.json?key=%s&q=%s&days=1", c.BaseURL, c.APIKey, city)
+	requestURL := fmt.Sprintf("%s/forecast.json?key=%s&q=%s&days=1", c.baseURL, c.apiKey, city)
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, requestURL, nil)
 	if err != nil {
-		logger.Errorf("failed to create WeatherAPI request: %s", err)
 		return nil, err
 	}
 
-	resp, err := c.HTTPClient.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		logger.Errorf("error making request to WeatherAPI: %s", err.Error())
 		return nil, err
 	}
-	defer func() {
-		if closeErr := resp.Body.Close(); closeErr != nil {
-			if err != nil {
-				err = fmt.Errorf("%w; failed to close response body: %w", err, closeErr)
-			} else {
-				err = fmt.Errorf("failed to close response body: %w", closeErr)
-			}
-		}
-	}()
+	defer closeBody(resp.Body, &err)
 
 	if resp.StatusCode != http.StatusOK {
-		var apiErr weatherAPIErrorResponse
-		if err = json.NewDecoder(resp.Body).Decode(&apiErr); err == nil {
-			if resp.StatusCode == http.StatusBadRequest && apiErr.Error.Code == weatherAPICityNotFoundCode {
-				return nil, customErrors.ErrCityNotFound
-			}
-			logger.Errorf(
-				"WeatherAPI error. Status code: %d, api code: %d, message: %s",
-				resp.StatusCode,
-				apiErr.Error.Code,
-				apiErr.Error.Message,
+		err = c.processErrorResponse(resp)
+
+		if c.next != nil {
+			nextClientName := reflect.TypeOf(c.next).Elem().Name()
+			logger.Warnf(
+				"WeatherAPIClient.GetAPIDayWeather() error: %s. "+
+					"Passing request to next weather client in chain: %s",
+				err,
+				nextClientName,
 			)
-			return nil, customErrors.ErrWeatherAPIError
+			return c.next.GetAPIDayWeather(ctx, city)
 		}
-		logger.Errorf("WeatherAPI error. Status code: %d", resp.StatusCode)
-		return nil, customErrors.ErrWeatherAPIError
+		return nil, err
 	}
 
 	var result dayWeatherAPIResponse
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		logger.Errorf("error parsing WeatherAPI response: %s", err.Error())
-		return nil, customErrors.ErrWeatherAPIError
+		return nil, customErrors.ErrWeatherDataError
 	}
 
 	// Map of required times

@@ -3,22 +3,22 @@ package handlers_test
 import (
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"strings"
 	"testing"
-	"weather_forecast_sub/internal/domain"
 	"weather_forecast_sub/internal/handlers"
 	"weather_forecast_sub/internal/service"
-	mockClients "weather_forecast_sub/pkg/clients/mocks"
-	customErrors "weather_forecast_sub/pkg/errors"
+	"weather_forecast_sub/pkg/clients"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/mock/gomock"
 )
 
 func TestWeather(t *testing.T) {
 	t.Run("Successful weather request", testSuccessfulWeatherRequest)
+	t.Run(
+		"Successful weather request with fallback to second client",
+		testSuccessfulWeatherRequestFallbackToSecondClient,
+	)
 	t.Run("Empty city parameter", testEmptyCityParameter)
 	t.Run("City not found", testCityNotFound)
 }
@@ -37,31 +37,60 @@ func performRequest(router *gin.Engine, url string) *httptest.ResponseRecorder {
 	return w
 }
 
+func fakeNewWeatherAPIClient(fakePrimaryServer *httptest.Server) *clients.WeatherAPIClient {
+	return clients.NewWeatherAPIClient(
+		"dummy-key",
+	).WithBaseURL(fakePrimaryServer.URL).WithClient(fakePrimaryServer.Client())
+}
+
+func fakeNewVisualCrossingClient(fakePrimaryServer *httptest.Server) *clients.VisualCrossingClient {
+	return clients.NewVisualCrossingClient(
+		"dummy-key",
+	).WithBaseURL(fakePrimaryServer.URL).WithClient(fakePrimaryServer.Client())
+}
+
 func testSuccessfulWeatherRequest(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+	// Setup a fake WeatherAPI server that returns a successful weather response
+	primaryServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, err := w.Write([]byte(`{
+			"current": {
+				"temp_c": 25.4,
+				"humidity": 70,
+				"condition": {
+					"text": "Sunny"
+				}
+			}
+		}`))
+		if err != nil {
+			t.Fatalf("failed to write response: %v", err)
+		}
+	}))
+	defer primaryServer.Close()
 
-	// Setup mock client
-	mockClient := mockClients.NewMockWeatherClient(ctrl)
-	mockClient.EXPECT().
-		GetAPICurrentWeather(gomock.Any(), "Kyiv").
-		Return(&domain.WeatherResponse{
-			Temperature: 25.4,
-			Humidity:    70,
-			Description: "Sunny",
-		}, nil)
+	// Setup a fake VisualCrossing server that would return 500 (should not be called in this test)
+	fallbackServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Errorf("fallback server should NOT be called")
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	defer fallbackServer.Close()
 
-	// Setup service and handler
-	weatherService := service.NewWeatherService(mockClient)
+	primaryClient := fakeNewWeatherAPIClient(primaryServer)
+	fallbackClient := fakeNewVisualCrossingClient(fallbackServer)
+	chainClient, err := clients.NewChainWeatherClient(
+		[]clients.ChainWeatherProvider{primaryClient, fallbackClient},
+	)
+	if err != nil {
+		t.Fatalf("failed to create chain weather client: %v", err)
+	}
+
+	weatherService := service.NewWeatherService(chainClient)
 	h := handlers.NewHandler(&service.Services{Weather: weatherService})
 
-	// Setup router
 	router := setupTestRouter(h)
 
-	// Execute request
 	w := performRequest(router, "/api/weather?city=Kyiv")
 
-	// Verify response
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.JSONEq(
 		t,
@@ -70,49 +99,120 @@ func testSuccessfulWeatherRequest(t *testing.T) {
 	)
 }
 
-func testEmptyCityParameter(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+func testSuccessfulWeatherRequestFallbackToSecondClient(t *testing.T) {
+	// Setup fake WeatherAPI server that fails
+	primaryServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Simulate internal server error
+		w.WriteHeader(http.StatusInternalServerError)
+		_, err := w.Write([]byte(`{"error": "internal error"}`))
+		if err != nil {
+			t.Fatalf("failed to write response: %v", err)
+		}
+	}))
+	defer primaryServer.Close()
 
-	// Setup mock client (no expectations needed)
-	mockClient := mockClients.NewMockWeatherClient(ctrl)
+	// Setup VisualCrossing server that succeeds
+	fallbackServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, err := w.Write([]byte(`{
+			"currentConditions": {
+				"temp": 18.5,
+				"humidity": 60,
+				"conditions": "Partly cloudy"
+			},
+			"days": []
+		}`))
+		if err != nil {
+			t.Fatalf("failed to write response: %v", err)
+		}
+	}))
+	defer fallbackServer.Close()
 
-	// Setup service and handler
-	weatherService := service.NewWeatherService(mockClient)
+	primaryClient := fakeNewWeatherAPIClient(primaryServer)
+	fallbackClient := fakeNewVisualCrossingClient(fallbackServer)
+	chainClient, err := clients.NewChainWeatherClient(
+		[]clients.ChainWeatherProvider{primaryClient, fallbackClient},
+	)
+	if err != nil {
+		t.Fatalf("failed to create chain weather client: %v", err)
+	}
+
+	weatherService := service.NewWeatherService(chainClient)
 	h := handlers.NewHandler(&service.Services{Weather: weatherService})
 
-	// Setup router
 	router := setupTestRouter(h)
 
-	// Execute request
-	w := performRequest(router, "/api/weather")
+	w := performRequest(router, "/api/weather?city=Kyiv")
 
-	// Verify response
+	// Assert fallback (VisualCrossing) result
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.JSONEq(t,
+		`{"temperature":18.5,"humidity":60,"description":"Partly cloudy"}`,
+		strings.TrimSpace(w.Body.String()),
+	)
+}
+
+func testEmptyCityParameter(t *testing.T) {
+	// Use dummy client that will never be called
+	dummyServer := httptest.NewServer(http.NotFoundHandler())
+	defer dummyServer.Close()
+
+	client := fakeNewWeatherAPIClient(dummyServer)
+
+	weatherService := service.NewWeatherService(client)
+	h := handlers.NewHandler(&service.Services{Weather: weatherService})
+
+	router := setupTestRouter(h)
+
+	w := performRequest(router, "/api/weather") // no city param
+
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 	assert.Empty(t, strings.TrimSpace(w.Body.String()))
 }
 
 func testCityNotFound(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+	// Fake WeatherAPI response (400 + code 1006)
+	primaryServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusBadRequest)
+		_, err := w.Write([]byte(`{
+			"error": {
+				"code": 1006,
+				"message": "No matching location found."
+			}
+		}`))
+		if err != nil {
+			t.Fatalf("failed to write response: %v", err)
+		}
+	}))
+	defer primaryServer.Close()
 
-	// Setup mock client
-	mockClient := mockClients.NewMockWeatherClient(ctrl)
-	mockClient.EXPECT().
-		GetAPICurrentWeather(gomock.Any(), url.QueryEscape("Київ")).
-		Return(nil, customErrors.ErrCityNotFound)
+	// Fake VisualCrossing response (400 + plain-text body)
+	fallbackServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusBadRequest)
+		_, err := w.Write([]byte("Bad API Request:Invalid location parameter value."))
+		if err != nil {
+			t.Fatalf("failed to write response: %v", err)
+		}
+	}))
+	defer fallbackServer.Close()
 
-	// Setup service and handler
-	weatherService := service.NewWeatherService(mockClient)
+	primaryClient := fakeNewWeatherAPIClient(primaryServer)
+	fallbackClient := fakeNewVisualCrossingClient(fallbackServer)
+
+	chainClient, err := clients.NewChainWeatherClient(
+		[]clients.ChainWeatherProvider{primaryClient, fallbackClient},
+	)
+	if err != nil {
+		t.Fatalf("failed to create chain weather client: %v", err)
+	}
+
+	weatherService := service.NewWeatherService(chainClient)
 	h := handlers.NewHandler(&service.Services{Weather: weatherService})
 
-	// Setup router
 	router := setupTestRouter(h)
 
-	// Execute request
 	w := performRequest(router, "/api/weather?city=Київ")
 
-	// Verify response
 	assert.Equal(t, http.StatusNotFound, w.Code)
 	assert.Empty(t, strings.TrimSpace(w.Body.String()))
 }

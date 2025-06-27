@@ -1,6 +1,9 @@
 package logger
 
 import (
+	"fmt"
+	"os"
+	"path/filepath"
 	"weather_forecast_sub/internal/config"
 
 	"go.uber.org/zap"
@@ -12,27 +15,39 @@ const (
 	devLogEnv  = "dev"
 )
 
+const (
+	dirPerm  = 0o750
+	filePerm = 0o600
+)
+
 func Init(loggerCfg config.LoggerConfig) error {
-	var cfg zap.Config
+	var core zapcore.Core
 
-	if loggerCfg.LoggerEnv == prodLogEnv {
-		cfg = zap.NewProductionConfig()
-	} else {
-		cfg = zap.NewDevelopmentConfig()
+	encoderCfg := zap.NewProductionEncoderConfig()
+	encoderCfg.EncodeTime = zapcore.ISO8601TimeEncoder
+
+	switch loggerCfg.LoggerEnv {
+	case prodLogEnv:
+		logDir := filepath.Dir(loggerCfg.FilePath)
+		if err := os.MkdirAll(logDir, dirPerm); err != nil {
+			return fmt.Errorf("failed to create log dir: %w", err)
+		}
+		logFile, err := os.OpenFile(loggerCfg.FilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, filePerm)
+		if err != nil {
+			return err
+		}
+
+		writer := zapcore.AddSync(logFile)
+		core = zapcore.NewCore(zapcore.NewJSONEncoder(encoderCfg), writer, zap.InfoLevel)
+	default:
+		core = zapcore.NewCore(
+			zapcore.NewConsoleEncoder(encoderCfg), zapcore.AddSync(os.Stdout), zap.DebugLevel,
+		)
 	}
 
-	cfg.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
-	cfg.DisableStacktrace = true
-
-	baseLogger, err := cfg.Build()
-	if err != nil {
-		return err
-	}
-
-	logger := baseLogger.WithOptions(zap.AddCallerSkip(1))
+	logger := zap.New(core, zap.AddCaller(), zap.AddCallerSkip(1))
 	zap.ReplaceGlobals(logger)
-
-	return err
+	return nil
 }
 
 func Debug(msg string) {

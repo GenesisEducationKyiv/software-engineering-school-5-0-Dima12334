@@ -46,11 +46,23 @@ func (ab *ApplicationBuilder) setupDependencies(app *Application) {
 		app.config.SMTP.Host,
 		app.config.SMTP.Port,
 	)
-	thirdPartyClients := clients.NewClients(app.config.ThirdParty)
+
+	primaryWeatherClient := clients.NewWeatherAPIClient(app.config.ThirdParty.WeatherAPIKey)
+	fallbackWeatherClients := []clients.ChainWeatherProvider{
+		clients.NewVisualCrossingClient(app.config.ThirdParty.VisualCrossingAPIKey),
+	}
+	allWeatherClients := append(
+		[]clients.ChainWeatherProvider{primaryWeatherClient}, fallbackWeatherClients...,
+	)
+	chainWeatherClient, err := clients.NewChainWeatherClient(allWeatherClients)
+	if err != nil {
+		log.Fatalf("failed to create chain weather client: %v", err)
+	}
+
 	repositories := repository.NewRepositories(app.dbConn)
 
 	services := service.NewServices(service.Deps{
-		Clients:            thirdPartyClients,
+		WeatherClient:      chainWeatherClient,
 		Repos:              repositories,
 		SubscriptionHasher: hasher,
 		EmailSender:        emailSender,

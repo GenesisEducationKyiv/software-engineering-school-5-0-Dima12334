@@ -3,6 +3,8 @@
 .bin
 .DS_Store
 
+/logs/app.log
+
 .env.dev
 cover.out
 
