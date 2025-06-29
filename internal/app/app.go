@@ -170,4 +170,10 @@ func (a *Application) shutdown() {
 	} else {
 		logger.Info("db connection closed successfully")
 	}
+
+	if err := a.redisConn.Close(); err != nil {
+		logger.Errorf("error occurred on redis connection close: %s", err.Error())
+	} else {
+		logger.Info("redis connection closed successfully")
+	}
 }

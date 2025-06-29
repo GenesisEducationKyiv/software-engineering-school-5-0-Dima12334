@@ -25,8 +25,8 @@ migrate-down: ## Rollback last database migration
 
 test: ## Run all tests
 	@bash -c '\
-		docker-compose -f docker-compose-test.yaml --env-file $(TEST_ENV_FILE) up -d db_test; \
-		trap "docker-compose -f docker-compose-test.yaml --env-file $(TEST_ENV_FILE) stop db_test" EXIT; \
+		docker-compose -f docker-compose-test.yaml --env-file $(TEST_ENV_FILE) up -d; \
+		trap "docker-compose -f docker-compose-test.yaml --env-file $(TEST_ENV_FILE) stop" EXIT; \
 		go test -v ./... \
 	'
 
@@ -35,8 +35,8 @@ test-unit: ## Run unit tests only
 
 test-integration: ## Run integration tests only (with DB)
 	@bash -c '\
-		docker-compose -f docker-compose-test.yaml --env-file $(TEST_ENV_FILE) up -d db_test; \
-		trap "docker-compose -f docker-compose-test.yaml --env-file $(TEST_ENV_FILE) stop db_test" EXIT; \
+		docker-compose -f docker-compose-test.yaml --env-file $(TEST_ENV_FILE) up -d; \
+		trap "docker-compose -f docker-compose-test.yaml --env-file $(TEST_ENV_FILE) stop" EXIT; \
 		go test -v ./internal/app/... ./internal/handlers/... \
 	'
 

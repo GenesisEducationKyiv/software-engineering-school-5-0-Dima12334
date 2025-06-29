@@ -94,18 +94,18 @@ func (s *ConfigService) setEnvironmentVariables(cfg *Config, environment string)
 	cfg.DB.DBName = envVars["DB_NAME"]
 	cfg.DB.SSLMode = envVars["DB_SSLMODE"]
 
+	cfg.Redis.Address = envVars["REDIS_ADDRESS"]
+	cacheDB, err := strconv.Atoi(envVars["REDIS_CACHE_DB"])
+	if err != nil {
+		log.Fatalf("REDIS_CACHE_DB must be integer: %v", err)
+	}
+	cfg.Redis.CacheDB = cacheDB
+
 	if environment != TestEnvironment {
 		cfg.Logger.LoggerEnv = envVars["LOGG_ENV"]
 		cfg.HTTP.Host = envVars["HTTP_HOST"]
 		cfg.ThirdParty.WeatherAPIKey = envVars["WEATHER_API_KEY"]
 		cfg.ThirdParty.VisualCrossingAPIKey = envVars["VISUAL_CROSSING_API_KEY"]
 		cfg.SMTP.Pass = envVars["SMTP_PASSWORD"]
-
-		cfg.Redis.Address = envVars["REDIS_ADDRESS"]
-		cacheDB, err := strconv.Atoi(envVars["REDIS_CACHE_DB"])
-		if err != nil {
-			log.Fatalf("REDIS_CACHE_DB must be integer: %v", err)
-		}
-		cfg.Redis.CacheDB = cacheDB
 	}
 }

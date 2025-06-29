@@ -2,31 +2,26 @@ package testutils
 
 import (
 	"testing"
+	"weather_forecast_sub/internal/config"
 	"weather_forecast_sub/pkg/cache"
-
-	"github.com/alicebob/miniredis/v2"
-	"github.com/redis/go-redis/v9"
+	"weather_forecast_sub/pkg/clients"
 )
 
 func SetupTestCache(t *testing.T) *cache.RedisCache {
 	t.Helper()
 
-	mr, err := miniredis.Run()
+	cfg, err := config.Init(config.ConfigsDir, config.TestEnvironment)
 	if err != nil {
-		t.Fatalf("failed to start miniredis: %v", err)
+		t.Fatalf("failed to load config: %v", err)
 	}
 
-	redisConn := redis.NewClient(&redis.Options{
-		Addr: mr.Addr(),
-		DB:   0,
-	})
+	redisConn := clients.NewRedisConnection(cfg.Redis)
 	cache := cache.NewCache(redisConn)
 
 	t.Cleanup(func() {
 		if err := redisConn.Close(); err != nil {
-			t.Logf("failed to close redis client: %v", err)
+			t.Logf("failed to close redis: %v", err)
 		}
-		mr.Close()
 	})
 
 	return cache
