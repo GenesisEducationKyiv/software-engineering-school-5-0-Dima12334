@@ -1,6 +1,7 @@
 package testutils
 
 import (
+	"context"
 	"testing"
 	"weather_forecast_sub/internal/config"
 	"weather_forecast_sub/pkg/cache"
@@ -19,6 +20,9 @@ func SetupTestCache(t *testing.T) *cache.RedisCache {
 	cache := cache.NewCache(redisConn)
 
 	t.Cleanup(func() {
+		if err := redisConn.FlushDB(context.Background()).Err(); err != nil {
+			t.Logf("failed to flush redis db: %v", err)
+		}
 		if err := redisConn.Close(); err != nil {
 			t.Logf("failed to close redis: %v", err)
 		}
