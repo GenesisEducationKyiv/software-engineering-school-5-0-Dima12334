@@ -14,6 +14,7 @@ type Config struct {
 	HTTP        HTTPConfig     `mapstructure:"http_server"`
 	Logger      LoggerConfig   `mapstructure:"logger"`
 	DB          DatabaseConfig `mapstructure:"db"`
+	Redis       RedisConfig
 	ThirdParty  ThirdPartyConfig
 	SMTP        SMTPConfig  `mapstructure:"smtp"`
 	Email       EmailConfig `mapstructure:"email"`
@@ -50,6 +51,11 @@ type DatabaseConfig struct {
 	SSLMode        string
 	DSN            string
 	MigrationsPath string `mapstructure:"migrationsPath"`
+}
+
+type RedisConfig struct {
+	Address string
+	CacheDB int
 }
 
 type SMTPConfig struct {

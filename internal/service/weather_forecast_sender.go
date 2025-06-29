@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"net/url"
 	"time"
 	"weather_forecast_sub/internal/domain"
 	"weather_forecast_sub/pkg/logger"
@@ -79,8 +78,7 @@ func sendWeatherForecast[T WeatherResponseType](
 
 	var subscriptionsToUpdate []string
 	for city, subscriptions := range cityToSubscriptions {
-		escapedCity := url.QueryEscape(city)
-		weatherData, err := getWeatherFunc(ctx, escapedCity)
+		weatherData, err := getWeatherFunc(ctx, city)
 		if err != nil {
 			logger.Errorf("failed to get weather (%s) for city %s: %s", frequency, city, err.Error())
 			continue

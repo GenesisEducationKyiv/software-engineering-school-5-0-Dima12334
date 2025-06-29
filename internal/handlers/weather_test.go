@@ -8,6 +8,7 @@ import (
 	"weather_forecast_sub/internal/handlers"
 	"weather_forecast_sub/internal/service"
 	"weather_forecast_sub/pkg/clients"
+	"weather_forecast_sub/testutils"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -49,6 +50,18 @@ func fakeNewVisualCrossingClient(fakePrimaryServer *httptest.Server) *clients.Vi
 	).WithBaseURL(fakePrimaryServer.URL).WithClient(fakePrimaryServer.Client())
 }
 
+func setupChainWeatherClient(
+	primaryServer, fallbackServer *httptest.Server,
+) (*clients.ChainWeatherClient, error) {
+	primaryClient := fakeNewWeatherAPIClient(primaryServer)
+	fallbackClient := fakeNewVisualCrossingClient(fallbackServer)
+	chainClient, err := clients.NewChainWeatherClient(
+		[]clients.ChainWeatherProvider{primaryClient, fallbackClient},
+	)
+
+	return chainClient, err
+}
+
 func testSuccessfulWeatherRequest(t *testing.T) {
 	// Setup a fake WeatherAPI server that returns a successful weather response
 	primaryServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -75,16 +88,13 @@ func testSuccessfulWeatherRequest(t *testing.T) {
 	}))
 	defer fallbackServer.Close()
 
-	primaryClient := fakeNewWeatherAPIClient(primaryServer)
-	fallbackClient := fakeNewVisualCrossingClient(fallbackServer)
-	chainClient, err := clients.NewChainWeatherClient(
-		[]clients.ChainWeatherProvider{primaryClient, fallbackClient},
-	)
+	chainClient, err := setupChainWeatherClient(primaryServer, fallbackServer)
 	if err != nil {
 		t.Fatalf("failed to create chain weather client: %v", err)
 	}
 
-	weatherService := service.NewWeatherService(chainClient)
+	cache := testutils.SetupTestCache(t)
+	weatherService := service.NewWeatherService(chainClient, cache)
 	h := handlers.NewHandler(&service.Services{Weather: weatherService})
 
 	router := setupTestRouter(h)
@@ -128,16 +138,13 @@ func testSuccessfulWeatherRequestFallbackToSecondClient(t *testing.T) {
 	}))
 	defer fallbackServer.Close()
 
-	primaryClient := fakeNewWeatherAPIClient(primaryServer)
-	fallbackClient := fakeNewVisualCrossingClient(fallbackServer)
-	chainClient, err := clients.NewChainWeatherClient(
-		[]clients.ChainWeatherProvider{primaryClient, fallbackClient},
-	)
+	chainClient, err := setupChainWeatherClient(primaryServer, fallbackServer)
 	if err != nil {
 		t.Fatalf("failed to create chain weather client: %v", err)
 	}
 
-	weatherService := service.NewWeatherService(chainClient)
+	cache := testutils.SetupTestCache(t)
+	weatherService := service.NewWeatherService(chainClient, cache)
 	h := handlers.NewHandler(&service.Services{Weather: weatherService})
 
 	router := setupTestRouter(h)
@@ -159,7 +166,8 @@ func testEmptyCityParameter(t *testing.T) {
 
 	client := fakeNewWeatherAPIClient(dummyServer)
 
-	weatherService := service.NewWeatherService(client)
+	cache := testutils.SetupTestCache(t)
+	weatherService := service.NewWeatherService(client, cache)
 	h := handlers.NewHandler(&service.Services{Weather: weatherService})
 
 	router := setupTestRouter(h)
@@ -196,17 +204,13 @@ func testCityNotFound(t *testing.T) {
 	}))
 	defer fallbackServer.Close()
 
-	primaryClient := fakeNewWeatherAPIClient(primaryServer)
-	fallbackClient := fakeNewVisualCrossingClient(fallbackServer)
-
-	chainClient, err := clients.NewChainWeatherClient(
-		[]clients.ChainWeatherProvider{primaryClient, fallbackClient},
-	)
+	chainClient, err := setupChainWeatherClient(primaryServer, fallbackServer)
 	if err != nil {
 		t.Fatalf("failed to create chain weather client: %v", err)
 	}
 
-	weatherService := service.NewWeatherService(chainClient)
+	cache := testutils.SetupTestCache(t)
+	weatherService := service.NewWeatherService(chainClient, cache)
 	h := handlers.NewHandler(&service.Services{Weather: weatherService})
 
 	router := setupTestRouter(h)

@@ -7,12 +7,12 @@ This document describes how to run tests for this project.
 The project has two types of tests:
 
 1. **Unit Tests**: Fast-running tests that verify individual components in isolation
-2. **Integration Tests**: Slower tests that verify components working together (require DB)
+2. **Integration Tests**: Slower tests that verify components working together (require DB and Redis)
 
 ## Running Tests
 
 ### Run all tests
-Runs both unit and integration tests (requires DB):
+Runs both unit and integration tests (requires DB and Redis):
 ```
 make test
 ```

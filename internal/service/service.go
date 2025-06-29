@@ -5,6 +5,7 @@ import (
 	"weather_forecast_sub/internal/config"
 	"weather_forecast_sub/internal/domain"
 	"weather_forecast_sub/internal/repository"
+	"weather_forecast_sub/pkg/cache"
 	"weather_forecast_sub/pkg/clients"
 	"weather_forecast_sub/pkg/email"
 	"weather_forecast_sub/pkg/hash"
@@ -59,6 +60,7 @@ type Deps struct {
 	EmailSender        email.Sender
 	EmailConfig        config.EmailConfig
 	HTTPConfig         config.HTTPConfig
+	Cache              cache.Cache
 }
 
 type Services struct {
@@ -69,7 +71,7 @@ type Services struct {
 
 func NewServices(deps Deps) *Services {
 	emailsService := NewEmailsService(deps.EmailSender, deps.EmailConfig, deps.HTTPConfig)
-	weatherService := NewWeatherService(deps.WeatherClient)
+	weatherService := NewWeatherService(deps.WeatherClient, deps.Cache)
 	return &Services{
 		Subscriptions: NewSubscriptionService(
 			deps.Repos.Subscription,
