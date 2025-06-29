@@ -15,10 +15,13 @@ import (
 	"weather_forecast_sub/internal/repository"
 	"weather_forecast_sub/internal/server"
 	"weather_forecast_sub/internal/service"
+	"weather_forecast_sub/pkg/cache"
 	"weather_forecast_sub/pkg/clients"
 	"weather_forecast_sub/pkg/email/smtp"
 	"weather_forecast_sub/pkg/hash"
 	"weather_forecast_sub/pkg/logger"
+
+	"github.com/redis/go-redis/v9"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -28,6 +31,7 @@ type Application struct {
 	server     *server.Server
 	cronRunner Cron
 	dbConn     *sqlx.DB
+	redisConn  *redis.Client
 }
 
 type ApplicationBuilder struct{}
@@ -61,6 +65,8 @@ func (ab *ApplicationBuilder) setupDependencies(app *Application) {
 
 	repositories := repository.NewRepositories(app.dbConn)
 
+	cache := cache.NewCache(app.redisConn)
+
 	services := service.NewServices(service.Deps{
 		WeatherClient:      chainWeatherClient,
 		Repos:              repositories,
@@ -68,6 +74,7 @@ func (ab *ApplicationBuilder) setupDependencies(app *Application) {
 		EmailSender:        emailSender,
 		EmailConfig:        app.config.Email,
 		HTTPConfig:         app.config.HTTP,
+		Cache:              cache,
 	})
 
 	app.cronRunner = NewCronRunner(services.WeatherForecastSender)
@@ -96,9 +103,16 @@ func (ab *ApplicationBuilder) Build(environment string) (*Application, error) {
 		log.Fatal(err)
 	}
 
+	redisConn := clients.NewRedisConnection(cfg.Redis)
+	err = clients.ValidateRedisConnection(redisConn)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	app := &Application{
-		config: cfg,
-		dbConn: dbConn,
+		config:    cfg,
+		dbConn:    dbConn,
+		redisConn: redisConn,
 	}
 	ab.setupDependencies(app)
 

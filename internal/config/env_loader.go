@@ -37,6 +37,8 @@ func (e *GodotenvLoader) GetRequiredEnvVars(environment string) map[string]strin
 			"WEATHER_API_KEY",
 			"VISUAL_CROSSING_API_KEY",
 			"SMTP_PASSWORD",
+			"REDIS_ADDRESS",
+			"REDIS_CACHE_DB",
 		)
 	}
 

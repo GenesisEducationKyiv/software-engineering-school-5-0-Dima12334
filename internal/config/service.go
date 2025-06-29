@@ -2,6 +2,8 @@ package config
 
 import (
 	"fmt"
+	"log"
+	"strconv"
 )
 
 type ConfigReader interface {
@@ -98,5 +100,12 @@ func (s *ConfigService) setEnvironmentVariables(cfg *Config, environment string)
 		cfg.ThirdParty.WeatherAPIKey = envVars["WEATHER_API_KEY"]
 		cfg.ThirdParty.VisualCrossingAPIKey = envVars["VISUAL_CROSSING_API_KEY"]
 		cfg.SMTP.Pass = envVars["SMTP_PASSWORD"]
+
+		cfg.Redis.Address = envVars["REDIS_ADDRESS"]
+		cacheDB, err := strconv.Atoi(envVars["REDIS_CACHE_DB"])
+		if err != nil {
+			log.Fatalf("REDIS_CACHE_DB must be integer: %v", err)
+		}
+		cfg.Redis.CacheDB = cacheDB
 	}
 }
