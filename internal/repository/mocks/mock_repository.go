@@ -100,30 +100,30 @@ func (mr *MockSubscriptionRepositoryMockRecorder) GetByToken(ctx, token any) *go
 }
 
 // GetConfirmedByFrequency mocks base method.
-func (m *MockSubscriptionRepository) GetConfirmedByFrequency(frequency string) ([]domain.Subscription, error) {
+func (m *MockSubscriptionRepository) GetConfirmedByFrequency(ctx context.Context, frequency string) ([]domain.Subscription, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetConfirmedByFrequency", frequency)
+	ret := m.ctrl.Call(m, "GetConfirmedByFrequency", ctx, frequency)
 	ret0, _ := ret[0].([]domain.Subscription)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetConfirmedByFrequency indicates an expected call of GetConfirmedByFrequency.
-func (mr *MockSubscriptionRepositoryMockRecorder) GetConfirmedByFrequency(frequency any) *gomock.Call {
+func (mr *MockSubscriptionRepositoryMockRecorder) GetConfirmedByFrequency(ctx, frequency any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConfirmedByFrequency", reflect.TypeOf((*MockSubscriptionRepository)(nil).GetConfirmedByFrequency), frequency)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConfirmedByFrequency", reflect.TypeOf((*MockSubscriptionRepository)(nil).GetConfirmedByFrequency), ctx, frequency)
 }
 
 // SetLastSentAt mocks base method.
-func (m *MockSubscriptionRepository) SetLastSentAt(lastSentAt time.Time, tokens []string) error {
+func (m *MockSubscriptionRepository) SetLastSentAt(ctx context.Context, lastSentAt time.Time, tokens []string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SetLastSentAt", lastSentAt, tokens)
+	ret := m.ctrl.Call(m, "SetLastSentAt", ctx, lastSentAt, tokens)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // SetLastSentAt indicates an expected call of SetLastSentAt.
-func (mr *MockSubscriptionRepositoryMockRecorder) SetLastSentAt(lastSentAt, tokens any) *gomock.Call {
+func (mr *MockSubscriptionRepositoryMockRecorder) SetLastSentAt(ctx, lastSentAt, tokens any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetLastSentAt", reflect.TypeOf((*MockSubscriptionRepository)(nil).SetLastSentAt), lastSentAt, tokens)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetLastSentAt", reflect.TypeOf((*MockSubscriptionRepository)(nil).SetLastSentAt), ctx, lastSentAt, tokens)
 }

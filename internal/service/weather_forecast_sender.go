@@ -13,8 +13,8 @@ type (
 )
 
 type SubscriptionSenderRepository interface {
-	SetLastSentAt(lastSentAt time.Time, tokens []string) error
-	GetConfirmedByFrequency(frequency string) ([]domain.Subscription, error)
+	SetLastSentAt(ctx context.Context, lastSentAt time.Time, tokens []string) error
+	GetConfirmedByFrequency(ctx context.Context, frequency string) ([]domain.Subscription, error)
 }
 
 type WeatherForecastSenderService struct {
@@ -65,7 +65,7 @@ func sendWeatherForecast[T WeatherResponseType](
 	getWeatherFunc WeatherFetcherFunc[T],
 	sendEmailFunc EmailSenderFunc[T],
 ) error {
-	subs, err := subscriptionSenderRepo.GetConfirmedByFrequency(frequency)
+	subs, err := subscriptionSenderRepo.GetConfirmedByFrequency(ctx, frequency)
 	if err != nil {
 		logger.Errorf("failed to get subscriptions (%s): %s", frequency, err.Error())
 		return err
@@ -109,5 +109,5 @@ func sendWeatherForecast[T WeatherResponseType](
 		return nil
 	}
 
-	return subscriptionSenderRepo.SetLastSentAt(time.Now(), subscriptionsToUpdate)
+	return subscriptionSenderRepo.SetLastSentAt(ctx, time.Now(), subscriptionsToUpdate)
 }
