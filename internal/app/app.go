@@ -51,6 +51,8 @@ func (ab *ApplicationBuilder) setupDependencies(app *Application) {
 		app.config.SMTP.Port,
 	)
 
+	redisCache := cache.NewCache(app.redisConn)
+
 	primaryWeatherClient := clients.NewWeatherAPIClient(app.config.ThirdParty.WeatherAPIKey)
 	fallbackWeatherClients := []clients.ChainWeatherProvider{
 		clients.NewVisualCrossingClient(app.config.ThirdParty.VisualCrossingAPIKey),
@@ -62,19 +64,17 @@ func (ab *ApplicationBuilder) setupDependencies(app *Application) {
 	if err != nil {
 		log.Fatalf("failed to create chain weather client: %v", err)
 	}
+	cachingWeatherClient := cache.NewCachingWeatherClient(chainWeatherClient, redisCache)
 
 	repositories := repository.NewRepositories(app.dbConn)
 
-	cache := cache.NewCache(app.redisConn)
-
 	services := service.NewServices(service.Deps{
-		WeatherClient:      chainWeatherClient,
+		WeatherClient:      cachingWeatherClient,
 		Repos:              repositories,
 		SubscriptionHasher: hasher,
 		EmailSender:        emailSender,
 		EmailConfig:        app.config.Email,
 		HTTPConfig:         app.config.HTTP,
-		Cache:              cache,
 	})
 
 	app.cronRunner = NewCronRunner(services.WeatherForecastSender)

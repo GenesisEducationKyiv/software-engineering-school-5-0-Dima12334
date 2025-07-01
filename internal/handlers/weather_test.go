@@ -7,6 +7,7 @@ import (
 	"testing"
 	"weather_forecast_sub/internal/handlers"
 	"weather_forecast_sub/internal/service"
+	"weather_forecast_sub/pkg/cache"
 	"weather_forecast_sub/pkg/clients"
 	"weather_forecast_sub/testutils"
 
@@ -93,8 +94,10 @@ func testSuccessfulWeatherRequest(t *testing.T) {
 		t.Fatalf("failed to create chain weather client: %v", err)
 	}
 
-	cache := testutils.SetupTestCache(t)
-	weatherService := service.NewWeatherService(chainClient, cache)
+	redisCache := testutils.SetupTestCache(t)
+	cachingWeatherClient := cache.NewCachingWeatherClient(chainClient, redisCache)
+
+	weatherService := service.NewWeatherService(cachingWeatherClient)
 	h := handlers.NewHandler(&service.Services{Weather: weatherService})
 
 	router := setupTestRouter(h)
@@ -143,8 +146,10 @@ func testSuccessfulWeatherRequestFallbackToSecondClient(t *testing.T) {
 		t.Fatalf("failed to create chain weather client: %v", err)
 	}
 
-	cache := testutils.SetupTestCache(t)
-	weatherService := service.NewWeatherService(chainClient, cache)
+	redisCache := testutils.SetupTestCache(t)
+	cachingWeatherClient := cache.NewCachingWeatherClient(chainClient, redisCache)
+
+	weatherService := service.NewWeatherService(cachingWeatherClient)
 	h := handlers.NewHandler(&service.Services{Weather: weatherService})
 
 	router := setupTestRouter(h)
@@ -166,8 +171,10 @@ func testEmptyCityParameter(t *testing.T) {
 
 	client := fakeNewWeatherAPIClient(dummyServer)
 
-	cache := testutils.SetupTestCache(t)
-	weatherService := service.NewWeatherService(client, cache)
+	redisCache := testutils.SetupTestCache(t)
+	cachingWeatherClient := cache.NewCachingWeatherClient(client, redisCache)
+
+	weatherService := service.NewWeatherService(cachingWeatherClient)
 	h := handlers.NewHandler(&service.Services{Weather: weatherService})
 
 	router := setupTestRouter(h)
@@ -209,8 +216,10 @@ func testCityNotFound(t *testing.T) {
 		t.Fatalf("failed to create chain weather client: %v", err)
 	}
 
-	cache := testutils.SetupTestCache(t)
-	weatherService := service.NewWeatherService(chainClient, cache)
+	redisCache := testutils.SetupTestCache(t)
+	cachingWeatherClient := cache.NewCachingWeatherClient(chainClient, redisCache)
+
+	weatherService := service.NewWeatherService(cachingWeatherClient)
 	h := handlers.NewHandler(&service.Services{Weather: weatherService})
 
 	router := setupTestRouter(h)

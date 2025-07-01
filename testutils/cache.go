@@ -17,7 +17,7 @@ func SetupTestCache(t *testing.T) *cache.RedisCache {
 	}
 
 	redisConn := clients.NewRedisConnection(cfg.Redis)
-	cache := cache.NewCache(redisConn)
+	redisCache := cache.NewCache(redisConn)
 
 	t.Cleanup(func() {
 		if err := redisConn.FlushDB(context.Background()).Err(); err != nil {
@@ -28,5 +28,5 @@ func SetupTestCache(t *testing.T) *cache.RedisCache {
 		}
 	})
 
-	return cache
+	return redisCache
 }
