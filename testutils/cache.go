@@ -21,10 +21,10 @@ func SetupTestCache(t *testing.T) *cache.RedisCache {
 
 	t.Cleanup(func() {
 		if err := redisConn.FlushDB(context.Background()).Err(); err != nil {
-			t.Logf("failed to flush redis db: %v", err)
+			t.Fatalf("failed to flush redis db: %v", err)
 		}
 		if err := redisConn.Close(); err != nil {
-			t.Logf("failed to close redis: %v", err)
+			t.Fatalf("failed to close redis: %v", err)
 		}
 	})
 

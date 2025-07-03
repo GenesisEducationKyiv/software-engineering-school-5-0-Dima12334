@@ -100,6 +100,7 @@ func (s *ConfigService) setEnvironmentVariables(cfg *Config, environment string)
 		log.Fatalf("REDIS_CACHE_DB must be integer: %v", err)
 	}
 	cfg.Redis.CacheDB = cacheDB
+	cfg.Redis.Password = envVars["REDIS_PASSWORD"]
 
 	if environment != TestEnvironment {
 		cfg.Logger.LoggerEnv = envVars["LOGG_ENV"]

@@ -39,7 +39,11 @@ func (s *CachingWeatherClient) GetAPICurrentWeather(
 		var res domain.WeatherResponse
 		if err := json.Unmarshal([]byte(cached), &res); err == nil {
 			return &res, nil
+		} else {
+			logger.Warnf("cache unmarshal error (weather current): %v", err)
 		}
+	} else {
+		clients.HandleRedisError(err)
 	}
 
 	resp, err := s.WeatherClient.GetAPICurrentWeather(ctx, url.QueryEscape(city))
@@ -53,7 +57,7 @@ func (s *CachingWeatherClient) GetAPICurrentWeather(
 	}
 
 	if err := s.cache.Set(ctx, key, string(data), oneHourDuration); err != nil {
-		logger.Errorf("cache set error (weather current): %s", err)
+		clients.HandleRedisError(err)
 	}
 
 	return resp, nil

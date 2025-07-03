@@ -54,8 +54,9 @@ type DatabaseConfig struct {
 }
 
 type RedisConfig struct {
-	Address string
-	CacheDB int
+	Address  string
+	CacheDB  int
+	Password string
 }
 
 type SMTPConfig struct {
