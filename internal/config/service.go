@@ -2,6 +2,8 @@ package config
 
 import (
 	"fmt"
+	"log"
+	"strconv"
 )
 
 type ConfigReader interface {
@@ -91,6 +93,14 @@ func (s *ConfigService) setEnvironmentVariables(cfg *Config, environment string)
 	cfg.DB.Password = envVars["DB_PASSWORD"]
 	cfg.DB.DBName = envVars["DB_NAME"]
 	cfg.DB.SSLMode = envVars["DB_SSLMODE"]
+
+	cfg.Redis.Address = envVars["REDIS_ADDRESS"]
+	cacheDB, err := strconv.Atoi(envVars["REDIS_CACHE_DB"])
+	if err != nil {
+		log.Fatalf("REDIS_CACHE_DB must be integer: %v", err)
+	}
+	cfg.Redis.CacheDB = cacheDB
+	cfg.Redis.Password = envVars["REDIS_PASSWORD"]
 
 	if environment != TestEnvironment {
 		cfg.Logger.LoggerEnv = envVars["LOGG_ENV"]

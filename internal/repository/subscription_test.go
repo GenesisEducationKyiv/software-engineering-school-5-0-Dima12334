@@ -300,7 +300,7 @@ func testSubscriptionRepoSetLastSentAt(t *testing.T) {
 		WithArgs(now, pq.Array(tokens)).
 		WillReturnResult(sqlmock.NewResult(1, 2))
 
-	err := repo.SetLastSentAt(now, tokens)
+	err := repo.SetLastSentAt(context.Background(), now, tokens)
 	assert.NoError(t, err)
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
@@ -326,7 +326,7 @@ func testSubscriptionRepoSetLastSentAtError(t *testing.T) {
 		WithArgs(now, pq.Array(tokens)).
 		WillReturnError(errors.New("update error"))
 
-	err := repo.SetLastSentAt(now, tokens)
+	err := repo.SetLastSentAt(context.Background(), now, tokens)
 	assert.Error(t, err)
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
@@ -414,7 +414,7 @@ func testSubscriptionRepoGetConfirmedByFrequency(t *testing.T) {
 		WithArgs("weekly").
 		WillReturnRows(rows)
 
-	subs, err := repo.GetConfirmedByFrequency("weekly")
+	subs, err := repo.GetConfirmedByFrequency(context.Background(), "weekly")
 	assert.NoError(t, err)
 	assert.Len(t, subs, 1)
 	assert.Equal(t, expected.Email, subs[0].Email)
@@ -439,7 +439,7 @@ func testSubscriptionRepoGetConfirmedByFrequencyError(t *testing.T) {
 		WithArgs("weekly").
 		WillReturnError(errors.New("query error"))
 
-	_, err := repo.GetConfirmedByFrequency("weekly")
+	_, err := repo.GetConfirmedByFrequency(context.Background(), "weekly")
 	assert.Error(t, err)
 	assert.NoError(t, mock.ExpectationsWereMet())
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"net/url"
 	"weather_forecast_sub/internal/domain"
 	customErrors "weather_forecast_sub/pkg/errors"
 
@@ -49,9 +48,8 @@ func (h *WeatherHandler) GetWeather(c *gin.Context) {
 		c.Status(http.StatusBadRequest)
 		return
 	}
-	escapedCity := url.QueryEscape(city)
 
-	weather, err := h.weatherService.GetCurrentWeather(c, escapedCity)
+	weather, err := h.weatherService.GetCurrentWeather(c, city)
 	if err != nil {
 		switch {
 		case errors.Is(err, customErrors.ErrCityNotFound):

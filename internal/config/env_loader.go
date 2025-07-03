@@ -24,7 +24,10 @@ func (e *GodotenvLoader) LoadEnvFile(fileName string) error {
 }
 
 func (e *GodotenvLoader) GetRequiredEnvVars(environment string) map[string]string {
-	baseVars := []string{"DB_HOST", "DB_PORT", "DB_USER", "DB_PASSWORD", "DB_NAME", "DB_SSLMODE"}
+	baseVars := []string{
+		"DB_HOST", "DB_PORT", "DB_USER", "DB_PASSWORD", "DB_NAME", "DB_SSLMODE",
+		"REDIS_ADDRESS", "REDIS_CACHE_DB", "REDIS_PASSWORD",
+	}
 
 	var allVars []string
 	allVars = append(allVars, baseVars...)
