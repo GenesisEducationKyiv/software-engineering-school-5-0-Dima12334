@@ -10,7 +10,7 @@ env:
   ENV: "test"
   REDIS_ADDRESS: "127.0.0.1:6378"
   REDIS_CACHE_DB: 0
-  REDIS_PASSWORD: ""
+  REDIS_PASSWORD: "redispassword"
 
 jobs:
   tests:
