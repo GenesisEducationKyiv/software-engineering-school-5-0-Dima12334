@@ -134,7 +134,7 @@ func (c *VisualCrossingClient) GetAPIDayWeather(
 	ctx context.Context, city string,
 ) (*domain.DayWeatherResponse, error) {
 	requestURL := fmt.Sprintf(
-		"%s/%s/today?unitGroup=metric&include=hours&key=%s&contentType=json", c.baseURL, city, c.apiKey,
+		"%s/%s/today?unitGroup=metric&include=hours&key=%s", c.baseURL, city, c.apiKey,
 	)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, requestURL, nil)

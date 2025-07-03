@@ -138,7 +138,9 @@ func testSendDailyWeatherForecastRepoError(t *testing.T) {
 
 	// Setup mock repo that returns error
 	mockRepo := mockRepository.NewMockSubscriptionRepository(ctrl)
-	mockRepo.EXPECT().GetConfirmedByFrequency("daily").Return(nil, errors.New("database error"))
+	mockRepo.EXPECT().GetConfirmedByFrequency(context.Background(), "daily").Return(
+		nil, errors.New("database error"),
+	)
 
 	s := service.NewWeatherForecastSenderService(
 		mockService.NewMockWeatherEmails(ctrl),
@@ -224,7 +226,9 @@ func testSendHourlyWeatherForecastRepoError(t *testing.T) {
 
 	// Setup mock repo that returns error
 	mockRepo := mockRepository.NewMockSubscriptionRepository(ctrl)
-	mockRepo.EXPECT().GetConfirmedByFrequency("hourly").Return(nil, errors.New("database error"))
+	mockRepo.EXPECT().GetConfirmedByFrequency(context.Background(), "hourly").Return(
+		nil, errors.New("database error"),
+	)
 
 	s := service.NewWeatherForecastSenderService(
 		mockService.NewMockWeatherEmails(ctrl),

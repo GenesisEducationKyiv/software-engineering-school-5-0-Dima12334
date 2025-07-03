@@ -8,6 +8,9 @@ on:
 
 env:
   ENV: "test"
+  REDIS_ADDRESS: "127.0.0.1:6378"
+  REDIS_CACHE_DB: 0
+  REDIS_PASSWORD: "redispassword"
 
 jobs:
   tests:
@@ -21,7 +24,10 @@ jobs:
           POSTGRES_DB: weather_forecast_sub_go_test
         ports:
           - 5433:5432
-
+      redis:
+        image: redis:latest
+        ports:
+          - 6378:6379
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
