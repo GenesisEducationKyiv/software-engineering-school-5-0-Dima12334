@@ -39,9 +39,9 @@ func (s *CachingWeatherClient) GetAPICurrentWeather(
 		var res domain.WeatherResponse
 		if err := json.Unmarshal([]byte(cached), &res); err == nil {
 			return &res, nil
-		} else {
-			logger.Warnf("cache unmarshal error (weather current): %v", err)
 		}
+
+		logger.Warnf("cache unmarshal error (weather current): %v", err)
 	} else {
 		clients.HandleRedisError(err)
 	}
