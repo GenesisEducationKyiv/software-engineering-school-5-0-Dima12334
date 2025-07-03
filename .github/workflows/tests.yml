@@ -28,8 +28,7 @@ jobs:
         image: redis:latest
         ports:
           - 6378:6379
-        options: >-
-          --requirepass yourpassword
+        command: ["redis-server", "--requirepass", "redispassword"]
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
