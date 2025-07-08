@@ -3,13 +3,16 @@ package cache
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/url"
 	"strings"
 	"time"
-	"weather_forecast_sub/pkg/clients"
+
+	"github.com/redis/go-redis/v9"
 
 	"weather_forecast_sub/internal/domain"
+	"weather_forecast_sub/pkg/clients"
 	"weather_forecast_sub/pkg/logger"
 )
 
@@ -43,7 +46,7 @@ func (s *CachingWeatherClient) GetAPICurrentWeather(
 
 		logger.Warnf("cache unmarshal error (weather current): %v", err)
 	} else {
-		clients.HandleRedisError(err)
+		HandleRedisError(err)
 	}
 
 	resp, err := s.WeatherClient.GetAPICurrentWeather(ctx, url.QueryEscape(city))
@@ -57,8 +60,24 @@ func (s *CachingWeatherClient) GetAPICurrentWeather(
 	}
 
 	if err := s.cache.Set(ctx, key, string(data), oneHourDuration); err != nil {
-		clients.HandleRedisError(err)
+		HandleRedisError(err)
 	}
 
 	return resp, nil
+}
+
+func HandleRedisError(err error) {
+	if err == nil {
+		return
+	}
+
+	if errors.Is(err, redis.Nil) {
+		return
+	}
+
+	if errors.Is(err, redis.ErrClosed) || strings.Contains(err.Error(), "connection refused") {
+		logger.Errorf("redis not available: %v", err)
+	} else {
+		logger.Errorf("redis get error: %v", err)
+	}
 }
