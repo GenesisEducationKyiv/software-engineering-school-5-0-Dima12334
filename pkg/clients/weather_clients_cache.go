@@ -1,4 +1,4 @@
-package cache
+package clients
 
 import (
 	"context"
@@ -8,11 +8,11 @@ import (
 	"net/url"
 	"strings"
 	"time"
+	redisCache "weather_forecast_sub/pkg/cache"
 
 	"github.com/redis/go-redis/v9"
 
 	"weather_forecast_sub/internal/domain"
-	"weather_forecast_sub/pkg/clients"
 	"weather_forecast_sub/pkg/logger"
 )
 
@@ -21,11 +21,11 @@ const (
 )
 
 type CachingWeatherClient struct {
-	clients.WeatherClient
-	cache Cache
+	WeatherClient
+	cache redisCache.Cache
 }
 
-func NewCachingWeatherClient(client clients.WeatherClient, cache Cache) *CachingWeatherClient {
+func NewCachingWeatherClient(client WeatherClient, cache redisCache.Cache) *CachingWeatherClient {
 	return &CachingWeatherClient{
 		WeatherClient: client,
 		cache:         cache,

@@ -64,7 +64,7 @@ func (ab *ApplicationBuilder) setupDependencies(app *Application) {
 	if err != nil {
 		log.Fatalf("failed to create chain weather client: %v", err)
 	}
-	cachingWeatherClient := cache.NewCachingWeatherClient(chainWeatherClient, redisCache)
+	cachingWeatherClient := clients.NewCachingWeatherClient(chainWeatherClient, redisCache)
 
 	repositories := repository.NewRepositories(app.dbConn)
 
