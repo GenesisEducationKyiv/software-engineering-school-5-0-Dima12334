@@ -7,7 +7,6 @@ import (
 	"testing"
 	"weather_forecast_sub/internal/handlers"
 	"weather_forecast_sub/internal/service"
-	"weather_forecast_sub/pkg/cache"
 	"weather_forecast_sub/pkg/clients"
 	"weather_forecast_sub/testutils"
 
@@ -95,7 +94,7 @@ func testSuccessfulWeatherRequest(t *testing.T) {
 	}
 
 	redisCache := testutils.SetupTestCache(t)
-	cachingWeatherClient := cache.NewCachingWeatherClient(chainClient, redisCache)
+	cachingWeatherClient := clients.NewCachingWeatherClient(chainClient, redisCache)
 
 	weatherService := service.NewWeatherService(cachingWeatherClient)
 	h := handlers.NewHandler(&service.Services{Weather: weatherService})
@@ -147,7 +146,7 @@ func testSuccessfulWeatherRequestFallbackToSecondClient(t *testing.T) {
 	}
 
 	redisCache := testutils.SetupTestCache(t)
-	cachingWeatherClient := cache.NewCachingWeatherClient(chainClient, redisCache)
+	cachingWeatherClient := clients.NewCachingWeatherClient(chainClient, redisCache)
 
 	weatherService := service.NewWeatherService(cachingWeatherClient)
 	h := handlers.NewHandler(&service.Services{Weather: weatherService})
@@ -172,7 +171,7 @@ func testEmptyCityParameter(t *testing.T) {
 	client := fakeNewWeatherAPIClient(dummyServer)
 
 	redisCache := testutils.SetupTestCache(t)
-	cachingWeatherClient := cache.NewCachingWeatherClient(client, redisCache)
+	cachingWeatherClient := clients.NewCachingWeatherClient(client, redisCache)
 
 	weatherService := service.NewWeatherService(cachingWeatherClient)
 	h := handlers.NewHandler(&service.Services{Weather: weatherService})
@@ -217,7 +216,7 @@ func testCityNotFound(t *testing.T) {
 	}
 
 	redisCache := testutils.SetupTestCache(t)
-	cachingWeatherClient := cache.NewCachingWeatherClient(chainClient, redisCache)
+	cachingWeatherClient := clients.NewCachingWeatherClient(chainClient, redisCache)
 
 	weatherService := service.NewWeatherService(cachingWeatherClient)
 	h := handlers.NewHandler(&service.Services{Weather: weatherService})

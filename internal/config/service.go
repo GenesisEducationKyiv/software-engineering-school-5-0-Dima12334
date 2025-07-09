@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"log"
 	"strconv"
 )
 
@@ -60,7 +59,9 @@ func (s *ConfigService) LoadConfig(configDir, environment string) (*Config, erro
 	}
 
 	// Load and set environment variables
-	s.setEnvironmentVariables(cfg, environment)
+	if err := s.setEnvironmentVariables(cfg, environment); err != nil {
+		return nil, fmt.Errorf("failed to set environment variables: %w", err)
+	}
 
 	// Post-process derived values
 	s.postProcessor.ProcessConfig(cfg)
@@ -83,7 +84,7 @@ func (s *ConfigService) loadEnvironmentFile(environment string) error {
 	return s.envLoader.LoadEnvFile(envFile)
 }
 
-func (s *ConfigService) setEnvironmentVariables(cfg *Config, environment string) {
+func (s *ConfigService) setEnvironmentVariables(cfg *Config, environment string) error {
 	envVars := s.envLoader.GetRequiredEnvVars(environment)
 
 	// Map environment variables to config fields
@@ -97,7 +98,7 @@ func (s *ConfigService) setEnvironmentVariables(cfg *Config, environment string)
 	cfg.Redis.Address = envVars["REDIS_ADDRESS"]
 	cacheDB, err := strconv.Atoi(envVars["REDIS_CACHE_DB"])
 	if err != nil {
-		log.Fatalf("REDIS_CACHE_DB must be integer: %v", err)
+		return fmt.Errorf("REDIS_CACHE_DB must be integer: %v", err)
 	}
 	cfg.Redis.CacheDB = cacheDB
 	cfg.Redis.Password = envVars["REDIS_PASSWORD"]
@@ -109,4 +110,6 @@ func (s *ConfigService) setEnvironmentVariables(cfg *Config, environment string)
 		cfg.ThirdParty.VisualCrossingAPIKey = envVars["VISUAL_CROSSING_API_KEY"]
 		cfg.SMTP.Pass = envVars["SMTP_PASSWORD"]
 	}
+
+	return nil
 }
