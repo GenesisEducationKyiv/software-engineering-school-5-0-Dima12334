@@ -77,9 +77,9 @@ func (r *SubscriptionRepo) Confirm(ctx context.Context, token string) error {
 	return err
 }
 
-func (r *SubscriptionRepo) SetLastSentAt(lastSentAt time.Time, tokens []string) error {
+func (r *SubscriptionRepo) SetLastSentAt(ctx context.Context, lastSentAt time.Time, tokens []string) error {
 	query := "UPDATE subscriptions SET last_sent_at = $1 WHERE token = ANY($2);"
-	_, err := r.db.Exec(query, lastSentAt, pq.Array(tokens))
+	_, err := r.db.ExecContext(ctx, query, lastSentAt, pq.Array(tokens))
 	return err
 }
 
@@ -89,7 +89,9 @@ func (r *SubscriptionRepo) Delete(ctx context.Context, token string) error {
 	return err
 }
 
-func (r *SubscriptionRepo) GetConfirmedByFrequency(frequency string) ([]domain.Subscription, error) {
+func (r *SubscriptionRepo) GetConfirmedByFrequency(
+	ctx context.Context, frequency string,
+) ([]domain.Subscription, error) {
 	var subscriptions []domain.Subscription
 
 	query := `
@@ -105,7 +107,7 @@ func (r *SubscriptionRepo) GetConfirmedByFrequency(frequency string) ([]domain.S
 		FROM subscriptions
 		WHERE confirmed = true AND frequency = $1;`
 
-	err := r.db.Select(&subscriptions, query, frequency)
+	err := r.db.SelectContext(ctx, &subscriptions, query, frequency)
 
 	return subscriptions, err
 }

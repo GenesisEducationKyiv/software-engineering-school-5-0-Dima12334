@@ -15,10 +15,13 @@ import (
 	"weather_forecast_sub/internal/repository"
 	"weather_forecast_sub/internal/server"
 	"weather_forecast_sub/internal/service"
+	"weather_forecast_sub/pkg/cache"
 	"weather_forecast_sub/pkg/clients"
 	"weather_forecast_sub/pkg/email/smtp"
 	"weather_forecast_sub/pkg/hash"
 	"weather_forecast_sub/pkg/logger"
+
+	"github.com/redis/go-redis/v9"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -28,6 +31,7 @@ type Application struct {
 	server     *server.Server
 	cronRunner Cron
 	dbConn     *sqlx.DB
+	redisConn  *redis.Client
 }
 
 type ApplicationBuilder struct{}
@@ -47,6 +51,8 @@ func (ab *ApplicationBuilder) setupDependencies(app *Application) {
 		app.config.SMTP.Port,
 	)
 
+	redisCache := cache.NewCache(app.redisConn)
+
 	primaryWeatherClient := clients.NewWeatherAPIClient(app.config.ThirdParty.WeatherAPIKey)
 	fallbackWeatherClients := []clients.ChainWeatherProvider{
 		clients.NewVisualCrossingClient(app.config.ThirdParty.VisualCrossingAPIKey),
@@ -58,11 +64,12 @@ func (ab *ApplicationBuilder) setupDependencies(app *Application) {
 	if err != nil {
 		log.Fatalf("failed to create chain weather client: %v", err)
 	}
+	cachingWeatherClient := clients.NewCachingWeatherClient(chainWeatherClient, redisCache)
 
 	repositories := repository.NewRepositories(app.dbConn)
 
 	services := service.NewServices(service.Deps{
-		WeatherClient:      chainWeatherClient,
+		WeatherClient:      cachingWeatherClient,
 		Repos:              repositories,
 		SubscriptionHasher: hasher,
 		EmailSender:        emailSender,
@@ -96,9 +103,16 @@ func (ab *ApplicationBuilder) Build(environment string) (*Application, error) {
 		log.Fatal(err)
 	}
 
+	redisConn := clients.NewRedisConnection(cfg.Redis)
+	err = clients.ValidateRedisConnection(redisConn)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	app := &Application{
-		config: cfg,
-		dbConn: dbConn,
+		config:    cfg,
+		dbConn:    dbConn,
+		redisConn: redisConn,
 	}
 	ab.setupDependencies(app)
 
@@ -155,5 +169,11 @@ func (a *Application) shutdown() {
 		logger.Errorf("error occurred on db connection close: %s", err.Error())
 	} else {
 		logger.Info("db connection closed successfully")
+	}
+
+	if err := a.redisConn.Close(); err != nil {
+		logger.Errorf("error occurred on redis connection close: %s", err.Error())
+	} else {
+		logger.Info("redis connection closed successfully")
 	}
 }

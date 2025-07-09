@@ -2,8 +2,10 @@ package clients
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"time"
 	"weather_forecast_sub/pkg/logger"
 )
@@ -36,7 +38,7 @@ func (lrt *LoggingRoundTripper) RoundTrip(req *http.Request) (*http.Response, er
 	duration := time.Since(start)
 
 	if err != nil {
-		logger.Errorf("[%s] HTTP request failed: %s", lrt.ClientName, err)
+		logger.Errorf("[HTTP Client: %s] request failed: %s", lrt.ClientName, err)
 		return resp, err
 	}
 
@@ -50,6 +52,12 @@ func (lrt *LoggingRoundTripper) RoundTrip(req *http.Request) (*http.Response, er
 		}
 	}
 
+	reqURL, err := replaceAPIKey(req.URL.String())
+	if err != nil {
+		logger.Errorf("[HTTP Client: %s]: %s", lrt.ClientName, err)
+		return resp, err
+	}
+
 	logger.Infof(
 		`[HTTP Client: %s]
 Request URL: %s
@@ -58,7 +66,7 @@ Duration: %s
 Request Body: %s
 Response Body: %s`,
 		lrt.ClientName,
-		req.URL.String(),
+		reqURL,
 		resp.StatusCode,
 		duration,
 		truncateIfNeeded(string(reqBodyBytes)),
@@ -66,6 +74,20 @@ Response Body: %s`,
 	)
 
 	return resp, nil
+}
+
+// replaceAPIKey used to replace API key from url in logs.
+func replaceAPIKey(rawURL string) (string, error) {
+	parsedURL, err := url.Parse(rawURL)
+	if err != nil {
+		return "", fmt.Errorf("invalid URL: %w", err)
+	}
+
+	query := parsedURL.Query()
+	query.Set("key", "API_KEY")
+	parsedURL.RawQuery = query.Encode()
+
+	return parsedURL.String(), nil
 }
 
 func truncateIfNeeded(body string) string {

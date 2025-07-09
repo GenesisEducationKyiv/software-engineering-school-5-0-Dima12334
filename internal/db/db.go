@@ -22,5 +22,5 @@ func ValidateDBConnection(db *sqlx.DB) error {
 	ctx, cancel := context.WithTimeout(context.Background(), pingTimeout)
 	defer cancel()
 
-	return errors.Wrap(db.PingContext(ctx), "ping wasn't successful")
+	return errors.Wrap(db.PingContext(ctx), "ping db wasn't successful")
 }

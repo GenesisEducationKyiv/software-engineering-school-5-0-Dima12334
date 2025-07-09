@@ -3,6 +3,8 @@ package clients
 import (
 	"context"
 	"errors"
+	"fmt"
+	"io"
 	"weather_forecast_sub/internal/domain"
 )
 
@@ -32,4 +34,14 @@ func NewChainWeatherClient(clients []ChainWeatherProvider) (*ChainWeatherClient,
 	return &ChainWeatherClient{
 		WeatherClient: clients[0],
 	}, nil
+}
+
+func closeBody(body io.Closer, errPtr *error) {
+	if closeErr := body.Close(); closeErr != nil {
+		if *errPtr != nil {
+			*errPtr = fmt.Errorf("%w; failed to close response body: %w", *errPtr, closeErr)
+		} else {
+			*errPtr = fmt.Errorf("failed to close response body: %w", closeErr)
+		}
+	}
 }
