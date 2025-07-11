@@ -5,12 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"ms-weather-subscription/internal/domain"
+	customErrors "ms-weather-subscription/pkg/errors"
+	"ms-weather-subscription/pkg/logger"
 	"net/http"
 	"reflect"
 	"time"
-	"weather_forecast_sub/internal/domain"
-	customErrors "weather_forecast_sub/pkg/errors"
-	"weather_forecast_sub/pkg/logger"
 )
 
 const (

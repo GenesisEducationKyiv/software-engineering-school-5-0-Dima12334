@@ -2,9 +2,9 @@ package service
 
 import (
 	"context"
+	"ms-weather-subscription/internal/domain"
+	"ms-weather-subscription/pkg/logger"
 	"time"
-	"weather_forecast_sub/internal/domain"
-	"weather_forecast_sub/pkg/logger"
 )
 
 type (
@@ -13,7 +13,6 @@ type (
 )
 
 type SubscriptionSenderRepository interface {
-	SetLastSentAt(ctx context.Context, lastSentAt time.Time, tokens []string) error
 	GetConfirmedByFrequency(ctx context.Context, frequency string) ([]domain.Subscription, error)
 }
 
@@ -109,5 +108,5 @@ func sendWeatherForecast[T WeatherResponseType](
 		return nil
 	}
 
-	return subscriptionSenderRepo.SetLastSentAt(ctx, time.Now(), subscriptionsToUpdate)
+	return nil
 }

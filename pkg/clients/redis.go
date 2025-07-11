@@ -2,8 +2,8 @@ package clients
 
 import (
 	"context"
+	"ms-weather-subscription/internal/config"
 	"time"
-	"weather_forecast_sub/internal/config"
 
 	"github.com/pkg/errors"
 	"github.com/redis/go-redis/v9"

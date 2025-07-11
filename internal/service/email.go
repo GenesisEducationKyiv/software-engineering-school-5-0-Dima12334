@@ -2,10 +2,10 @@ package service
 
 import (
 	"fmt"
-	"weather_forecast_sub/internal/config"
-	"weather_forecast_sub/internal/domain"
-	"weather_forecast_sub/pkg/email"
-	"weather_forecast_sub/pkg/logger"
+	"ms-weather-subscription/internal/config"
+	"ms-weather-subscription/internal/domain"
+	"ms-weather-subscription/pkg/email"
+	"ms-weather-subscription/pkg/logger"
 )
 
 type ConfirmationEmailTemplateInput struct {

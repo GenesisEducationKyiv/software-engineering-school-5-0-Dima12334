@@ -3,21 +3,20 @@ package app_test
 import (
 	"context"
 	"errors"
+	"ms-weather-subscription/internal/domain"
+	"ms-weather-subscription/testutils"
 	"testing"
-	"time"
-	"weather_forecast_sub/internal/domain"
-	"weather_forecast_sub/testutils"
 
 	"github.com/jmoiron/sqlx"
 
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 
-	"weather_forecast_sub/internal/repository"
-	mockRepository "weather_forecast_sub/internal/repository/mocks"
-	"weather_forecast_sub/internal/service"
-	mockService "weather_forecast_sub/internal/service/mocks"
-	mockSender "weather_forecast_sub/pkg/email/mocks"
+	"ms-weather-subscription/internal/repository"
+	mockRepository "ms-weather-subscription/internal/repository/mocks"
+	"ms-weather-subscription/internal/service"
+	mockService "ms-weather-subscription/internal/service/mocks"
+	mockSender "ms-weather-subscription/pkg/email/mocks"
 )
 
 func TestSubscriptionCron(t *testing.T) {
@@ -96,25 +95,11 @@ func testSendDailyWeatherForecastSuccess(t *testing.T) {
 		Send(gomock.Any()).
 		Return(nil)
 
-	var lastSentAt *time.Time
-	err = testSettings.TestDB.QueryRowx(`
-        SELECT last_sent_at FROM subscriptions WHERE email = 'daily@example.com'
-    `).Scan(&lastSentAt)
-	assert.NoError(t, err)
-	assert.Nil(t, lastSentAt)
-
 	// Execute
 	err = testSettings.WeatherForecastSenderService.SendDailyWeatherForecast(context.Background())
 
 	// Verify
 	assert.NoError(t, err)
-
-	// Check last_sent_at was updated
-	err = testSettings.TestDB.QueryRowx(`
-        SELECT last_sent_at FROM subscriptions WHERE email = 'daily@example.com'
-    `).Scan(&lastSentAt)
-	assert.NoError(t, err)
-	assert.NotNil(t, lastSentAt)
 }
 
 func testSendDailyWeatherForecastNoSubs(t *testing.T) {
@@ -184,25 +169,11 @@ func testSendHourlyWeatherForecastSuccess(t *testing.T) {
 		Send(gomock.Any()).
 		Return(nil)
 
-	var lastSentAt *time.Time
-	err = testSettings.TestDB.QueryRowx(`
-        SELECT last_sent_at FROM subscriptions WHERE email = 'hourly@example.com'
-    `).Scan(&lastSentAt)
-	assert.NoError(t, err)
-	assert.Nil(t, lastSentAt)
-
 	// Execute
 	err = testSettings.WeatherForecastSenderService.SendHourlyWeatherForecast(context.Background())
 
 	// Verify
 	assert.NoError(t, err)
-
-	// Check last_sent_at was updated
-	err = testSettings.TestDB.QueryRowx(`
-        SELECT last_sent_at FROM subscriptions WHERE email = 'hourly@example.com'
-    `).Scan(&lastSentAt)
-	assert.NoError(t, err)
-	assert.NotNil(t, lastSentAt)
 }
 
 func testSendHourlyWeatherForecastNoSubs(t *testing.T) {

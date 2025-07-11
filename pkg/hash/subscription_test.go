@@ -1,8 +1,8 @@
 package hash_test
 
 import (
+	"ms-weather-subscription/pkg/hash"
 	"testing"
-	"weather_forecast_sub/pkg/hash"
 
 	"github.com/stretchr/testify/assert"
 )

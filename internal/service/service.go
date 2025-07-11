@@ -2,12 +2,12 @@ package service
 
 import (
 	"context"
-	"weather_forecast_sub/internal/config"
-	"weather_forecast_sub/internal/domain"
-	"weather_forecast_sub/internal/repository"
-	"weather_forecast_sub/pkg/clients"
-	"weather_forecast_sub/pkg/email"
-	"weather_forecast_sub/pkg/hash"
+	"ms-weather-subscription/internal/config"
+	"ms-weather-subscription/internal/domain"
+	"ms-weather-subscription/internal/repository"
+	"ms-weather-subscription/pkg/clients"
+	"ms-weather-subscription/pkg/email"
+	"ms-weather-subscription/pkg/hash"
 )
 
 //go:generate mockgen -source=service.go -destination=mocks/mock_service.go

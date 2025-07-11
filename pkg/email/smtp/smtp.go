@@ -1,8 +1,8 @@
 package smtp
 
 import (
-	"weather_forecast_sub/pkg/email"
-	"weather_forecast_sub/pkg/logger"
+	"ms-weather-subscription/pkg/email"
+	"ms-weather-subscription/pkg/logger"
 
 	"github.com/go-gomail/gomail"
 	"github.com/pkg/errors"

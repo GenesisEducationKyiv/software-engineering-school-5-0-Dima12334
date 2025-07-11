@@ -4,12 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"time"
-	"weather_forecast_sub/internal/domain"
-	customErrors "weather_forecast_sub/pkg/errors"
+	"ms-weather-subscription/internal/domain"
+	customErrors "ms-weather-subscription/pkg/errors"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/lib/pq"
 )
 
 type SubscriptionRepo struct {
@@ -22,8 +20,8 @@ func NewSubscriptionRepo(db *sqlx.DB) *SubscriptionRepo {
 
 func (r *SubscriptionRepo) Create(ctx context.Context, subscription domain.Subscription) error {
 	query := `
-		INSERT INTO subscriptions (created_at, email, city, token, frequency, confirmed, last_sent_at) 
-		values ($1, $2, $3, $4, $5, $6, $7);`
+		INSERT INTO subscriptions (created_at, email, city, token, frequency, confirmed) 
+		values ($1, $2, $3, $4, $5, $6);`
 	_, err := r.db.ExecContext(
 		ctx,
 		query,
@@ -33,7 +31,6 @@ func (r *SubscriptionRepo) Create(ctx context.Context, subscription domain.Subsc
 		subscription.Token,
 		subscription.Frequency,
 		subscription.Confirmed,
-		subscription.LastSentAt,
 	)
 	if err != nil {
 		if customErrors.IsDuplicateDBError(err) {
@@ -54,8 +51,7 @@ func (r *SubscriptionRepo) GetByToken(ctx context.Context, token string) (domain
 		city,
 		token,
 		frequency,
-		confirmed,
-		last_sent_at
+		confirmed
 		FROM subscriptions
 		WHERE token = $1;`
 
@@ -74,12 +70,6 @@ func (r *SubscriptionRepo) GetByToken(ctx context.Context, token string) (domain
 func (r *SubscriptionRepo) Confirm(ctx context.Context, token string) error {
 	query := "UPDATE subscriptions SET confirmed = true WHERE token = $1;"
 	_, err := r.db.ExecContext(ctx, query, token)
-	return err
-}
-
-func (r *SubscriptionRepo) SetLastSentAt(ctx context.Context, lastSentAt time.Time, tokens []string) error {
-	query := "UPDATE subscriptions SET last_sent_at = $1 WHERE token = ANY($2);"
-	_, err := r.db.ExecContext(ctx, query, lastSentAt, pq.Array(tokens))
 	return err
 }
 
@@ -102,8 +92,7 @@ func (r *SubscriptionRepo) GetConfirmedByFrequency(
 		city,
 		token,
 		frequency,
-		confirmed,
-		last_sent_at
+		confirmed
 		FROM subscriptions
 		WHERE confirmed = true AND frequency = $1;`
 

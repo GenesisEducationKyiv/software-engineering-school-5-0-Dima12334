@@ -10,8 +10,8 @@
 package mock_email
 
 import (
-	reflect "reflect"
-	email "weather_forecast_sub/pkg/email"
+	email "ms-weather-subscription/pkg/email"
+
 
 	gomock "go.uber.org/mock/gomock"
 )

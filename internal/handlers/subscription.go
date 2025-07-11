@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"weather_forecast_sub/internal/domain"
-	customErrors "weather_forecast_sub/pkg/errors"
-	"weather_forecast_sub/pkg/hash"
+
+	"ms-weather-subscription/internal/domain"
+	customErrors "ms-weather-subscription/pkg/errors"
+	"ms-weather-subscription/pkg/hash"
 
 	"github.com/gin-gonic/gin"
 )

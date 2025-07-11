@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"weather_forecast_sub/internal/domain"
+	"ms-weather-subscription/internal/domain"
 )
 
 type WeatherClient interface {

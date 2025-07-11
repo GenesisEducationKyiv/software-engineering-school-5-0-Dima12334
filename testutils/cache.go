@@ -2,10 +2,10 @@ package testutils
 
 import (
 	"context"
+	"ms-weather-subscription/internal/config"
+	"ms-weather-subscription/pkg/cache"
+	"ms-weather-subscription/pkg/clients"
 	"testing"
-	"weather_forecast_sub/internal/config"
-	"weather_forecast_sub/pkg/cache"
-	"weather_forecast_sub/pkg/clients"
 )
 
 func SetupTestCache(t *testing.T) *cache.RedisCache {

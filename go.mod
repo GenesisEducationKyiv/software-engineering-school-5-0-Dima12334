@@ -1,4 +1,4 @@
-module weather_forecast_sub
+module ms-weather-subscription
 
 go 1.24
 

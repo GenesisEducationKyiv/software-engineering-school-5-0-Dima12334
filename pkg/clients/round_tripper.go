@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"ms-weather-subscription/pkg/logger"
 	"net/http"
 	"net/url"
 	"time"
-	"weather_forecast_sub/pkg/logger"
 )
 
 type LoggingRoundTripper struct {

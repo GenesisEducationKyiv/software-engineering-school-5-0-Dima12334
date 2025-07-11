@@ -5,15 +5,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	redisCache "ms-weather-subscription/pkg/cache"
 	"net/url"
 	"strings"
 	"time"
-	redisCache "weather_forecast_sub/pkg/cache"
 
 	"github.com/redis/go-redis/v9"
 
-	"weather_forecast_sub/internal/domain"
-	"weather_forecast_sub/pkg/logger"
+	"ms-weather-subscription/internal/domain"
+	"ms-weather-subscription/pkg/logger"
 )
 
 const (

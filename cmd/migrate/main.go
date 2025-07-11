@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 	"log"
+	"ms-weather-subscription/internal/config"
+	"ms-weather-subscription/pkg/migrations"
 	"os"
-	"weather_forecast_sub/internal/config"
-	"weather_forecast_sub/pkg/migrations"
 
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/lib/pq"

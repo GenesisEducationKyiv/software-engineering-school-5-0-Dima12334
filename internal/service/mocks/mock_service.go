@@ -11,9 +11,9 @@ package mock_service
 
 import (
 	context "context"
+	domain "ms-weather-subscription/internal/domain"
+	service "ms-weather-subscription/internal/service"
 	reflect "reflect"
-	domain "weather_forecast_sub/internal/domain"
-	service "weather_forecast_sub/internal/service"
 
 	gomock "go.uber.org/mock/gomock"
 )
