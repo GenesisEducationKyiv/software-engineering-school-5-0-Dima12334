@@ -2,8 +2,7 @@ package repository
 
 import (
 	"context"
-	"time"
-	"weather_forecast_sub/internal/domain"
+	"ms-weather-subscription/internal/domain"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -14,7 +13,6 @@ type SubscriptionRepository interface {
 	Create(ctx context.Context, subscription domain.Subscription) error
 	GetByToken(ctx context.Context, token string) (domain.Subscription, error)
 	Confirm(ctx context.Context, token string) error
-	SetLastSentAt(ctx context.Context, lastSentAt time.Time, tokens []string) error
 	Delete(ctx context.Context, token string) error
 	GetConfirmedByFrequency(ctx context.Context, frequency string) ([]domain.Subscription, error)
 }

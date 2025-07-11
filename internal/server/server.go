@@ -2,8 +2,8 @@ package server
 
 import (
 	"context"
+	"ms-weather-subscription/internal/config"
 	"net/http"
-	"weather_forecast_sub/internal/config"
 )
 
 type Server struct {

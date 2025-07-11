@@ -2,8 +2,8 @@ package service
 
 import (
 	"context"
-	"weather_forecast_sub/internal/domain"
-	"weather_forecast_sub/pkg/clients"
+	"ms-weather-subscription/internal/domain"
+	"ms-weather-subscription/pkg/clients"
 )
 
 type WeatherService struct {

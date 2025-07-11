@@ -2,8 +2,8 @@ package main
 
 import (
 	"log"
-	"weather_forecast_sub/internal/app"
-	"weather_forecast_sub/internal/config"
+	"ms-weather-subscription/internal/app"
+	"ms-weather-subscription/internal/config"
 )
 
 func main() {

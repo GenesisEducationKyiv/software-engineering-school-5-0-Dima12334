@@ -1,13 +1,13 @@
 package email_test
 
 import (
+	"ms-weather-subscription/internal/domain"
+	"ms-weather-subscription/internal/service"
+	"ms-weather-subscription/pkg/email"
+	customErrors "ms-weather-subscription/pkg/errors"
+	"ms-weather-subscription/testutils"
 	"os"
 	"testing"
-	"weather_forecast_sub/internal/domain"
-	"weather_forecast_sub/internal/service"
-	"weather_forecast_sub/pkg/email"
-	customErrors "weather_forecast_sub/pkg/errors"
-	"weather_forecast_sub/testutils"
 
 	"github.com/stretchr/testify/assert"
 )

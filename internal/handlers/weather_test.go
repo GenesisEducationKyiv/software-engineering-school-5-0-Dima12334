@@ -1,14 +1,14 @@
 package handlers_test
 
 import (
+	"ms-weather-subscription/internal/handlers"
+	"ms-weather-subscription/internal/service"
+	"ms-weather-subscription/pkg/clients"
+	"ms-weather-subscription/testutils"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"weather_forecast_sub/internal/handlers"
-	"weather_forecast_sub/internal/service"
-	"weather_forecast_sub/pkg/clients"
-	"weather_forecast_sub/testutils"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"

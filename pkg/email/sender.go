@@ -3,9 +3,9 @@ package email
 import (
 	"bytes"
 	"html/template"
+	customErrors "ms-weather-subscription/pkg/errors"
+	"ms-weather-subscription/pkg/logger"
 	"strings"
-	customErrors "weather_forecast_sub/pkg/errors"
-	"weather_forecast_sub/pkg/logger"
 )
 
 type SendEmailInput struct {

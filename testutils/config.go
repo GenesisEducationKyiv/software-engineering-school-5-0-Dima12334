@@ -1,8 +1,8 @@
 package testutils
 
 import (
+	"ms-weather-subscription/internal/config"
 	"testing"
-	"weather_forecast_sub/internal/config"
 )
 
 func SetupTestConfig(t *testing.T) *config.Config {

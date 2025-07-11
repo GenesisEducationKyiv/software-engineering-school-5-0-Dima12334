@@ -2,8 +2,8 @@ package app
 
 import (
 	"context"
+	"ms-weather-subscription/pkg/logger"
 	"time"
-	"weather_forecast_sub/pkg/logger"
 
 	"github.com/robfig/cron/v3"
 )

@@ -3,9 +3,9 @@ package handlers
 import (
 	"context"
 	"errors"
+	"ms-weather-subscription/internal/domain"
+	customErrors "ms-weather-subscription/pkg/errors"
 	"net/http"
-	"weather_forecast_sub/internal/domain"
-	customErrors "weather_forecast_sub/pkg/errors"
 
 	"github.com/gin-gonic/gin"
 )

@@ -11,9 +11,8 @@ package mock_repository
 
 import (
 	context "context"
+	domain "ms-weather-subscription/internal/domain"
 	reflect "reflect"
-	time "time"
-	domain "weather_forecast_sub/internal/domain"
 
 	gomock "go.uber.org/mock/gomock"
 )
@@ -112,18 +111,4 @@ func (m *MockSubscriptionRepository) GetConfirmedByFrequency(ctx context.Context
 func (mr *MockSubscriptionRepositoryMockRecorder) GetConfirmedByFrequency(ctx, frequency any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConfirmedByFrequency", reflect.TypeOf((*MockSubscriptionRepository)(nil).GetConfirmedByFrequency), ctx, frequency)
-}
-
-// SetLastSentAt mocks base method.
-func (m *MockSubscriptionRepository) SetLastSentAt(ctx context.Context, lastSentAt time.Time, tokens []string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SetLastSentAt", ctx, lastSentAt, tokens)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// SetLastSentAt indicates an expected call of SetLastSentAt.
-func (mr *MockSubscriptionRepositoryMockRecorder) SetLastSentAt(ctx, lastSentAt, tokens any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetLastSentAt", reflect.TypeOf((*MockSubscriptionRepository)(nil).SetLastSentAt), ctx, lastSentAt, tokens)
 }

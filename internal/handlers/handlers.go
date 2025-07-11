@@ -7,9 +7,9 @@ import (
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 
-	_ "weather_forecast_sub/docs"
-	"weather_forecast_sub/internal/config"
-	"weather_forecast_sub/internal/service"
+	_ "ms-weather-subscription/docs"
+	"ms-weather-subscription/internal/config"
+	"ms-weather-subscription/internal/service"
 )
 
 type Handler struct {

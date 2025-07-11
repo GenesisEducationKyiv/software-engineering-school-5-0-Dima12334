@@ -2,17 +2,17 @@ package handlers_test
 
 import (
 	"bytes"
+	"ms-weather-subscription/internal/config"
+	"ms-weather-subscription/internal/domain"
+	"ms-weather-subscription/internal/handlers"
+	"ms-weather-subscription/internal/repository"
+	"ms-weather-subscription/internal/service"
+	mockSender "ms-weather-subscription/pkg/email/mocks"
+	"ms-weather-subscription/pkg/hash"
+	"ms-weather-subscription/testutils"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"weather_forecast_sub/internal/config"
-	"weather_forecast_sub/internal/domain"
-	"weather_forecast_sub/internal/handlers"
-	"weather_forecast_sub/internal/repository"
-	"weather_forecast_sub/internal/service"
-	mockSender "weather_forecast_sub/pkg/email/mocks"
-	"weather_forecast_sub/pkg/hash"
-	"weather_forecast_sub/testutils"
 
 	"github.com/jmoiron/sqlx"
 

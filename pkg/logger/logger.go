@@ -2,9 +2,9 @@ package logger
 
 import (
 	"fmt"
+	"ms-weather-subscription/internal/config"
 	"os"
 	"path/filepath"
-	"weather_forecast_sub/internal/config"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"

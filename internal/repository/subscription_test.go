@@ -4,18 +4,18 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	customErrors "ms-weather-subscription/pkg/errors"
+	"ms-weather-subscription/testutils"
 	"testing"
 	"time"
-	customErrors "weather_forecast_sub/pkg/errors"
-	"weather_forecast_sub/testutils"
 
 	"github.com/lib/pq"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 
-	"weather_forecast_sub/internal/domain"
-	"weather_forecast_sub/internal/repository"
+	"ms-weather-subscription/internal/domain"
+	"ms-weather-subscription/internal/repository"
 )
 
 func TestSubscriptionRepo(t *testing.T) {
@@ -27,8 +27,6 @@ func TestSubscriptionRepo(t *testing.T) {
 	t.Run("GetByToken DB Error", testSubscriptionRepoGetByTokenDBError)
 	t.Run("Confirm", testSubscriptionRepoConfirm)
 	t.Run("Confirm Error", testSubscriptionRepoConfirmError)
-	t.Run("SetLastSentAt", testSubscriptionRepoSetLastSentAt)
-	t.Run("SetLastSentAt Error", testSubscriptionRepoSetLastSentAtError)
 	t.Run("Delete", testSubscriptionRepoDelete)
 	t.Run("Delete Error", testSubscriptionRepoDeleteError)
 	t.Run("GetConfirmedByFrequency", testSubscriptionRepoGetConfirmedByFrequency)
@@ -49,19 +47,17 @@ func testSubscriptionRepoCreate(t *testing.T) {
 
 	repo := repository.NewSubscriptionRepo(db)
 
-	now := time.Now()
 	sub := domain.Subscription{
-		CreatedAt:  time.Now(),
-		Email:      "test@example.com",
-		City:       "Kyiv",
-		Token:      "token123",
-		Frequency:  "daily",
-		Confirmed:  false,
-		LastSentAt: &now,
+		CreatedAt: time.Now(),
+		Email:     "test@example.com",
+		City:      "Kyiv",
+		Token:     "token123",
+		Frequency: "daily",
+		Confirmed: false,
 	}
 
 	mock.ExpectExec("INSERT INTO subscriptions").
-		WithArgs(sub.CreatedAt, sub.Email, sub.City, sub.Token, sub.Frequency, sub.Confirmed, sub.LastSentAt).
+		WithArgs(sub.CreatedAt, sub.Email, sub.City, sub.Token, sub.Frequency, sub.Confirmed).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	err := repo.Create(context.Background(), sub)
@@ -85,17 +81,16 @@ func testSubscriptionRepoCreateError(t *testing.T) {
 	repo := repository.NewSubscriptionRepo(db)
 
 	sub := domain.Subscription{
-		CreatedAt:  time.Now(),
-		Email:      "error@example.com",
-		City:       "Kyiv",
-		Token:      "errorToken",
-		Frequency:  "daily",
-		Confirmed:  false,
-		LastSentAt: nil,
+		CreatedAt: time.Now(),
+		Email:     "error@example.com",
+		City:      "Kyiv",
+		Token:     "errorToken",
+		Frequency: "daily",
+		Confirmed: false,
 	}
 
 	mock.ExpectExec("INSERT INTO subscriptions").
-		WithArgs(sub.CreatedAt, sub.Email, sub.City, sub.Token, sub.Frequency, sub.Confirmed, sub.LastSentAt).
+		WithArgs(sub.CreatedAt, sub.Email, sub.City, sub.Token, sub.Frequency, sub.Confirmed).
 		WillReturnError(errors.New("some db error"))
 
 	err := repo.Create(context.Background(), sub)
@@ -119,18 +114,17 @@ func testSubscriptionRepoCreateDuplicationError(t *testing.T) {
 	repo := repository.NewSubscriptionRepo(db)
 
 	sub := domain.Subscription{
-		CreatedAt:  time.Now(),
-		Email:      "error@example.com",
-		City:       "Kyiv",
-		Token:      "errorToken",
-		Frequency:  "daily",
-		Confirmed:  false,
-		LastSentAt: nil,
+		CreatedAt: time.Now(),
+		Email:     "error@example.com",
+		City:      "Kyiv",
+		Token:     "errorToken",
+		Frequency: "daily",
+		Confirmed: false,
 	}
 
 	duplicateError := pq.Error{Code: customErrors.PgUniqueViolationCode}
 	mock.ExpectExec("INSERT INTO subscriptions").
-		WithArgs(sub.CreatedAt, sub.Email, sub.City, sub.Token, sub.Frequency, sub.Confirmed, sub.LastSentAt).
+		WithArgs(sub.CreatedAt, sub.Email, sub.City, sub.Token, sub.Frequency, sub.Confirmed).
 		WillReturnError(&duplicateError)
 
 	err := repo.Create(context.Background(), sub)
@@ -154,23 +148,21 @@ func testSubscriptionRepoGetByToken(t *testing.T) {
 	repo := repository.NewSubscriptionRepo(db)
 
 	token := "test-token"
-	now := time.Now()
 	expected := domain.Subscription{
-		ID:         "68501cb6-0bf0-800e-81ba-bae3763ecdd2",
-		CreatedAt:  time.Now(),
-		Email:      "user@example.com",
-		City:       "Kyiv",
-		Token:      token,
-		Frequency:  "daily",
-		Confirmed:  true,
-		LastSentAt: &now,
+		ID:        "68501cb6-0bf0-800e-81ba-bae3763ecdd2",
+		CreatedAt: time.Now(),
+		Email:     "user@example.com",
+		City:      "Kyiv",
+		Token:     token,
+		Frequency: "daily",
+		Confirmed: true,
 	}
 
 	rows := sqlmock.NewRows([]string{
-		"id", "created_at", "email", "city", "token", "frequency", "confirmed", "last_sent_at",
+		"id", "created_at", "email", "city", "token", "frequency", "confirmed",
 	}).AddRow(
 		expected.ID, expected.CreatedAt, expected.Email, expected.City, expected.Token,
-		expected.Frequency, expected.Confirmed, expected.LastSentAt,
+		expected.Frequency, expected.Confirmed,
 	)
 
 	mock.ExpectQuery("SELECT .* FROM subscriptions WHERE token =").
@@ -279,58 +271,6 @@ func testSubscriptionRepoConfirmError(t *testing.T) {
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
-func testSubscriptionRepoSetLastSentAt(t *testing.T) {
-	t.Parallel()
-
-	db, mock := testutils.SetupMockDB(t)
-	defer func() {
-		mock.ExpectClose()
-		err := db.Close()
-		if err != nil {
-			t.Fatal(err)
-		}
-	}()
-
-	repo := repository.NewSubscriptionRepo(db)
-
-	now := time.Now()
-	tokens := []string{"token1", "token2"}
-
-	mock.ExpectExec("UPDATE subscriptions SET last_sent_at").
-		WithArgs(now, pq.Array(tokens)).
-		WillReturnResult(sqlmock.NewResult(1, 2))
-
-	err := repo.SetLastSentAt(context.Background(), now, tokens)
-	assert.NoError(t, err)
-	assert.NoError(t, mock.ExpectationsWereMet())
-}
-
-func testSubscriptionRepoSetLastSentAtError(t *testing.T) {
-	t.Parallel()
-
-	db, mock := testutils.SetupMockDB(t)
-	defer func() {
-		mock.ExpectClose()
-		err := db.Close()
-		if err != nil {
-			t.Fatal(err)
-		}
-	}()
-
-	repo := repository.NewSubscriptionRepo(db)
-
-	now := time.Now()
-	tokens := []string{"token1", "token2"}
-
-	mock.ExpectExec("UPDATE subscriptions SET last_sent_at").
-		WithArgs(now, pq.Array(tokens)).
-		WillReturnError(errors.New("update error"))
-
-	err := repo.SetLastSentAt(context.Background(), now, tokens)
-	assert.Error(t, err)
-	assert.NoError(t, mock.ExpectationsWereMet())
-}
-
 func testSubscriptionRepoDelete(t *testing.T) {
 	t.Parallel()
 
@@ -391,23 +331,21 @@ func testSubscriptionRepoGetConfirmedByFrequency(t *testing.T) {
 
 	repo := repository.NewSubscriptionRepo(db)
 
-	now := time.Now()
 	expected := domain.Subscription{
-		ID:         "68501cb6-0bf0-800e-81ba-bae3763ecdd2",
-		CreatedAt:  time.Now(),
-		Email:      "test@example.com",
-		City:       "Lviv",
-		Token:      "token321",
-		Frequency:  "weekly",
-		Confirmed:  true,
-		LastSentAt: &now,
+		ID:        "68501cb6-0bf0-800e-81ba-bae3763ecdd2",
+		CreatedAt: time.Now(),
+		Email:     "test@example.com",
+		City:      "Lviv",
+		Token:     "token321",
+		Frequency: "weekly",
+		Confirmed: true,
 	}
 
 	rows := sqlmock.NewRows([]string{
-		"id", "created_at", "email", "city", "token", "frequency", "confirmed", "last_sent_at",
+		"id", "created_at", "email", "city", "token", "frequency", "confirmed",
 	}).AddRow(
 		expected.ID, expected.CreatedAt, expected.Email, expected.City, expected.Token,
-		expected.Frequency, expected.Confirmed, expected.LastSentAt,
+		expected.Frequency, expected.Confirmed,
 	)
 
 	mock.ExpectQuery("SELECT .* FROM subscriptions WHERE confirmed = true").

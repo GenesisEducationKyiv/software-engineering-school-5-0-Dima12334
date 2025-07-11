@@ -2,9 +2,9 @@
 package testutils
 
 import (
+	"ms-weather-subscription/internal/config"
+	"ms-weather-subscription/pkg/migrations"
 	"testing"
-	"weather_forecast_sub/internal/config"
-	"weather_forecast_sub/pkg/migrations"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
