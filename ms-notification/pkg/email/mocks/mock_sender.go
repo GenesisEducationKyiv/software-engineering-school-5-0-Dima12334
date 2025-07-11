@@ -12,7 +12,6 @@ package mock_email
 import (
 	email "ms-weather-subscription/pkg/email"
 
-
 	gomock "go.uber.org/mock/gomock"
 )
 
