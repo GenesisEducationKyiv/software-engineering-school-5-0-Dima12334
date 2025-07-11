@@ -8,7 +8,7 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 
-COPY . .
+COPY .. .
 
 RUN go build -ldflags="-s -w" -o bin/migrate ./cmd/migrate/main.go
 RUN go build -ldflags="-s -w" -o bin/app ./cmd/app/main.go

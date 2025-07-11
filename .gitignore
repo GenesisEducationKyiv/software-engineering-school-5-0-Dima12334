@@ -3,9 +3,12 @@
 .bin
 .DS_Store
 
-/logs/app.log
+/ms-weather-subscription/logs/app.log
+/ms-weather-subscription/.env.dev
 
-.env.dev
+/ms-notification/logs/app.log
+/ms-notification/.env.dev
+
 cover.out
 
 # Visual Studio Settings
