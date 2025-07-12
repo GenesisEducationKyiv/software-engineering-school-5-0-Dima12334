@@ -1,11 +1,11 @@
 package email_test
 
 import (
-	"ms-weather-subscription/internal/domain"
-	"ms-weather-subscription/internal/service"
-	"ms-weather-subscription/pkg/email"
-	customErrors "ms-weather-subscription/pkg/errors"
-	"ms-weather-subscription/testutils"
+	"ms-notification/internal/domain"
+	"ms-notification/internal/service"
+	"ms-notification/pkg/email"
+	customErrors "ms-notification/pkg/errors"
+	"ms-notification/testutils"
 	"os"
 	"testing"
 

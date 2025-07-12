@@ -2,9 +2,9 @@ package email
 
 import (
 	"bytes"
+	"common/logger"
 	"html/template"
-	customErrors "ms-weather-subscription/pkg/errors"
-	"ms-weather-subscription/pkg/logger"
+	customErrors "ms-notification/pkg/errors"
 	"strings"
 )
 

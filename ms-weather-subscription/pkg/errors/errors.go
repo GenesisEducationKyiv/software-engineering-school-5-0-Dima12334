@@ -16,10 +16,6 @@ var (
 
 	ErrCityNotFound     = errors.New("city doesn't exists")
 	ErrWeatherDataError = errors.New("failed to get weather data")
-
-	ErrEmailToRequired      = errors.New("email 'To' field is required")
-	ErrEmailSubjectRequired = errors.New("email 'Subject' field is required")
-	ErrEmailBodyRequired    = errors.New("email 'Body' field is required")
 )
 
 func IsDuplicateDBError(err error) bool {

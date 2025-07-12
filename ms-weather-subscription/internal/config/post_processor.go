@@ -27,14 +27,7 @@ func (p *DefaultConfigPostProcessor) processDatabaseConfig(cfg *Config) {
 	cfg.DB.MigrationsPath = migrationsPath
 }
 
-func (p *DefaultConfigPostProcessor) processEmailConfig(cfg *Config) {
-	cfg.Email.Templates.Confirmation = GetOriginalPath(cfg.Email.Templates.Confirmation)
-	cfg.Email.Templates.WeatherForecastDaily = GetOriginalPath(cfg.Email.Templates.WeatherForecastDaily)
-	cfg.Email.Templates.WeatherForecastHourly = GetOriginalPath(cfg.Email.Templates.WeatherForecastHourly)
-}
-
 func (p *DefaultConfigPostProcessor) ProcessConfig(cfg *Config) {
 	p.processHTTPConfig(cfg)
 	p.processDatabaseConfig(cfg)
-	p.processEmailConfig(cfg)
 }

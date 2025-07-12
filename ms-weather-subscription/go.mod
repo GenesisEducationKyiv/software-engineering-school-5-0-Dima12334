@@ -3,9 +3,9 @@ module ms-weather-subscription
 go 1.24.2
 
 require (
+	common v0.0.0
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/gin-gonic/gin v1.10.0
-	github.com/go-gomail/gomail v0.0.0-20160411212932-81ebce5c23df
 	github.com/golang-migrate/migrate/v4 v4.18.3
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/joho/godotenv v1.5.1
@@ -20,9 +20,6 @@ require (
 	github.com/swaggo/gin-swagger v1.6.0
 	github.com/swaggo/swag v1.16.4
 	go.uber.org/mock v0.5.2
-	go.uber.org/zap v1.27.0
-	ms-notification v0.0.0
-	common v0.0.0
 )
 
 require (
@@ -67,6 +64,7 @@ require (
 	github.com/ugorji/go/codec v1.2.12 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
+	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/arch v0.17.0 // indirect
 	golang.org/x/crypto v0.38.0 // indirect
 	golang.org/x/mod v0.24.0 // indirect
@@ -76,12 +74,10 @@ require (
 	golang.org/x/text v0.25.0 // indirect
 	golang.org/x/tools v0.33.0 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
-	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
-	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 replace (
-	ms-notification => ../ms-notification
 	common => ../pkg
+	ms-notification => ../ms-notification
 )

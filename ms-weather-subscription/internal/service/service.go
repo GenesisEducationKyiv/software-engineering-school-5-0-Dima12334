@@ -6,7 +6,6 @@ import (
 	"ms-weather-subscription/internal/domain"
 	"ms-weather-subscription/internal/repository"
 	"ms-weather-subscription/pkg/clients"
-	"ms-weather-subscription/pkg/email"
 	"ms-weather-subscription/pkg/hash"
 )
 
@@ -28,37 +27,12 @@ type Weather interface {
 	GetDayWeather(ctx context.Context, city string) (*domain.DayWeatherResponse, error)
 }
 
-type WeatherResponseType interface {
-	*domain.WeatherResponse | *domain.DayWeatherResponse
-}
-
-type ConfirmationEmailInput struct {
-	Email string
-	Token string
-}
-
-type WeatherForecastEmailInput[T WeatherResponseType] struct {
-	Subscription domain.Subscription
-	Weather      T
-	Date         string
-}
-
-type SubscriptionEmails interface {
-	SendConfirmationEmail(ConfirmationEmailInput) error
-}
-
-type WeatherEmails interface {
-	SendWeatherForecastDailyEmail(WeatherForecastEmailInput[*domain.DayWeatherResponse]) error
-	SendWeatherForecastHourlyEmail(WeatherForecastEmailInput[*domain.WeatherResponse]) error
-}
-
 type Deps struct {
 	Repos              *repository.Repositories
 	WeatherClient      clients.WeatherClient
 	SubscriptionHasher hash.SubscriptionHasher
-	EmailSender        email.Sender
-	EmailConfig        config.EmailConfig
 	HTTPConfig         config.HTTPConfig
+	NotificationClient clients.NotificationSender
 }
 
 type Services struct {
@@ -68,19 +42,18 @@ type Services struct {
 }
 
 func NewServices(deps Deps) *Services {
-	emailsService := NewEmailsService(deps.EmailSender, deps.EmailConfig, deps.HTTPConfig)
 	weatherService := NewWeatherService(deps.WeatherClient)
 	return &Services{
 		Subscriptions: NewSubscriptionService(
 			deps.Repos.Subscription,
 			deps.SubscriptionHasher,
-			emailsService,
+			deps.NotificationClient,
 		),
 		Weather: weatherService,
 		WeatherForecastSender: NewWeatherForecastSenderService(
-			emailsService,
 			weatherService,
 			deps.Repos.Subscription,
+			deps.NotificationClient,
 		),
 	}
 }

@@ -1,11 +1,11 @@
 package service
 
 import (
+	"common/logger"
 	"fmt"
 	"ms-notification/internal/config"
 	"ms-notification/internal/domain"
 	"ms-notification/pkg/email"
-	"ms-notification/pkg/logger"
 )
 
 type ConfirmationEmailTemplateInput struct {
