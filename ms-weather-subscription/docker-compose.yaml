@@ -29,7 +29,9 @@ services:
     command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}"]
 
   app:
-    build: ..
+    build:
+      context: ..
+      dockerfile: ms-weather-subscription/Dockerfile
     container_name: weather_forecast_sub_app
     depends_on:
       db:
@@ -39,7 +41,7 @@ services:
     ports:
       - "${APP_PORT}:${APP_PORT}"
     volumes:
-      - ./.env.dev:/app/.env.dev
+      - ./ms-weather-subscription/.env.dev:/app/.env.dev
       - ./logs:/app/logs
 
 volumes:
