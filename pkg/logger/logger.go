@@ -2,7 +2,6 @@ package logger
 
 import (
 	"fmt"
-	"ms-notification/internal/config"
 	"os"
 	"path/filepath"
 
@@ -20,19 +19,19 @@ const (
 	filePerm = 0o600
 )
 
-func Init(loggerCfg config.LoggerConfig) error {
+func Init(loggerEnv, logFilePath string) error {
 	var core zapcore.Core
 
 	encoderCfg := zap.NewProductionEncoderConfig()
 	encoderCfg.EncodeTime = zapcore.ISO8601TimeEncoder
 
-	switch loggerCfg.LoggerEnv {
+	switch loggerEnv {
 	case prodLogEnv:
-		logDir := filepath.Dir(loggerCfg.FilePath)
+		logDir := filepath.Dir(logFilePath)
 		if err := os.MkdirAll(logDir, dirPerm); err != nil {
 			return fmt.Errorf("failed to create log dir: %w", err)
 		}
-		logFile, err := os.OpenFile(loggerCfg.FilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, filePerm)
+		logFile, err := os.OpenFile(logFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, filePerm)
 		if err != nil {
 			return err
 		}

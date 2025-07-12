@@ -1,6 +1,7 @@
 package app
 
 import (
+	"common/logger"
 	"context"
 	"errors"
 	"log"
@@ -14,7 +15,6 @@ import (
 	"ms-weather-subscription/pkg/clients"
 	"ms-weather-subscription/pkg/email/smtp"
 	"ms-weather-subscription/pkg/hash"
-	"ms-weather-subscription/pkg/logger"
 	"net/http"
 	"os"
 	"os/signal"
@@ -90,7 +90,7 @@ func (ab *ApplicationBuilder) Build(environment string) (*Application, error) {
 		return nil, err
 	}
 
-	if err := logger.Init(cfg.Logger); err != nil {
+	if err := logger.Init(cfg.Logger.LoggerEnv, cfg.Logger.FilePath); err != nil {
 		return nil, err
 	}
 

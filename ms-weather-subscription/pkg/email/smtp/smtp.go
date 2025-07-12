@@ -1,11 +1,10 @@
 package smtp
 
 import (
-	"ms-weather-subscription/pkg/email"
-	"ms-weather-subscription/pkg/logger"
-
+	"common/logger"
 	"github.com/go-gomail/gomail"
 	"github.com/pkg/errors"
+	"ms-weather-subscription/pkg/email"
 )
 
 type SMTPSender struct {

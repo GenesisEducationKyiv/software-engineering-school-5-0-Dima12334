@@ -1,6 +1,7 @@
 package clients
 
 import (
+	"common/logger"
 	"context"
 	"encoding/json"
 	"errors"
@@ -13,7 +14,6 @@ import (
 	"github.com/redis/go-redis/v9"
 
 	"ms-weather-subscription/internal/domain"
-	"ms-weather-subscription/pkg/logger"
 )
 
 const (

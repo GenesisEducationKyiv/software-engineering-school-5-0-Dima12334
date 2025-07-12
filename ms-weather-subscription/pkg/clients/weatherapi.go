@@ -1,12 +1,12 @@
 package clients
 
 import (
+	"common/logger"
 	"context"
 	"encoding/json"
 	"fmt"
 	"ms-weather-subscription/internal/domain"
 	customErrors "ms-weather-subscription/pkg/errors"
-	"ms-weather-subscription/pkg/logger"
 	"net/http"
 	"reflect"
 	"strings"

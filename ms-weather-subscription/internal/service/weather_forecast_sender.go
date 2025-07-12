@@ -1,9 +1,9 @@
 package service
 
 import (
+	"common/logger"
 	"context"
 	"ms-weather-subscription/internal/domain"
-	"ms-weather-subscription/pkg/logger"
 	"time"
 )
 
