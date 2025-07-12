@@ -2,9 +2,9 @@ package clients
 
 import (
 	"bytes"
+	"common/logger"
 	"fmt"
 	"io"
-	"ms-weather-subscription/pkg/logger"
 	"net/http"
 	"net/url"
 	"time"

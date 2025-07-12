@@ -1,6 +1,6 @@
 module ms-weather-subscription
 
-go 1.24
+go 1.24.2
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
@@ -21,6 +21,8 @@ require (
 	github.com/swaggo/swag v1.16.4
 	go.uber.org/mock v0.5.2
 	go.uber.org/zap v1.27.0
+	ms-notification v0.0.0
+	common v0.0.0
 )
 
 require (
@@ -77,4 +79,9 @@ require (
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
+)
+
+replace (
+	ms-notification => ../ms-notification
+	common => ../pkg
 )

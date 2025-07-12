@@ -1,6 +1,7 @@
 package app
 
 import (
+	"common/logger"
 	"context"
 	"errors"
 	"ms-notification/internal/config"
@@ -8,7 +9,6 @@ import (
 	"ms-notification/internal/server"
 	"ms-notification/internal/service"
 	"ms-notification/pkg/email/smtp"
-	"ms-notification/pkg/logger"
 	"net/http"
 	"os"
 	"os/signal"
@@ -54,7 +54,7 @@ func (ab *ApplicationBuilder) Build(environment string) (*Application, error) {
 		return nil, err
 	}
 
-	if err := logger.Init(cfg.Logger); err != nil {
+	if err := logger.Init(cfg.Logger.LoggerEnv, cfg.Logger.FilePath); err != nil {
 		return nil, err
 	}
 
