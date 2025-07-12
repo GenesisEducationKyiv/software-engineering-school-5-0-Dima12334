@@ -13,7 +13,6 @@ import (
 	"ms-weather-subscription/internal/service"
 	"ms-weather-subscription/pkg/cache"
 	"ms-weather-subscription/pkg/clients"
-	"ms-weather-subscription/pkg/email/smtp"
 	"ms-weather-subscription/pkg/hash"
 	"net/http"
 	"os"
@@ -43,13 +42,6 @@ func NewApplication(environment string) (*Application, error) {
 
 func (ab *ApplicationBuilder) setupDependencies(app *Application) {
 	hasher := &hash.SHA256Hasher{}
-	emailSender := smtp.NewSMTPSender(
-		app.config.SMTP.From,
-		app.config.SMTP.FromName,
-		app.config.SMTP.Pass,
-		app.config.SMTP.Host,
-		app.config.SMTP.Port,
-	)
 
 	redisCache := cache.NewCache(app.redisConn)
 
@@ -68,13 +60,15 @@ func (ab *ApplicationBuilder) setupDependencies(app *Application) {
 
 	repositories := repository.NewRepositories(app.dbConn)
 
+	// TODO: Implement notification client init
+	notificationClient := clients.NewNotificationClient()
+
 	services := service.NewServices(service.Deps{
 		WeatherClient:      cachingWeatherClient,
 		Repos:              repositories,
 		SubscriptionHasher: hasher,
-		EmailSender:        emailSender,
-		EmailConfig:        app.config.Email,
 		HTTPConfig:         app.config.HTTP,
+		NotificationClient: notificationClient,
 	})
 
 	app.cronRunner = NewCronRunner(services.WeatherForecastSender)

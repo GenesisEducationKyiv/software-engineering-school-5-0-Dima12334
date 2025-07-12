@@ -3,15 +3,13 @@ module ms-notification
 go 1.24.2
 
 require (
+	common v0.0.0
 	github.com/go-gomail/gomail v0.0.0-20160411212932-81ebce5c23df
 	github.com/joho/godotenv v1.5.1
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.10.0
 	go.uber.org/mock v0.5.2
-	go.uber.org/zap v1.27.0
-	ms-weather-subscription v0.0.0
-	common v0.0.0
 )
 
 require (
@@ -27,6 +25,7 @@ require (
 	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
+	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/text v0.25.0 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
@@ -35,6 +34,6 @@ require (
 )
 
 replace (
-	ms-weather-subscription => ../ms-weather-subscription
 	common => ../pkg
+	ms-weather-subscription => ../ms-weather-subscription
 )

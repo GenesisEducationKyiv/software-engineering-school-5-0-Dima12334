@@ -4,12 +4,13 @@ import (
 	"common/logger"
 	"context"
 	"ms-weather-subscription/internal/domain"
+	"ms-weather-subscription/pkg/clients"
 	"time"
 )
 
 type (
-	WeatherFetcherFunc[T WeatherResponseType] func(ctx context.Context, city string) (T, error)
-	EmailSenderFunc[T WeatherResponseType]    func(inp WeatherForecastEmailInput[T]) error
+	WeatherFetcherFunc[T clients.WeatherResponseType] func(ctx context.Context, city string) (T, error)
+	EmailSenderFunc[T clients.WeatherResponseType]    func(inp clients.WeatherForecastEmailInput[T]) error
 )
 
 type SubscriptionSenderRepository interface {
@@ -17,18 +18,18 @@ type SubscriptionSenderRepository interface {
 }
 
 type WeatherForecastSenderService struct {
-	emailService           WeatherEmails
+	notificationClient     clients.WeatherNotificationSender
 	weatherService         Weather
 	subscriptionSenderRepo SubscriptionSenderRepository
 }
 
 func NewWeatherForecastSenderService(
-	emailService WeatherEmails,
 	weatherService Weather,
 	subscriptionSenderRepo SubscriptionSenderRepository,
+	notificationClient clients.WeatherNotificationSender,
 ) *WeatherForecastSenderService {
 	return &WeatherForecastSenderService{
-		emailService:           emailService,
+		notificationClient:     notificationClient,
 		weatherService:         weatherService,
 		subscriptionSenderRepo: subscriptionSenderRepo,
 	}
@@ -41,7 +42,7 @@ func (s *WeatherForecastSenderService) SendDailyWeatherForecast(ctx context.Cont
 		domain.DailyWeatherEmailFrequency,
 		time.DateOnly,
 		s.weatherService.GetDayWeather,
-		s.emailService.SendWeatherForecastDailyEmail,
+		s.notificationClient.SendWeatherForecastDailyEmail,
 	)
 }
 
@@ -52,11 +53,11 @@ func (s *WeatherForecastSenderService) SendHourlyWeatherForecast(ctx context.Con
 		domain.HourlyWeatherEmailFrequency,
 		time.DateTime,
 		s.weatherService.GetCurrentWeather,
-		s.emailService.SendWeatherForecastHourlyEmail,
+		s.notificationClient.SendWeatherForecastHourlyEmail,
 	)
 }
 
-func sendWeatherForecast[T WeatherResponseType](
+func sendWeatherForecast[T clients.WeatherResponseType](
 	ctx context.Context,
 	subscriptionSenderRepo SubscriptionSenderRepository,
 	frequency string,
@@ -84,7 +85,7 @@ func sendWeatherForecast[T WeatherResponseType](
 		}
 
 		for _, subscription := range subscriptions {
-			inp := WeatherForecastEmailInput[T]{
+			inp := clients.WeatherForecastEmailInput[T]{
 				Subscription: subscription,
 				Weather:      weatherData,
 				Date:         time.Now().Format(dateFormat),

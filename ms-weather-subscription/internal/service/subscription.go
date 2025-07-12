@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"ms-weather-subscription/internal/domain"
+	"ms-weather-subscription/pkg/clients"
 	"ms-weather-subscription/pkg/hash"
 )
 
@@ -14,18 +15,18 @@ type SubscriptionRepository interface {
 }
 
 type SubscriptionService struct {
-	repo         SubscriptionRepository
-	hasher       hash.SubscriptionHasher
-	emailService SubscriptionEmails
+	repo               SubscriptionRepository
+	hasher             hash.SubscriptionHasher
+	notificationClient clients.SubscriptionNotificationSender
 }
 
 func NewSubscriptionService(
-	repo SubscriptionRepository, hasher hash.SubscriptionHasher, emailService SubscriptionEmails,
+	repo SubscriptionRepository, hasher hash.SubscriptionHasher, notificationClient clients.SubscriptionNotificationSender,
 ) *SubscriptionService {
 	return &SubscriptionService{
-		repo:         repo,
-		hasher:       hasher,
-		emailService: emailService,
+		repo:               repo,
+		hasher:             hasher,
+		notificationClient: notificationClient,
 	}
 }
 
@@ -39,7 +40,9 @@ func (s *SubscriptionService) Create(ctx context.Context, inp domain.CreateSubsc
 		return err
 	}
 
-	return s.emailService.SendConfirmationEmail(ConfirmationEmailInput{Email: inp.Email, Token: token})
+	return s.notificationClient.SendConfirmationEmail(
+		clients.ConfirmationEmailInput{Email: inp.Email, Token: token},
+	)
 }
 
 func (s *SubscriptionService) Confirm(ctx context.Context, token string) error {

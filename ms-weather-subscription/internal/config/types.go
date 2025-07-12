@@ -16,8 +16,6 @@ type Config struct {
 	DB          DatabaseConfig `mapstructure:"db"`
 	Redis       RedisConfig
 	ThirdParty  ThirdPartyConfig
-	SMTP        SMTPConfig  `mapstructure:"smtp"`
-	Email       EmailConfig `mapstructure:"email"`
 }
 
 type HTTPConfig struct {
@@ -57,28 +55,4 @@ type RedisConfig struct {
 	Address  string
 	CacheDB  int
 	Password string
-}
-
-type SMTPConfig struct {
-	Host     string `mapstructure:"host"`
-	Port     int    `mapstructure:"port"`
-	From     string `mapstructure:"from"`
-	FromName string `mapstructure:"from_name"`
-	Pass     string
-}
-
-type EmailConfig struct {
-	Templates EmailTemplates
-	Subjects  EmailSubjects
-}
-
-type EmailTemplates struct {
-	Confirmation          string `mapstructure:"confirmation_email"`
-	WeatherForecastDaily  string `mapstructure:"weather_forecast_daily"`
-	WeatherForecastHourly string `mapstructure:"weather_forecast_hourly"`
-}
-
-type EmailSubjects struct {
-	Confirmation    string `mapstructure:"confirmation_email"`
-	WeatherForecast string `mapstructure:"weather_forecast"`
 }

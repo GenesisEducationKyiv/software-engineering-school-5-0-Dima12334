@@ -6,7 +6,7 @@ http_server:
   writeTimeout: 10s
 
 logger:
-  file_path: ./logs/app.log
+  file_path: ./ms-notification/logs/app.log
 
 smtp:
   host: "smtp.ukr.net"

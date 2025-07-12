@@ -108,7 +108,6 @@ func (s *ConfigService) setEnvironmentVariables(cfg *Config, environment string)
 		cfg.HTTP.Host = envVars["HTTP_HOST"]
 		cfg.ThirdParty.WeatherAPIKey = envVars["WEATHER_API_KEY"]
 		cfg.ThirdParty.VisualCrossingAPIKey = envVars["VISUAL_CROSSING_API_KEY"]
-		cfg.SMTP.Pass = envVars["SMTP_PASSWORD"]
 	}
 
 	return nil
