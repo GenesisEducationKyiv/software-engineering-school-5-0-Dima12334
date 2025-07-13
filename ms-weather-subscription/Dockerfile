@@ -5,10 +5,14 @@ ENV CGO_ENABLED=0 GOOS=linux GOARCH=amd64
 
 WORKDIR /app
 
-COPY ./ms-weather-subscription/go.mod ./ms-weather-subscription/go.sum ./
-RUN go mod download
+COPY ./go.work ./
+COPY ./go.work.sum ./
 
+COPY ./pkg ./pkg
+COPY ./ms-notification ./ms-notification
 COPY ./ms-weather-subscription ./ms-weather-subscription
+
+RUN go work sync && go mod download all
 
 RUN go build -ldflags="-s -w" -o bin/migrate ./ms-weather-subscription/cmd/migrate/main.go
 RUN go build -ldflags="-s -w" -o bin/app ./ms-weather-subscription/cmd/app/main.go

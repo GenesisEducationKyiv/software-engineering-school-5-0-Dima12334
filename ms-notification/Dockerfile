@@ -5,10 +5,13 @@ ENV CGO_ENABLED=0 GOOS=linux GOARCH=amd64
 
 WORKDIR /app
 
-COPY ./ms-notification/go.mod ./ms-notification/go.sum ./
-RUN go mod download
+COPY ./go.work ./
+COPY ./go.work.sum ./
 
+COPY ./pkg ./pkg
 COPY ./ms-notification ./ms-notification
+
+RUN go work sync && go mod download all
 
 RUN go build -ldflags="-s -w" -o bin/app ./ms-notification/cmd/app/main.go
 

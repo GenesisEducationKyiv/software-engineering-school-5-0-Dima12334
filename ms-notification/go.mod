@@ -35,5 +35,4 @@ require (
 
 replace (
 	common => ../pkg
-	ms-weather-subscription => ../ms-weather-subscription
 )
