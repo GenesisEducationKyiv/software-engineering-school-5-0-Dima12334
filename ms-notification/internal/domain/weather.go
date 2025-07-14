@@ -14,3 +14,14 @@ type DayWeatherResponse struct {
 	SevenPM WeatherResponse `json:"seven_pm"`
 	TenPM   WeatherResponse `json:"ten_pm"`
 }
+
+type WeatherResponseType interface {
+	*WeatherResponse | *DayWeatherResponse
+}
+
+type WeatherForecastEmailInput[T WeatherResponseType] struct {
+	Subscription    Subscription
+	Weather         T
+	Date            string
+	UnsubscribeLink string
+}

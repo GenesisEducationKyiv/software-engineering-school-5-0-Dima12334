@@ -8,34 +8,10 @@ import (
 
 //go:generate mockgen -source=service.go -destination=mocks/mock_service.go
 
-type WeatherResponseType interface {
-	*domain.WeatherResponse | *domain.DayWeatherResponse
-}
-
-type ConfirmationEmailInput struct {
-	Email            string
-	ConfirmationLink string
-}
-
-type WeatherForecastEmailInput[T WeatherResponseType] struct {
-	Subscription    domain.Subscription
-	Weather         T
-	Date            string
-	UnsubscribeLink string
-}
-
-type SubscriptionEmails interface {
-	SendConfirmationEmail(ConfirmationEmailInput) error
-}
-
-type WeatherEmails interface {
-	SendWeatherForecastDailyEmail(WeatherForecastEmailInput[*domain.DayWeatherResponse]) error
-	SendWeatherForecastHourlyEmail(WeatherForecastEmailInput[*domain.WeatherResponse]) error
-}
-
 type Emails interface {
-	SubscriptionEmails
-	WeatherEmails
+	SendConfirmationEmail(domain.ConfirmationEmailInput) error
+	SendWeatherForecastDailyEmail(domain.WeatherForecastEmailInput[*domain.DayWeatherResponse]) error
+	SendWeatherForecastHourlyEmail(domain.WeatherForecastEmailInput[*domain.WeatherResponse]) error
 }
 
 type Deps struct {

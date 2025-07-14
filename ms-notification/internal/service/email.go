@@ -44,7 +44,7 @@ func NewEmailsService(
 	}
 }
 
-func (s *EmailService) SendConfirmationEmail(inp ConfirmationEmailInput) error {
+func (s *EmailService) SendConfirmationEmail(inp domain.ConfirmationEmailInput) error {
 	subject := s.emailConfig.Subjects.Confirmation
 
 	templateInput := ConfirmationEmailTemplateInput{
@@ -89,7 +89,7 @@ func sendWeatherForecastEmail(
 }
 
 func (s *EmailService) SendWeatherForecastDailyEmail(
-	inp WeatherForecastEmailInput[*domain.DayWeatherResponse],
+	inp domain.WeatherForecastEmailInput[*domain.DayWeatherResponse],
 ) error {
 	templateInput := WeatherForecastDailyEmailTemplateInput{
 		UnsubscribeLink: inp.UnsubscribeLink,
@@ -110,7 +110,7 @@ func (s *EmailService) SendWeatherForecastDailyEmail(
 }
 
 func (s *EmailService) SendWeatherForecastHourlyEmail(
-	inp WeatherForecastEmailInput[*domain.WeatherResponse],
+	inp domain.WeatherForecastEmailInput[*domain.WeatherResponse],
 ) error {
 	templateInput := WeatherForecastHourlyEmailTemplateInput{
 		UnsubscribeLink: inp.UnsubscribeLink,

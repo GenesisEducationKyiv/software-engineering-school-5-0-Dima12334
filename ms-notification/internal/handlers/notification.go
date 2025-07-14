@@ -21,7 +21,7 @@ func (h *NotificationGRPCHandler) SendConfirmationEmail(
 	ctx context.Context,
 	req *pb.ConfirmationEmailRequest,
 ) (*pb.SendStatus, error) {
-	input := service.ConfirmationEmailInput{
+	input := domain.ConfirmationEmailInput{
 		Email:            req.Email,
 		ConfirmationLink: req.ConfirmationLink,
 	}
@@ -33,7 +33,7 @@ func (h *NotificationGRPCHandler) SendDailyForecastEmail(
 	ctx context.Context,
 	req *pb.DailyForecastEmailRequest,
 ) (*pb.SendStatus, error) {
-	input := service.WeatherForecastEmailInput[*domain.DayWeatherResponse]{
+	input := domain.WeatherForecastEmailInput[*domain.DayWeatherResponse]{
 		Subscription:    fromProtoSubscription(req.Subscription),
 		Weather:         fromProtoDayWeather(req.Weather),
 		Date:            req.Date,
@@ -47,7 +47,7 @@ func (h *NotificationGRPCHandler) SendHourlyForecastEmail(
 	ctx context.Context,
 	req *pb.HourlyForecastEmailRequest,
 ) (*pb.SendStatus, error) {
-	input := service.WeatherForecastEmailInput[*domain.WeatherResponse]{
+	input := domain.WeatherForecastEmailInput[*domain.WeatherResponse]{
 		Subscription:    fromProtoSubscription(req.Subscription),
 		Weather:         fromProtoWeather(req.Weather),
 		Date:            req.Date,

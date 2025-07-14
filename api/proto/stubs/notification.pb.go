@@ -143,7 +143,7 @@ func (x *Weather) GetDescription() string {
 	return ""
 }
 
-// Daily data
+// Daily Weather data
 type DayWeather struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SevenAm       *Weather               `protobuf:"bytes,1,opt,name=seven_am,json=sevenAm,proto3" json:"seven_am,omitempty"`

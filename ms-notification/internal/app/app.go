@@ -45,8 +45,8 @@ func (ab *ApplicationBuilder) setupDependencies(app *Application) error {
 		return err
 	}
 
-	grpcHandler := handlers.NewNotificationGRPCHandler(services.Emails)
-	pb.RegisterNotificationServiceServer(grpcServer.GRPCServer(), grpcHandler)
+	grpcNotificationHandler := handlers.NewNotificationGRPCHandler(services.Emails)
+	pb.RegisterNotificationServiceServer(grpcServer.GRPCServer(), grpcNotificationHandler)
 
 	app.server = grpcServer
 

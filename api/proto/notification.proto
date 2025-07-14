@@ -17,7 +17,7 @@ message Weather {
   string description = 3;
 }
 
-// Daily data
+// Daily Weather data
 message DayWeather {
   Weather seven_am = 1;
   Weather ten_am = 2;

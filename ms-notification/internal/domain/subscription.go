@@ -5,3 +5,8 @@ type Subscription struct {
 	City  string `json:"city"`
 	Token string `json:"token"`
 }
+
+type ConfirmationEmailInput struct {
+	Email            string
+	ConfirmationLink string
+}
