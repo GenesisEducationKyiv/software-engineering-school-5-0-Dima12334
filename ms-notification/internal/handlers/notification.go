@@ -61,7 +61,6 @@ func fromProtoSubscription(s *pb.Subscription) domain.Subscription {
 	return domain.Subscription{
 		Email: s.Email,
 		City:  s.City,
-		Token: s.Token,
 	}
 }
 

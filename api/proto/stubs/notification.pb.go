@@ -26,7 +26,6 @@ type Subscription struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Email         string                 `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
 	City          string                 `protobuf:"bytes,2,opt,name=city,proto3" json:"city,omitempty"`
-	Token         string                 `protobuf:"bytes,3,opt,name=token,proto3" json:"token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -71,13 +70,6 @@ func (x *Subscription) GetEmail() string {
 func (x *Subscription) GetCity() string {
 	if x != nil {
 		return x.City
-	}
-	return ""
-}
-
-func (x *Subscription) GetToken() string {
-	if x != nil {
-		return x.Token
 	}
 	return ""
 }
@@ -467,11 +459,10 @@ var File_notification_proto protoreflect.FileDescriptor
 
 const file_notification_proto_rawDesc = "" +
 	"\n" +
-	"\x12notification.proto\x12\fnotification\"N\n" +
+	"\x12notification.proto\x12\fnotification\"8\n" +
 	"\fSubscription\x12\x14\n" +
 	"\x05email\x18\x01 \x01(\tR\x05email\x12\x12\n" +
-	"\x04city\x18\x02 \x01(\tR\x04city\x12\x14\n" +
-	"\x05token\x18\x03 \x01(\tR\x05token\"i\n" +
+	"\x04city\x18\x02 \x01(\tR\x04city\"i\n" +
 	"\aWeather\x12 \n" +
 	"\vtemperature\x18\x01 \x01(\x02R\vtemperature\x12\x1a\n" +
 	"\bhumidity\x18\x02 \x01(\x02R\bhumidity\x12 \n" +

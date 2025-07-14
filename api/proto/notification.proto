@@ -7,7 +7,6 @@ option go_package = "api/proto/stubs/notificationpb;notificationpb";
 message Subscription {
   string email = 1;
   string city = 2;
-  string token = 3;
 }
 
 // Current Weather data
