@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"ms-weather-subscription/internal/config"
 	"ms-weather-subscription/internal/domain"
 	"ms-weather-subscription/pkg/clients"
 	"ms-weather-subscription/pkg/hash"
@@ -17,13 +18,18 @@ type SubscriptionRepository interface {
 type SubscriptionService struct {
 	repo               SubscriptionRepository
 	hasher             hash.SubscriptionHasher
+	httpConfig         config.HTTPConfig
 	notificationClient clients.SubscriptionNotificationSender
 }
 
 func NewSubscriptionService(
-	repo SubscriptionRepository, hasher hash.SubscriptionHasher, notificationClient clients.SubscriptionNotificationSender,
+	httpConfig config.HTTPConfig,
+	repo SubscriptionRepository,
+	hasher hash.SubscriptionHasher,
+	notificationClient clients.SubscriptionNotificationSender,
 ) *SubscriptionService {
 	return &SubscriptionService{
+		httpConfig:         httpConfig,
 		repo:               repo,
 		hasher:             hasher,
 		notificationClient: notificationClient,
@@ -40,9 +46,21 @@ func (s *SubscriptionService) Create(ctx context.Context, inp domain.CreateSubsc
 		return err
 	}
 
-	return s.notificationClient.SendConfirmationEmail(
-		clients.ConfirmationEmailInput{Email: inp.Email, Token: token},
+	err = s.notificationClient.SendConfirmationEmail(
+		clients.ConfirmationEmailInput{
+			Email:            inp.Email,
+			ConfirmationLink: subscription.CreateConfirmationLink(s.httpConfig.BaseURL),
+		},
 	)
+	if err != nil {
+		delErr := s.repo.Delete(ctx, token)
+		if delErr != nil {
+			return delErr
+		}
+		return err
+	}
+
+	return nil
 }
 
 func (s *SubscriptionService) Confirm(ctx context.Context, token string) error {

@@ -48,7 +48,7 @@ func (s *EmailService) SendConfirmationEmail(inp ConfirmationEmailInput) error {
 	subject := s.emailConfig.Subjects.Confirmation
 
 	templateInput := ConfirmationEmailTemplateInput{
-		ConfirmationLink: s.createConfirmationLink(inp.Token),
+		ConfirmationLink: inp.ConfirmationLink,
 	}
 	sendInput := email.SendEmailInput{Subject: subject, To: inp.Email}
 
@@ -65,14 +65,6 @@ func (s *EmailService) SendConfirmationEmail(inp ConfirmationEmailInput) error {
 	}
 
 	return s.sender.Send(sendInput)
-}
-
-func (s *EmailService) createConfirmationLink(token string) string {
-	return fmt.Sprintf("%s/api/confirm/%s", s.httpConfig.BaseURL, token)
-}
-
-func (s *EmailService) createUnsubscribeLink(token string) string {
-	return fmt.Sprintf("%s/api/unsubscribe/%s", s.httpConfig.BaseURL, token)
 }
 
 func sendWeatherForecastEmail(
@@ -100,7 +92,7 @@ func (s *EmailService) SendWeatherForecastDailyEmail(
 	inp WeatherForecastEmailInput[*domain.DayWeatherResponse],
 ) error {
 	templateInput := WeatherForecastDailyEmailTemplateInput{
-		UnsubscribeLink: s.createUnsubscribeLink(inp.Subscription.Token),
+		UnsubscribeLink: inp.UnsubscribeLink,
 		City:            inp.Subscription.City,
 		Weather:         *inp.Weather,
 		Date:            inp.Date,
@@ -121,7 +113,7 @@ func (s *EmailService) SendWeatherForecastHourlyEmail(
 	inp WeatherForecastEmailInput[*domain.WeatherResponse],
 ) error {
 	templateInput := WeatherForecastHourlyEmailTemplateInput{
-		UnsubscribeLink: s.createUnsubscribeLink(inp.Subscription.Token),
+		UnsubscribeLink: inp.UnsubscribeLink,
 		City:            inp.Subscription.City,
 		Weather:         *inp.Weather,
 		Date:            inp.Date,

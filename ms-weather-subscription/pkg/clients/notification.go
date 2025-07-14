@@ -7,14 +7,15 @@ type WeatherResponseType interface {
 }
 
 type ConfirmationEmailInput struct {
-	Email string
-	Token string
+	Email            string
+	ConfirmationLink string
 }
 
 type WeatherForecastEmailInput[T WeatherResponseType] struct {
-	Subscription domain.Subscription
-	Weather      T
-	Date         string
+	Subscription    domain.Subscription
+	Weather         T
+	Date            string
+	UnsubscribeLink string
 }
 
 type SubscriptionNotificationSender interface {

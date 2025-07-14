@@ -46,6 +46,7 @@ func setupCronTestEnvironment(t *testing.T, ctrl *gomock.Controller) cronTestEnv
 	emailsService := service.NewEmailsService(mockEmailSender, cfg.Email, cfg.HTTP)
 
 	s := service.NewWeatherForecastSenderService(
+		cfg.HTTP,
 		emailsService,
 		mockWeatherService,
 		subscriptionRepo,
@@ -127,7 +128,9 @@ func testSendDailyWeatherForecastRepoError(t *testing.T) {
 		nil, errors.New("database error"),
 	)
 
+	cfg := testutils.SetupTestConfig(t)
 	s := service.NewWeatherForecastSenderService(
+		cfg.HTTP,
 		mockService.NewMockWeatherEmails(ctrl),
 		mockService.NewMockWeather(ctrl),
 		mockRepo,
@@ -201,7 +204,9 @@ func testSendHourlyWeatherForecastRepoError(t *testing.T) {
 		nil, errors.New("database error"),
 	)
 
+	cfg := testutils.SetupTestConfig(t)
 	s := service.NewWeatherForecastSenderService(
+		cfg.HTTP,
 		mockService.NewMockWeatherEmails(ctrl),
 		mockService.NewMockWeather(ctrl),
 		mockRepo,

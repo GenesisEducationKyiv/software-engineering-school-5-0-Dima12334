@@ -3,6 +3,7 @@ package service
 import (
 	"common/logger"
 	"context"
+	"ms-weather-subscription/internal/config"
 	"ms-weather-subscription/internal/domain"
 	"ms-weather-subscription/pkg/clients"
 	"time"
@@ -13,22 +14,35 @@ type (
 	EmailSenderFunc[T clients.WeatherResponseType]    func(inp clients.WeatherForecastEmailInput[T]) error
 )
 
+type sendWeatherForecastInput[T clients.WeatherResponseType] struct {
+	ctx        context.Context
+	repo       SubscriptionSenderRepository
+	frequency  string
+	dateFormat string
+	getWeather WeatherFetcherFunc[T]
+	sendEmail  EmailSenderFunc[T]
+	baseURL    string
+}
+
 type SubscriptionSenderRepository interface {
 	GetConfirmedByFrequency(ctx context.Context, frequency string) ([]domain.Subscription, error)
 }
 
 type WeatherForecastSenderService struct {
+	httpConfig             config.HTTPConfig
 	notificationClient     clients.WeatherNotificationSender
 	weatherService         Weather
 	subscriptionSenderRepo SubscriptionSenderRepository
 }
 
 func NewWeatherForecastSenderService(
+	httpConfig config.HTTPConfig,
 	weatherService Weather,
 	subscriptionSenderRepo SubscriptionSenderRepository,
 	notificationClient clients.WeatherNotificationSender,
 ) *WeatherForecastSenderService {
 	return &WeatherForecastSenderService{
+		httpConfig:             httpConfig,
 		notificationClient:     notificationClient,
 		weatherService:         weatherService,
 		subscriptionSenderRepo: subscriptionSenderRepo,
@@ -36,38 +50,33 @@ func NewWeatherForecastSenderService(
 }
 
 func (s *WeatherForecastSenderService) SendDailyWeatherForecast(ctx context.Context) error {
-	return sendWeatherForecast(
-		ctx,
-		s.subscriptionSenderRepo,
-		domain.DailyWeatherEmailFrequency,
-		time.DateOnly,
-		s.weatherService.GetDayWeather,
-		s.notificationClient.SendWeatherForecastDailyEmail,
-	)
+	return sendWeatherForecast(sendWeatherForecastInput[*domain.DayWeatherResponse]{
+		ctx:        ctx,
+		repo:       s.subscriptionSenderRepo,
+		frequency:  domain.DailyWeatherEmailFrequency,
+		dateFormat: time.DateOnly,
+		getWeather: s.weatherService.GetDayWeather,
+		sendEmail:  s.notificationClient.SendWeatherForecastDailyEmail,
+		baseURL:    s.httpConfig.BaseURL,
+	})
 }
 
 func (s *WeatherForecastSenderService) SendHourlyWeatherForecast(ctx context.Context) error {
-	return sendWeatherForecast(
-		ctx,
-		s.subscriptionSenderRepo,
-		domain.HourlyWeatherEmailFrequency,
-		time.DateTime,
-		s.weatherService.GetCurrentWeather,
-		s.notificationClient.SendWeatherForecastHourlyEmail,
-	)
+	return sendWeatherForecast(sendWeatherForecastInput[*domain.WeatherResponse]{
+		ctx:        ctx,
+		repo:       s.subscriptionSenderRepo,
+		frequency:  domain.HourlyWeatherEmailFrequency,
+		dateFormat: time.DateTime,
+		getWeather: s.weatherService.GetCurrentWeather,
+		sendEmail:  s.notificationClient.SendWeatherForecastHourlyEmail,
+		baseURL:    s.httpConfig.BaseURL,
+	})
 }
 
-func sendWeatherForecast[T clients.WeatherResponseType](
-	ctx context.Context,
-	subscriptionSenderRepo SubscriptionSenderRepository,
-	frequency string,
-	dateFormat string,
-	getWeatherFunc WeatherFetcherFunc[T],
-	sendEmailFunc EmailSenderFunc[T],
-) error {
-	subs, err := subscriptionSenderRepo.GetConfirmedByFrequency(ctx, frequency)
+func sendWeatherForecast[T clients.WeatherResponseType](inp sendWeatherForecastInput[T]) error {
+	subs, err := inp.repo.GetConfirmedByFrequency(inp.ctx, inp.frequency)
 	if err != nil {
-		logger.Errorf("failed to get subscriptions (%s): %s", frequency, err.Error())
+		logger.Errorf("failed to get subscriptions (%s): %s", inp.frequency, err.Error())
 		return err
 	}
 
@@ -78,23 +87,24 @@ func sendWeatherForecast[T clients.WeatherResponseType](
 
 	var subscriptionsToUpdate []string
 	for city, subscriptions := range cityToSubscriptions {
-		weatherData, err := getWeatherFunc(ctx, city)
+		weatherData, err := inp.getWeather(inp.ctx, city)
 		if err != nil {
-			logger.Errorf("failed to get weather (%s) for city %s: %s", frequency, city, err.Error())
+			logger.Errorf("failed to get weather (%s) for city %s: %s", inp.frequency, city, err.Error())
 			continue
 		}
 
 		for _, subscription := range subscriptions {
-			inp := clients.WeatherForecastEmailInput[T]{
-				Subscription: subscription,
-				Weather:      weatherData,
-				Date:         time.Now().Format(dateFormat),
+			emailInput := clients.WeatherForecastEmailInput[T]{
+				Subscription:    subscription,
+				Weather:         weatherData,
+				Date:            time.Now().Format(inp.dateFormat),
+				UnsubscribeLink: subscription.CreateUnsubscribeLink(inp.baseURL),
 			}
 
-			if err := sendEmailFunc(inp); err != nil {
+			if err := inp.sendEmail(emailInput); err != nil {
 				logger.Errorf(
 					"failed to send email (%s) to %s: %s",
-					frequency,
+					inp.frequency,
 					subscription.Email,
 					err.Error(),
 				)
@@ -105,7 +115,7 @@ func sendWeatherForecast[T clients.WeatherResponseType](
 	}
 
 	if len(subscriptionsToUpdate) == 0 {
-		logger.Warnf("no %s subscriptions to update", frequency)
+		logger.Warnf("no %s subscriptions to update", inp.frequency)
 		return nil
 	}
 

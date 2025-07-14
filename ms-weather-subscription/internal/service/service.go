@@ -45,12 +45,14 @@ func NewServices(deps Deps) *Services {
 	weatherService := NewWeatherService(deps.WeatherClient)
 	return &Services{
 		Subscriptions: NewSubscriptionService(
+			deps.HTTPConfig,
 			deps.Repos.Subscription,
 			deps.SubscriptionHasher,
 			deps.NotificationClient,
 		),
 		Weather: weatherService,
 		WeatherForecastSender: NewWeatherForecastSenderService(
+			deps.HTTPConfig,
 			weatherService,
 			deps.Repos.Subscription,
 			deps.NotificationClient,

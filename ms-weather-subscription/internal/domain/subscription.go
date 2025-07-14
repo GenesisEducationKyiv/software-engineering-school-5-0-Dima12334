@@ -1,6 +1,9 @@
 package domain
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 const (
 	DailyWeatherEmailFrequency  = "daily"
@@ -26,6 +29,14 @@ func NewSubscription(email, city, frequency, token string) Subscription {
 		Token:     token,
 		Confirmed: false,
 	}
+}
+
+func (s *Subscription) CreateConfirmationLink(BaseURL string) string {
+	return fmt.Sprintf("%s/api/confirm/%s", BaseURL, s.Token)
+}
+
+func (s *Subscription) CreateUnsubscribeLink(BaseURL string) string {
+	return fmt.Sprintf("%s/api/unsubscribe/%s", BaseURL, s.Token)
 }
 
 type CreateSubscriptionInput struct {

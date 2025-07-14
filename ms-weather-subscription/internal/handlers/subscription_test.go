@@ -53,6 +53,7 @@ func setupTestEnvironment(t *testing.T, ctrl *gomock.Controller) subscriptionTes
 	emailsService := service.NewEmailsService(mockEmailSender, cfg.Email, cfg.HTTP)
 
 	subService := service.NewSubscriptionService(
+		cfg.HTTP,
 		repo,
 		hasher,
 		emailsService,
