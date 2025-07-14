@@ -30,6 +30,6 @@ RUN chown -R appuser:appgroup /app
 
 USER appuser
 
-EXPOSE 8080
+EXPOSE 8000
 
 CMD ["./bin/app"]
