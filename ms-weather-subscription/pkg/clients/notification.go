@@ -31,10 +31,14 @@ type NotificationSender interface {
 	WeatherNotificationSender
 }
 
-type NotificationClient struct{}
+type NotificationClient struct {
+	notificationServiceURL string
+}
 
-func NewNotificationClient() *NotificationClient {
-	return &NotificationClient{}
+func NewNotificationClient(NotificationServiceURL string) *NotificationClient {
+	return &NotificationClient{
+		notificationServiceURL: NotificationServiceURL,
+	}
 }
 
 func (n *NotificationClient) SendConfirmationEmail(inp ConfirmationEmailInput) error {

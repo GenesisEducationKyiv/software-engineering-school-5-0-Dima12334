@@ -31,8 +31,9 @@ type HTTPConfig struct {
 }
 
 type ThirdPartyConfig struct {
-	WeatherAPIKey        string
-	VisualCrossingAPIKey string
+	WeatherAPIKey          string
+	VisualCrossingAPIKey   string
+	NotificationServiceURL string
 }
 
 type LoggerConfig struct {
