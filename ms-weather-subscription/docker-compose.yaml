@@ -41,7 +41,7 @@ services:
     ports:
       - "${APP_PORT}:${APP_PORT}"
     volumes:
-      - ./ms-weather-subscription/.env.dev:/app/.env.dev
+      - .env.dev:/app/.env.dev
       - ./logs:/app/logs
 
 volumes:

@@ -11,6 +11,7 @@ COPY ./go.work.sum ./
 COPY ./pkg ./pkg
 COPY ./ms-notification ./ms-notification
 COPY ./ms-weather-subscription ./ms-weather-subscription
+COPY ./api/proto/stubs ./api/proto/stubs
 
 RUN go work sync && go mod download all
 
