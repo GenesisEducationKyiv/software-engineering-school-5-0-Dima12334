@@ -35,4 +35,5 @@ require (
 
 replace (
 	common => ../pkg
+	proto_stubs => ../api/proto/stubs
 )

@@ -4,4 +4,5 @@ use (
 	ms-weather-subscription
 	ms-notification
 	pkg
+	api/proto/stubs
 )

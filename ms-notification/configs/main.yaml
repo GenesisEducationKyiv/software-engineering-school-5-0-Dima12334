@@ -1,9 +1,6 @@
 http_server:
   host: localhost
-  port: 8080
-  readTimeout: 10s
-  readHeaderTimeout: 5s
-  writeTimeout: 10s
+  port: 8000
 
 logger:
   file_path: ./ms-notification/logs/app.log

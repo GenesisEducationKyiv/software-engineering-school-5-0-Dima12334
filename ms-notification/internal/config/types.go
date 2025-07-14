@@ -1,7 +1,5 @@
 package config
 
-import "time"
-
 const (
 	ProdEnvironment = "prod"
 	DevEnvironment  = "dev"
@@ -23,10 +21,6 @@ type HTTPConfig struct {
 	Scheme  string
 	Domain  string
 	BaseURL string
-
-	ReadTimeout       time.Duration `mapstructure:"readTimeout"`
-	ReadHeaderTimeout time.Duration `mapstructure:"readHeaderTimeout"`
-	WriteTimeout      time.Duration `mapstructure:"writeTimeout"`
 }
 
 type LoggerConfig struct {

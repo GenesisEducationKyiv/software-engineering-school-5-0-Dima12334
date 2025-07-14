@@ -1,31 +1,39 @@
 package server
 
 import (
-	"context"
 	"ms-notification/internal/config"
-	"net/http"
+	"net"
+
+	"google.golang.org/grpc"
 )
 
 type Server struct {
-	httpServer *http.Server
+	grpcServer   *grpc.Server
+	grpcListener net.Listener
 }
 
-func NewServer(cfgHTTP *config.HTTPConfig, handler http.Handler) *Server {
-	return &Server{
-		httpServer: &http.Server{
-			Addr:              ":" + cfgHTTP.Port,
-			Handler:           handler,
-			ReadTimeout:       cfgHTTP.ReadTimeout,
-			ReadHeaderTimeout: cfgHTTP.ReadHeaderTimeout,
-			WriteTimeout:      cfgHTTP.WriteTimeout,
-		},
+func NewServer(cfg *config.HTTPConfig) (*Server, error) {
+	listener, err := net.Listen("tcp", ":"+cfg.Port)
+	if err != nil {
+		return &Server{}, err
 	}
+
+	grpcSrv := grpc.NewServer()
+
+	return &Server{
+		grpcServer:   grpcSrv,
+		grpcListener: listener,
+	}, nil
 }
 
 func (s *Server) Run() error {
-	return s.httpServer.ListenAndServe()
+	return s.grpcServer.Serve(s.grpcListener)
 }
 
-func (s *Server) Stop(ctx context.Context) error {
-	return s.httpServer.Shutdown(ctx)
+func (s *Server) Stop() {
+	s.grpcServer.GracefulStop()
+}
+
+func (s *Server) GRPCServer() *grpc.Server {
+	return s.grpcServer
 }

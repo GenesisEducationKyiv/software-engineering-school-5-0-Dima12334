@@ -2,18 +2,15 @@ package app
 
 import (
 	"common/logger"
-	"context"
-	"errors"
 	"ms-notification/internal/config"
 	"ms-notification/internal/handlers"
 	"ms-notification/internal/server"
 	"ms-notification/internal/service"
 	"ms-notification/pkg/email/smtp"
-	"net/http"
 	"os"
 	"os/signal"
+	pb "proto_stubs"
 	"syscall"
-	"time"
 )
 
 type Application struct {
@@ -28,7 +25,7 @@ func NewApplication(environment string) (*Application, error) {
 	return builder.Build(environment)
 }
 
-func (ab *ApplicationBuilder) setupDependencies(app *Application) {
+func (ab *ApplicationBuilder) setupDependencies(app *Application) error {
 	emailSender := smtp.NewSMTPSender(
 		app.config.SMTP.From,
 		app.config.SMTP.FromName,
@@ -43,9 +40,17 @@ func (ab *ApplicationBuilder) setupDependencies(app *Application) {
 		HTTPConfig:  app.config.HTTP,
 	})
 
-	handler := handlers.NewHandler(services)
+	grpcServer, err := server.NewServer(&app.config.HTTP)
+	if err != nil {
+		return err
+	}
 
-	app.server = server.NewServer(&app.config.HTTP, handler.Init(app.config.Environment))
+	grpcHandler := handlers.NewNotificationGRPCHandler(services.Emails)
+	pb.RegisterNotificationServiceServer(grpcServer.GRPCServer(), grpcHandler)
+
+	app.server = grpcServer
+
+	return nil
 }
 
 func (ab *ApplicationBuilder) Build(environment string) (*Application, error) {
@@ -61,14 +66,14 @@ func (ab *ApplicationBuilder) Build(environment string) (*Application, error) {
 	app := &Application{
 		config: cfg,
 	}
-	ab.setupDependencies(app)
+	err = ab.setupDependencies(app)
 
-	return app, nil
+	return app, err
 }
 
 func (a *Application) Run() {
 	go func() {
-		if err := a.server.Run(); !errors.Is(err, http.ErrServerClosed) {
+		if err := a.server.Run(); err != nil {
 			logger.Errorf("error occurred while running http server: %s\n", err.Error())
 		}
 	}()
@@ -87,13 +92,5 @@ func (a *Application) waitForShutdown() {
 }
 
 func (a *Application) shutdown() {
-	const shutdownTimeout = 5 * time.Second
-	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
-	defer cancel()
-
-	if err := a.server.Stop(ctx); err != nil {
-		logger.Errorf("failed to stop server: %v", err.Error())
-	} else {
-		logger.Info("server stopped successfully")
-	}
+	a.server.Stop()
 }
