@@ -7,5 +7,5 @@ services:
     ports:
       - "${APP_PORT}:${APP_PORT}"
     volumes:
-      - .env.dev:/app/.env.dev
-      - ./logs:/app/logs
+      - .env.dev:/app/ms-notification/.env.dev
+      - ./logs:/app/ms-notification/logs

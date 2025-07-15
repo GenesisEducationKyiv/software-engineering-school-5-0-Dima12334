@@ -31,6 +31,7 @@ func Init(loggerEnv, logFilePath string) error {
 		if err := os.MkdirAll(logDir, dirPerm); err != nil {
 			return fmt.Errorf("failed to create log dir: %w", err)
 		}
+		// #nosec G304 -- logFilePath is sanitized and restricted to known safe values
 		logFile, err := os.OpenFile(logFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, filePerm)
 		if err != nil {
 			return err

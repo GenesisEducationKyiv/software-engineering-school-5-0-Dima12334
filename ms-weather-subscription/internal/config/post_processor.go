@@ -1,6 +1,8 @@
 package config
 
 import (
+	commonCfg "common/config"
+
 	"fmt"
 )
 
@@ -23,7 +25,7 @@ func (p *DefaultConfigPostProcessor) processDatabaseConfig(cfg *Config) {
 		cfg.DB.User, cfg.DB.Password, cfg.DB.Host, cfg.DB.Port, cfg.DB.DBName, cfg.DB.SSLMode,
 	)
 
-	migrationsPath := "file://" + GetOriginalPath("migrations")
+	migrationsPath := "file://" + commonCfg.GetOriginalPath("ms-weather-subscription/migrations")
 	cfg.DB.MigrationsPath = migrationsPath
 }
 

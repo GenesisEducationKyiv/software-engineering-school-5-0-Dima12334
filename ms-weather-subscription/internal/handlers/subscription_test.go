@@ -2,7 +2,7 @@ package handlers_test
 
 import (
 	"bytes"
-	"ms-weather-subscription/internal/config"
+	commonCfg "common/config"
 	"ms-weather-subscription/internal/domain"
 	"ms-weather-subscription/internal/handlers"
 	"ms-weather-subscription/internal/repository"
@@ -69,7 +69,7 @@ func setupTestEnvironment(t *testing.T, ctrl *gomock.Controller) subscriptionTes
 	router.GET("/api/unsubscribe/:token", handler.SubscriptionHandler.UnsubscribeEmail)
 
 	// Create router with mock template
-	router.LoadHTMLGlob(config.GetOriginalPath("templates/**/*.html"))
+	router.LoadHTMLGlob(commonCfg.GetOriginalPath("ms-weather-subscription/templates/**/*.html"))
 
 	cleanup := func() {
 		_, err := testDB.Exec(`DELETE FROM subscriptions;`)

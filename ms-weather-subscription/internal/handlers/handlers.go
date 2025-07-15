@@ -1,14 +1,15 @@
 package handlers
 
 import (
+	"ms-weather-subscription/internal/config"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 
+	commonCfg "common/config"
 	_ "ms-weather-subscription/docs"
-	"ms-weather-subscription/internal/config"
 	"ms-weather-subscription/internal/service"
 )
 
@@ -40,7 +41,7 @@ func (h *Handler) initGinRouter(environment string) *gin.Engine {
 	}
 
 	router := gin.Default()
-	router.LoadHTMLGlob(config.GetOriginalPath("templates/**/*.html"))
+	router.LoadHTMLGlob(commonCfg.GetOriginalPath("ms-weather-subscription/templates/**/*.html"))
 
 	return router
 }

@@ -35,8 +35,8 @@ func (s *Subscription) CreateConfirmationLink(baseURL string) string {
 	return fmt.Sprintf("%s/api/confirm/%s", baseURL, s.Token)
 }
 
-func (s *Subscription) CreateUnsubscribeLink(BaseURL string) string {
-	return fmt.Sprintf("%s/api/unsubscribe/%s", BaseURL, s.Token)
+func (s *Subscription) CreateUnsubscribeLink(baseURL string) string {
+	return fmt.Sprintf("%s/api/unsubscribe/%s", baseURL, s.Token)
 }
 
 type CreateSubscriptionInput struct {

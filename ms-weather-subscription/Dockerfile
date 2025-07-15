@@ -27,9 +27,12 @@ WORKDIR /app
 
 COPY --from=builder /app/bin/migrate ./bin/migrate
 COPY --from=builder /app/bin/app ./bin/app
-COPY --from=builder /app/ms-weather-subscription/configs ./configs
-COPY --from=builder /app/ms-weather-subscription/migrations ./migrations
-COPY --from=builder /app/ms-weather-subscription/docs ./docs
+COPY --from=builder /app/ms-weather-subscription/configs ./ms-weather-subscription/configs
+COPY --from=builder /app/ms-weather-subscription/templates ./ms-weather-subscription/templates
+COPY --from=builder /app/ms-weather-subscription/migrations ./ms-weather-subscription/migrations
+COPY --from=builder /app/ms-weather-subscription/docs ./ms-weather-subscription/docs
+COPY --from=builder /app/go.work ./go.work
+COPY --from=builder /app/go.work.sum ./go.work.sum
 
 RUN chown -R appuser:appgroup /app
 

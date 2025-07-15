@@ -6,7 +6,7 @@ const (
 	ProdEnvironment = "prod"
 	DevEnvironment  = "dev"
 	TestEnvironment = "test"
-	ConfigsDir      = "configs"
+	ConfigsDir      = "ms-weather-subscription/configs"
 )
 
 type Config struct {

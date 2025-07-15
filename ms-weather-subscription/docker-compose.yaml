@@ -41,8 +41,8 @@ services:
     ports:
       - "${APP_PORT}:${APP_PORT}"
     volumes:
-      - .env.dev:/app/.env.dev
-      - ./logs:/app/logs
+      - .env.dev:/app/ms-weather-subscription/.env.dev
+      - ./logs:/app/ms-weather-subscription/logs
 
 volumes:
   postgres_data:

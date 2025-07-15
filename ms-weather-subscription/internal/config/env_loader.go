@@ -4,6 +4,8 @@ import (
 	"log"
 	"os"
 
+	commonCfg "common/config"
+
 	"github.com/joho/godotenv"
 )
 
@@ -14,7 +16,7 @@ func (e *GodotenvLoader) LoadEnvFile(fileName string) error {
 		return nil
 	}
 
-	envPath := GetOriginalPath(fileName)
+	envPath := commonCfg.GetOriginalPath(fileName)
 
 	err := godotenv.Load(envPath)
 	if err != nil {

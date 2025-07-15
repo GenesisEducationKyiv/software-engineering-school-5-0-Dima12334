@@ -1,6 +1,8 @@
 package config
 
 import (
+	commonCfg "common/config"
+
 	"fmt"
 	"strconv"
 )
@@ -47,7 +49,7 @@ func (s *ConfigService) LoadConfig(configDir, environment string) (*Config, erro
 	}
 
 	// Read config file
-	configDirPath := GetOriginalPath(configDir)
+	configDirPath := commonCfg.GetOriginalPath(configDir)
 	if err := s.reader.ReadConfigFile(configDirPath, "main"); err != nil {
 		return nil, fmt.Errorf("failed to read config file: %w", err)
 	}
@@ -74,11 +76,11 @@ func (s *ConfigService) loadEnvironmentFile(environment string) error {
 
 	switch environment {
 	case TestEnvironment:
-		envFile = ".env.test"
+		envFile = "ms-weather-subscription/.env.test"
 	case ProdEnvironment:
 		envFile = "" // No env file for production
 	default:
-		envFile = ".env.dev"
+		envFile = "ms-weather-subscription/.env.dev"
 	}
 
 	return s.envLoader.LoadEnvFile(envFile)

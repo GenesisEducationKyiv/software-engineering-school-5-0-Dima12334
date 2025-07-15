@@ -4,7 +4,7 @@ const (
 	ProdEnvironment = "prod"
 	DevEnvironment  = "dev"
 	TestEnvironment = "test"
-	ConfigsDir      = "configs"
+	ConfigsDir      = "ms-notification/configs"
 )
 
 type Config struct {

@@ -1,6 +1,7 @@
 package config
 
 import (
+	commonCfg "common/config"
 	"fmt"
 )
 
@@ -18,9 +19,13 @@ func (p *DefaultConfigPostProcessor) processHTTPConfig(cfg *Config) {
 }
 
 func (p *DefaultConfigPostProcessor) processEmailConfig(cfg *Config) {
-	cfg.Email.Templates.Confirmation = GetOriginalPath(cfg.Email.Templates.Confirmation)
-	cfg.Email.Templates.WeatherForecastDaily = GetOriginalPath(cfg.Email.Templates.WeatherForecastDaily)
-	cfg.Email.Templates.WeatherForecastHourly = GetOriginalPath(cfg.Email.Templates.WeatherForecastHourly)
+	cfg.Email.Templates.Confirmation = commonCfg.GetOriginalPath(cfg.Email.Templates.Confirmation)
+	cfg.Email.Templates.WeatherForecastDaily = commonCfg.GetOriginalPath(
+		cfg.Email.Templates.WeatherForecastDaily,
+	)
+	cfg.Email.Templates.WeatherForecastHourly = commonCfg.GetOriginalPath(
+		cfg.Email.Templates.WeatherForecastHourly,
+	)
 }
 
 func (p *DefaultConfigPostProcessor) ProcessConfig(cfg *Config) {

@@ -13,9 +13,9 @@ smtp:
 
 email:
   templates:
-    confirmation_email: "templates/email/confirmation_email.html"
-    weather_forecast_daily: "templates/email/weather_forecast_daily.html"
-    weather_forecast_hourly: "templates/email/weather_forecast_hourly.html"
+    confirmation_email: "ms-notification/templates/email/confirmation_email.html"
+    weather_forecast_daily: "ms-notification/templates/email/weather_forecast_daily.html"
+    weather_forecast_hourly: "ms-notification/templates/email/weather_forecast_hourly.html"
   subjects:
     confirmation_email: "Confirm your email"
     weather_forecast: "%s weather forecast"

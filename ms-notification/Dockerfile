@@ -25,8 +25,10 @@ RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 WORKDIR /app
 
 COPY --from=builder /app/bin/app ./bin/app
-COPY --from=builder /app/ms-notification/configs ./configs
-COPY --from=builder /app/ms-notification/templates ./templates
+COPY --from=builder /app/ms-notification/configs ./ms-notification/configs
+COPY --from=builder /app/ms-notification/templates ./ms-notification/templates
+COPY --from=builder /app/go.work ./go.work
+COPY --from=builder /app/go.work.sum ./go.work.sum
 
 RUN chown -R appuser:appgroup /app
 
