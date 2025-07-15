@@ -63,5 +63,23 @@ jobs:
         run: |
           go run ./cmd/app/main.go &
           SERVER_PID=$!
+          
+          # Wait for /ping to return 200 OK (max 10 attempts)
+          for i in {1..10}; do
+            if curl --fail --silent http://localhost:8000/ping > /dev/null; then
+              echo "Server is healthy!"
+              break
+            fi
+            echo "Waiting for /ping to return 200... ($i/10)"
+            sleep 1
+          done
+
+          if ! curl --fail --silent http://localhost:8000/ping > /dev/null; then
+            echo "Server failed to pass ping in time."
+            kill $SERVER_PID
+            exit 1
+          fi
+          
           postman collection run "25524341-9be8d3fd-871f-4b5d-8765-49c908e55c40"
+          
           kill $SERVER_PID
