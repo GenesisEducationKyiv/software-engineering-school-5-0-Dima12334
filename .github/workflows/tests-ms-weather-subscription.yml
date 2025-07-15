@@ -1,4 +1,4 @@
-name: Tests
+name: Tests ms-weather-subscription
 
 on:
   push:
@@ -38,15 +38,18 @@ jobs:
           go-version: 1.24
 
       - name: Install dependencies
+        working-directory: ./ms-weather-subscription
         run: go mod tidy
 
       # Run Unit tests
       - name: Run unit tests
-        run: go test -v $(go list ./ms-weather-subscription/... | grep -v 'internal/app\|internal/handlers')
+        working-directory: ./ms-weather-subscription
+        run: go test -v $(go list ./... | grep -v 'internal/app\|internal/handlers')
 
       # Run Integration tests
       - name: Run integration tests
-        run: go test -v ./ms-weather-subscription/internal/app/... ./ms-weather-subscription/internal/handlers/...
+        working-directory: ./ms-weather-subscription
+        run: go test -v ./internal/app/... ./internal/handlers/...
 
       # Run  E2E tests using Postman
       - name: Install Postman CLI
@@ -56,8 +59,9 @@ jobs:
         run: postman login --with-api-key ${{ secrets.POSTMAN_API_KEY }}
 
       - name: Run Go server and E2E tests
+        working-directory: ./ms-weather-subscription
         run: |
-          go run ./ms-weather-subscription/cmd/app/main.go &
+          go run ./cmd/app/main.go &
           SERVER_PID=$!
           postman collection run "25524341-9be8d3fd-871f-4b5d-8765-49c908e55c40"
           kill $SERVER_PID

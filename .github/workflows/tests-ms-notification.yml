@@ -1,4 +1,4 @@
-name: Tests
+name: Tests ms-notification
 
 on:
   push:
@@ -22,8 +22,10 @@ jobs:
           go-version: 1.24
 
       - name: Install dependencies
+        working-directory: ./ms-notification
         run: go mod tidy
 
       # Run Unit tests
       - name: Run unit tests
-        run: go test -v $(go list ./ms-notification/... | grep -v 'internal/app\|internal/handlers')
+        working-directory: ./ms-notification
+        run: go test -v $(go list ./... | grep -v 'internal/app\|internal/handlers')
