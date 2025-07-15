@@ -85,7 +85,6 @@ func sendWeatherForecast[T clients.WeatherResponseType](inp sendWeatherForecastI
 		cityToSubscriptions[sub.City] = append(cityToSubscriptions[sub.City], sub)
 	}
 
-	var subscriptionsToUpdate []string
 	for city, subscriptions := range cityToSubscriptions {
 		weatherData, err := inp.getWeather(inp.ctx, city)
 		if err != nil {
@@ -103,20 +102,14 @@ func sendWeatherForecast[T clients.WeatherResponseType](inp sendWeatherForecastI
 
 			if err := inp.sendEmail(emailInput); err != nil {
 				logger.Errorf(
-					"failed to send email (%s) to %s: %s",
+					"failed to send email weather (%s) to %s: %s",
 					inp.frequency,
 					subscription.Email,
 					err.Error(),
 				)
 				continue
 			}
-			subscriptionsToUpdate = append(subscriptionsToUpdate, subscription.Token)
 		}
-	}
-
-	if len(subscriptionsToUpdate) == 0 {
-		logger.Warnf("no %s subscriptions to update", inp.frequency)
-		return nil
 	}
 
 	return nil
