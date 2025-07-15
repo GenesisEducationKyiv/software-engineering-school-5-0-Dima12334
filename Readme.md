@@ -21,26 +21,39 @@ Local version: http://localhost:8080/swagger/index.html
 ```
 https://github.com/Dima12334/weather_forecast_sub.git
 ```
-2. Create `.env.dev` file in the root directory and fill it with variables as in `.env.dev.example`
-3. Build and up docker containers:
+2. Create `.env.dev` files in the `ms-notification` and `ms-weather-subscription` directories and fill them with variables as in `.env.dev.example`
+3. Create general docker network:
 ```
-make up-with-build
+docker network create microservices-net
 ```
-4. Apply migrations:
+4. Build and up docker containers:
+- Build and start the notification service:
+```
+cd notification && make up-with-build
+```
+- Return to the root directory:
+```
+cd ..
+```
+- Build and start the weather subscription service:
+```
+cd ms-weather-subscription && make up-with-build
+```
+5. Apply migrations in the `ms-weather-subscription` service:
 ```
 make migrate-up
 ```
-5. Done. Use the App.<br>
+6. Done. Use the App.<br>
 You can open http://localhost:8080/subscribe page and fill out the form.<br>
 After that you will receive email with a confirmation link, and after confirmation you will start receiving weather updates.<br>
 You can unsubscribe from the newsletter at any time by using the unsubscribe link in email.<br>
 
-## Optionally you can
-1. Run tests:
+## Optionally you can run these commands for each package
+1. Run tests (for more detailed information looks at `Makefile`)
 ```
-make test
+make help
 ```
-2. Install and run linter:
+2. Run linter (make sure you have installed golangci-lint):
 - Installation
 ```
 curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.1.6
@@ -49,3 +62,4 @@ curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install
 ```
 make lint
 ```
+

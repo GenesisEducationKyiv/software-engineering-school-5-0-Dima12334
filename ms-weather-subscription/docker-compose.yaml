@@ -15,6 +15,8 @@ services:
       - "${DB_PORT}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - microservices-net
 
   redis:
     image: redis:latest
@@ -27,6 +29,8 @@ services:
     ports:
       - "6379:6379"
     command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}"]
+    networks:
+      - microservices-net
 
   app:
     build:
@@ -43,6 +47,12 @@ services:
     volumes:
       - .env.dev:/app/ms-weather-subscription/.env.dev
       - ./logs:/app/ms-weather-subscription/logs
+    networks:
+      - microservices-net
 
 volumes:
   postgres_data:
+
+networks:
+  microservices-net:
+    external: true

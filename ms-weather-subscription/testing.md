@@ -1,10 +1,10 @@
 # Testing Guide
 
-This document describes how to run tests for this project.
+This document describes how to run tests for the weather-subscription microservice.
 
 ## Test Types
 
-The project has two types of tests:
+The weather-subscription microservice has two types of tests:
 
 1. **Unit Tests**: Fast-running tests that verify individual components in isolation
 2. **Integration Tests**: Slower tests that verify components working together (require DB and Redis)

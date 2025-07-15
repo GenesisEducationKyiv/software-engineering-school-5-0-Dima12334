@@ -1,5 +1,5 @@
 services:
-  app:
+  ms-notification:
     build:
       context: ..
       dockerfile: ms-notification/Dockerfile
@@ -9,3 +9,9 @@ services:
     volumes:
       - .env.dev:/app/ms-notification/.env.dev
       - ./logs:/app/ms-notification/logs
+    networks:
+      - microservices-net
+
+networks:
+  microservices-net:
+    external: true
