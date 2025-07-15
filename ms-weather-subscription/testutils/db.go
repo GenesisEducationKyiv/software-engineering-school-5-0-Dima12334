@@ -2,9 +2,11 @@
 package testutils
 
 import (
+	"database/sql"
 	"ms-weather-subscription/internal/config"
 	"ms-weather-subscription/pkg/migrations"
 	"testing"
+	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
@@ -13,6 +15,31 @@ import (
 	_ "github.com/lib/pq"
 )
 
+const (
+	dbRetryCount    = 2
+	dbRetryInterval = 1 * time.Second
+)
+
+func waitForDB(t *testing.T, dsn string) {
+	var lastErr error
+	for i := 1; i <= dbRetryCount; i++ {
+		db, err := sql.Open("postgres", dsn)
+		if err == nil {
+			if err = db.Ping(); err == nil {
+				err = db.Close()
+				if err != nil {
+					t.Fatal(err)
+				}
+				return // DB is ready
+			}
+		}
+		lastErr = err
+		t.Logf("waiting for DB to be ready (attempt %d/%d): %v", i, dbRetryCount, err)
+		time.Sleep(dbRetryInterval)
+	}
+	t.Fatalf("database not ready after %d attempts: %v", dbRetryCount, lastErr)
+}
+
 func SetupTestDB(t *testing.T) *sqlx.DB {
 	t.Helper()
 
@@ -20,6 +47,8 @@ func SetupTestDB(t *testing.T) *sqlx.DB {
 	if err != nil {
 		t.Fatalf("failed to load config: %v", err)
 	}
+
+	waitForDB(t, cfg.DB.DSN)
 
 	err = migrations.ApplyMigrations(cfg.DB.DSN, cfg.DB.MigrationsPath, "up")
 	if err != nil {

@@ -13,5 +13,8 @@ up-with-build: ## Build and up docker containers
 down: ## Down docker containers
 	docker-compose --env-file $(ENV_FILE) down
 
+test-unit: ## Run unit tests only
+	go test -v $(shell go list ./... | grep -v 'internal/app\|internal/handlers')
+
 lint: ## Run golangci-lint with remote config (first you need to install this linter on you, look Readme.md)
 	@bash -c 'golangci-lint run --config <(curl -sSfL https://raw.githubusercontent.com/fabl3ss/genesis-se-school-linter/refs/heads/main/.golangci.yaml)'

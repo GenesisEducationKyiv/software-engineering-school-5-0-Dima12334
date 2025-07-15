@@ -3,52 +3,31 @@ package clients
 import (
 	"common/logger"
 	"context"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"ms-weather-subscription/internal/domain"
 	pb "proto_stubs"
 	"time"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 const contextTimeout = 5 * time.Second
 
-type WeatherResponseType interface {
-	*domain.WeatherResponse | *domain.DayWeatherResponse
-}
-
-type ConfirmationEmailInput struct {
-	Email            string
-	ConfirmationLink string
-}
-
-type WeatherForecastEmailInput[T WeatherResponseType] struct {
-	Subscription    domain.Subscription
-	Weather         T
-	Date            string
-	UnsubscribeLink string
-}
-
-type SubscriptionNotificationSender interface {
-	SendConfirmationEmail(ConfirmationEmailInput) error
-}
-
-type WeatherNotificationSender interface {
-	SendWeatherForecastDailyEmail(WeatherForecastEmailInput[*domain.DayWeatherResponse]) error
-	SendWeatherForecastHourlyEmail(WeatherForecastEmailInput[*domain.WeatherResponse]) error
-}
+//go:generate mockgen -source=notification.go -destination=mocks/mock_notification.go
 
 type NotificationSender interface {
-	SubscriptionNotificationSender
-	WeatherNotificationSender
+	SendConfirmationEmail(domain.ConfirmationEmailInput) error
+	SendWeatherForecastDailyEmail(domain.WeatherForecastEmailInput[*domain.DayWeatherResponse]) error
+	SendWeatherForecastHourlyEmail(domain.WeatherForecastEmailInput[*domain.WeatherResponse]) error
 }
 
 type NotificationClient struct {
 	client pb.NotificationServiceClient
 }
 
-func NewNotificationClient(NotificationServiceURL string) (*NotificationClient, error) {
+func NewNotificationClient(notificationServiceURL string) (*NotificationClient, error) {
 	conn, err := grpc.NewClient(
-		NotificationServiceURL, grpc.WithTransportCredentials(insecure.NewCredentials()),
+		notificationServiceURL, grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
 		return nil, err
@@ -61,7 +40,7 @@ func NewNotificationClient(NotificationServiceURL string) (*NotificationClient, 
 	}, nil
 }
 
-func (n *NotificationClient) SendConfirmationEmail(inp ConfirmationEmailInput) error {
+func (n *NotificationClient) SendConfirmationEmail(inp domain.ConfirmationEmailInput) error {
 	ctx, cancel := context.WithTimeout(context.Background(), contextTimeout)
 	defer cancel()
 
@@ -82,7 +61,7 @@ func (n *NotificationClient) SendConfirmationEmail(inp ConfirmationEmailInput) e
 }
 
 func (n *NotificationClient) SendWeatherForecastDailyEmail(
-	inp WeatherForecastEmailInput[*domain.DayWeatherResponse],
+	inp domain.WeatherForecastEmailInput[*domain.DayWeatherResponse],
 ) error {
 	ctx, cancel := context.WithTimeout(context.Background(), contextTimeout)
 	defer cancel()
@@ -124,7 +103,7 @@ func (n *NotificationClient) SendWeatherForecastDailyEmail(
 }
 
 func (n *NotificationClient) SendWeatherForecastHourlyEmail(
-	inp WeatherForecastEmailInput[*domain.WeatherResponse],
+	inp domain.WeatherForecastEmailInput[*domain.WeatherResponse],
 ) error {
 	ctx, cancel := context.WithTimeout(context.Background(), contextTimeout)
 	defer cancel()

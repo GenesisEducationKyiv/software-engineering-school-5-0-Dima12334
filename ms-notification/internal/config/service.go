@@ -58,9 +58,7 @@ func (s *ConfigService) LoadConfig(configDir, environment string) (*Config, erro
 	}
 
 	// Load and set environment variables
-	if err := s.setEnvironmentVariables(cfg, environment); err != nil {
-		return nil, fmt.Errorf("failed to set environment variables: %w", err)
-	}
+	s.setEnvironmentVariables(cfg, environment)
 
 	// Post-process derived values
 	s.postProcessor.ProcessConfig(cfg)
@@ -83,7 +81,7 @@ func (s *ConfigService) loadEnvironmentFile(environment string) error {
 	return s.envLoader.LoadEnvFile(envFile)
 }
 
-func (s *ConfigService) setEnvironmentVariables(cfg *Config, environment string) error {
+func (s *ConfigService) setEnvironmentVariables(cfg *Config, environment string) {
 	envVars := s.envLoader.GetRequiredEnvVars(environment)
 
 	if environment != TestEnvironment {
@@ -91,6 +89,4 @@ func (s *ConfigService) setEnvironmentVariables(cfg *Config, environment string)
 		cfg.HTTP.Host = envVars["HTTP_HOST"]
 		cfg.SMTP.Pass = envVars["SMTP_PASSWORD"]
 	}
-
-	return nil
 }

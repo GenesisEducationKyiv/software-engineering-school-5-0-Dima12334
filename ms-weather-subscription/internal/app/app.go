@@ -60,8 +60,10 @@ func (ab *ApplicationBuilder) setupDependencies(app *Application) {
 
 	repositories := repository.NewRepositories(app.dbConn)
 
-	// TODO: Implement notification client init
-	notificationClient := clients.NewNotificationClient(app.config.ThirdParty.NotificationServiceURL)
+	notificationClient, err := clients.NewNotificationClient(app.config.ThirdParty.NotificationServiceURL)
+	if err != nil {
+		log.Fatalf("failed to create notification client: %v", err)
+	}
 
 	services := service.NewServices(service.Deps{
 		WeatherClient:      cachingWeatherClient,

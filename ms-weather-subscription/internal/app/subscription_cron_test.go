@@ -16,7 +16,7 @@ import (
 	mockRepository "ms-weather-subscription/internal/repository/mocks"
 	"ms-weather-subscription/internal/service"
 	mockService "ms-weather-subscription/internal/service/mocks"
-	mockSender "ms-weather-subscription/pkg/email/mocks"
+	mockClients "ms-weather-subscription/pkg/clients/mocks"
 )
 
 func TestSubscriptionCron(t *testing.T) {
@@ -32,7 +32,7 @@ type cronTestEnv struct {
 	TestDB                       *sqlx.DB
 	WeatherForecastSenderService *service.WeatherForecastSenderService
 	MockWeatherService           *mockService.MockWeather
-	MockEmailSender              *mockSender.MockSender
+	MockNotificationClient       *mockClients.MockNotificationSender
 	CleanupFunc                  func()
 }
 
@@ -41,15 +41,14 @@ func setupCronTestEnvironment(t *testing.T, ctrl *gomock.Controller) cronTestEnv
 	testDB := testutils.SetupTestDB(t)
 
 	subscriptionRepo := repository.NewSubscriptionRepo(testDB)
-	mockEmailSender := mockSender.NewMockSender(ctrl)
 	mockWeatherService := mockService.NewMockWeather(ctrl)
-	emailsService := service.NewEmailsService(mockEmailSender, cfg.Email, cfg.HTTP)
+	mockNotificationClient := mockClients.NewMockNotificationSender(ctrl)
 
 	s := service.NewWeatherForecastSenderService(
 		cfg.HTTP,
-		emailsService,
 		mockWeatherService,
 		subscriptionRepo,
+		mockNotificationClient,
 	)
 
 	cleanupFunc := func() {
@@ -63,7 +62,7 @@ func setupCronTestEnvironment(t *testing.T, ctrl *gomock.Controller) cronTestEnv
 		TestDB:                       testDB,
 		WeatherForecastSenderService: s,
 		MockWeatherService:           mockWeatherService,
-		MockEmailSender:              mockEmailSender,
+		MockNotificationClient:       mockNotificationClient,
 		CleanupFunc:                  cleanupFunc,
 	}
 }
@@ -92,8 +91,9 @@ func testSendDailyWeatherForecastSuccess(t *testing.T) {
 			// ... other times
 		}, nil)
 
-	testSettings.MockEmailSender.EXPECT().
-		Send(gomock.Any()).
+	testSettings.MockNotificationClient.
+		EXPECT().
+		SendWeatherForecastDailyEmail(gomock.Any()).
 		Return(nil)
 
 	// Execute
@@ -131,9 +131,9 @@ func testSendDailyWeatherForecastRepoError(t *testing.T) {
 	cfg := testutils.SetupTestConfig(t)
 	s := service.NewWeatherForecastSenderService(
 		cfg.HTTP,
-		mockService.NewMockWeatherEmails(ctrl),
 		mockService.NewMockWeather(ctrl),
 		mockRepo,
+		mockClients.NewMockNotificationSender(ctrl),
 	)
 
 	// Execute
@@ -168,8 +168,8 @@ func testSendHourlyWeatherForecastSuccess(t *testing.T) {
 			Description: "Partly Cloudy",
 		}, nil)
 
-	testSettings.MockEmailSender.EXPECT().
-		Send(gomock.Any()).
+	testSettings.MockNotificationClient.EXPECT().
+		SendWeatherForecastHourlyEmail(gomock.Any()).
 		Return(nil)
 
 	// Execute
@@ -207,9 +207,9 @@ func testSendHourlyWeatherForecastRepoError(t *testing.T) {
 	cfg := testutils.SetupTestConfig(t)
 	s := service.NewWeatherForecastSenderService(
 		cfg.HTTP,
-		mockService.NewMockWeatherEmails(ctrl),
 		mockService.NewMockWeather(ctrl),
 		mockRepo,
+		mockClients.NewMockNotificationSender(ctrl),
 	)
 
 	// Execute
