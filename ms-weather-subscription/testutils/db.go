@@ -2,6 +2,7 @@
 package testutils
 
 import (
+	"context"
 	"database/sql"
 	"ms-weather-subscription/internal/config"
 	"ms-weather-subscription/pkg/migrations"
@@ -18,6 +19,7 @@ import (
 const (
 	dbRetryCount    = 2
 	dbRetryInterval = 1 * time.Second
+	pingTimeout     = 5 * time.Second
 )
 
 func waitForDB(t *testing.T, dsn string) {
@@ -25,9 +27,12 @@ func waitForDB(t *testing.T, dsn string) {
 	for i := 1; i <= dbRetryCount; i++ {
 		db, err := sql.Open("postgres", dsn)
 		if err == nil {
-			if err = db.Ping(); err == nil {
-				err = db.Close()
-				if err != nil {
+			ctx, cancel := context.WithTimeout(context.Background(), pingTimeout)
+			err = db.PingContext(ctx)
+			cancel()
+
+			if err == nil {
+				if err := db.Close(); err != nil {
 					t.Fatal(err)
 				}
 				return // DB is ready
