@@ -3,7 +3,7 @@ http_server:
   port: 8000
 
 logger:
-  file_path: ./ms-notification/logs/app.log
+  file_path: ./logs/app.log
 
 smtp:
   host: "smtp.ukr.net"

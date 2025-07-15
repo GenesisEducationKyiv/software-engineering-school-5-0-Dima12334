@@ -6,4 +6,4 @@ http_server:
   writeTimeout: 10s
 
 logger:
-  file_path: ./ms-weather-subscription/logs/app.log
+  file_path: ./logs/app.log
