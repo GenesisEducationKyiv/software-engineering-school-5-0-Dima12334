@@ -3,6 +3,7 @@ package handlers_test
 import (
 	"bytes"
 	commonCfg "common/config"
+	"errors"
 	"ms-weather-subscription/internal/domain"
 	"ms-weather-subscription/internal/handlers"
 	"ms-weather-subscription/internal/repository"
@@ -24,6 +25,7 @@ import (
 func TestSubscription(t *testing.T) {
 	t.Run("Show subscribe page", testShowSubscribePageMocked)
 	t.Run("Successful subscription", testSuccessfulSubscribe)
+	t.Run("Successful subscription with failed email", testSuccessfulSubscribeWithFailedEmail)
 	t.Run("Invalid request body", testInvalidSubscribeRequestBody)
 	t.Run("Duplicate subscription", testDuplicateSubscribe)
 	t.Run("Duplicate email subscription with different frequency", testDuplicateEmailSubscribe)
@@ -141,6 +143,44 @@ func testSuccessfulSubscribe(t *testing.T) {
 	assert.Equal(t, "Kyiv", sub.City)
 	assert.Equal(t, "daily", sub.Frequency)
 	assert.False(t, sub.Confirmed, "subscription should not be confirmed yet")
+}
+
+func testSuccessfulSubscribeWithFailedEmail(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	// Setup
+	testSettings := setupTestEnvironment(t, ctrl)
+	defer testSettings.CleanupFunc()
+
+	// Mock expectations
+	testSettings.MockNotificationClient.
+		EXPECT().
+		SendConfirmationEmail(gomock.Any()).
+		Return(errors.New("some error"))
+
+	// Execute
+	w := httptest.NewRecorder()
+	req := httptest.NewRequest("POST", "/api/subscribe", bytes.NewBufferString(
+		`{"email": "test@example.com", "city": "Kyiv", "frequency": "daily"}`,
+	))
+	req.Header.Set("Content-Type", "application/json")
+
+	testSettings.Router.ServeHTTP(w, req)
+
+	// Verify
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
+
+	// Check database
+	var count int
+	err := testSettings.TestDB.QueryRowx(`
+		SELECT COUNT(*) 
+		FROM subscriptions 
+		WHERE email = $1
+	`, "test@example.com").Scan(&count)
+
+	assert.NoError(t, err)
+	assert.Equal(t, 0, count, "no record should be created for failed confirmation email")
 }
 
 func testInvalidSubscribeRequestBody(t *testing.T) {

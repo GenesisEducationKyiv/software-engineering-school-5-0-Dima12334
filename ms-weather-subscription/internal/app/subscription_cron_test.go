@@ -21,6 +21,10 @@ import (
 
 func TestSubscriptionCron(t *testing.T) {
 	t.Run("Send daily weather forecast success", testSendDailyWeatherForecastSuccess)
+	t.Run(
+		"Send daily weather forecast success with partial failure",
+		testSendDailyWeatherForecastSuccessWithPartialFailure,
+	)
 	t.Run("Send daily weather forecast no subscriptions", testSendDailyWeatherForecastNoSubs)
 	t.Run("Send daily weather forecast repo error", testSendDailyWeatherForecastRepoError)
 	t.Run("Send hourly weather forecast success", testSendHourlyWeatherForecastSuccess)
@@ -100,6 +104,49 @@ func testSendDailyWeatherForecastSuccess(t *testing.T) {
 	err = testSettings.WeatherForecastSenderService.SendDailyWeatherForecast(context.Background())
 
 	// Verify
+	assert.NoError(t, err)
+}
+
+func testSendDailyWeatherForecastSuccessWithPartialFailure(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	// Setup
+	testSettings := setupCronTestEnvironment(t, ctrl)
+	defer testSettings.CleanupFunc()
+
+	// Insert 3 subscriptions
+	_, err := testSettings.TestDB.Exec(`
+        INSERT INTO subscriptions (email, city, frequency, token, confirmed, created_at)
+        VALUES 
+            ('user1@example.com', 'Kyiv', 'daily', 'token1', true, NOW()),
+            ('user2@example.com', 'Kyiv', 'daily', 'token2', true, NOW()),
+            ('user3@example.com', 'Kyiv', 'daily', 'token3', true, NOW())
+    `)
+	assert.NoError(t, err)
+
+	// Expect weather service once (shared city — Kyiv)
+	testSettings.MockWeatherService.EXPECT().
+		GetDayWeather(gomock.Any(), "Kyiv").
+		Return(&domain.DayWeatherResponse{
+			SevenAM: domain.WeatherResponse{Temperature: 20, Humidity: 60, Description: "Sunny"},
+			TenAM:   domain.WeatherResponse{Temperature: 22, Humidity: 55, Description: "Sunny"},
+		}, nil)
+
+	// Expectations: 1st and 3rd succeed, 2nd fails
+	testSettings.MockNotificationClient.EXPECT().
+		SendWeatherForecastDailyEmail(gomock.Any()).
+		DoAndReturn(func(req domain.WeatherForecastEmailInput[*domain.DayWeatherResponse]) error {
+			if req.Subscription.Email == "user2@example.com" {
+				return errors.New("smtp failure")
+			}
+			return nil
+		}).Times(3)
+
+	// Execute
+	err = testSettings.WeatherForecastSenderService.SendDailyWeatherForecast(context.Background())
+
+	// Assert: the method still completes without global failure
 	assert.NoError(t, err)
 }
 
