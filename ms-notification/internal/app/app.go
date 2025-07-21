@@ -2,7 +2,6 @@ package app
 
 import (
 	"common/logger"
-	amqp "github.com/rabbitmq/amqp091-go"
 	"ms-notification/internal/config"
 	"ms-notification/internal/consumer"
 	"ms-notification/internal/service"
@@ -10,6 +9,8 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 type Application struct {

@@ -3,6 +3,7 @@ package publisher
 import (
 	"common/logger"
 	"encoding/json"
+
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 

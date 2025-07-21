@@ -4,7 +4,6 @@ import (
 	"common/logger"
 	"context"
 	"errors"
-	amqp "github.com/rabbitmq/amqp091-go"
 	"log"
 	"ms-weather-subscription/internal/config"
 	"ms-weather-subscription/internal/db"
@@ -21,6 +20,8 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+
+	amqp "github.com/rabbitmq/amqp091-go"
 
 	"github.com/redis/go-redis/v9"
 
