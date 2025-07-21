@@ -32,6 +32,24 @@ services:
     networks:
       - microservices-net
 
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: weather_forecast_sub_rabbitmq
+    healthcheck:
+      test: [ "CMD", "rabbitmq-diagnostics", "status" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "5672:5672"      # AMQP protocol (for apps)
+      - "15672:15672"    # Web UI
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+
+    networks:
+      - microservices-net
+
   app:
     build:
       context: ..
@@ -41,6 +59,8 @@ services:
       db:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     ports:
       - "${APP_PORT}:${APP_PORT}"
