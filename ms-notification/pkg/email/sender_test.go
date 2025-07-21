@@ -54,7 +54,7 @@ func testGenerateBodyFromHTMLWeatherHourly(t *testing.T) {
 	templateData := service.WeatherForecastHourlyEmailTemplateInput{
 		UnsubscribeLink: "https://example.com/api/unsubscribe",
 		City:            "London",
-		Weather: domain.WeatherResponse{
+		Weather: domain.Weather{
 			Temperature: 20.5,
 			Humidity:    65,
 			Description: "Sunny",
@@ -81,29 +81,29 @@ func testGenerateBodyFromHTMLWeatherDaily(t *testing.T) {
 	templateData := service.WeatherForecastDailyEmailTemplateInput{
 		UnsubscribeLink: "https://example.com/api/unsubscribe",
 		City:            "London",
-		Weather: domain.DayWeatherResponse{
-			SevenAM: domain.WeatherResponse{
+		Weather: domain.DayWeather{
+			SevenAM: domain.Weather{
 				Temperature: 18.0,
 				Humidity:    70,
 				Description: "Cloudy",
 			},
-			TenAM: domain.WeatherResponse{
+			TenAM: domain.Weather{
 				Temperature: 18.0,
 				Humidity:    70,
 				Description: "Cloudy"},
-			OnePM: domain.WeatherResponse{
+			OnePM: domain.Weather{
 				Temperature: 18.0,
 				Humidity:    70,
 				Description: "Cloudy"},
-			FourPM: domain.WeatherResponse{
+			FourPM: domain.Weather{
 				Temperature: 18.0,
 				Humidity:    70,
 				Description: "Cloudy"},
-			SevenPM: domain.WeatherResponse{
+			SevenPM: domain.Weather{
 				Temperature: 18.0,
 				Humidity:    70,
 				Description: "Cloudy"},
-			TenPM: domain.WeatherResponse{
+			TenPM: domain.Weather{
 				Temperature: 18.0,
 				Humidity:    70,
 				Description: "Cloudy"},

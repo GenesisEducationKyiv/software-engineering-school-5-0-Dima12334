@@ -41,7 +41,7 @@ func (e *GodotenvLoader) GetRequiredEnvVars(environment string) map[string]strin
 			"HTTP_HOST",
 			"WEATHER_API_KEY",
 			"VISUAL_CROSSING_API_KEY",
-			"NOTIFICATION_SERVICE_URL",
+			"RABBITMQ_URL",
 		)
 	}
 

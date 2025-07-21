@@ -6,7 +6,6 @@ import (
 )
 
 type ConfigReader interface {
-	SetDefaults()
 	ReadConfigFile(configDirPath, configName string) error
 	Unmarshal(cfg interface{}) error
 }
@@ -39,8 +38,6 @@ func NewConfigService(
 }
 
 func (s *ConfigService) LoadConfig(configDir, environment string) (*Config, error) {
-	s.reader.SetDefaults()
-
 	// Load environment file
 	if err := s.loadEnvironmentFile(environment); err != nil {
 		return nil, fmt.Errorf("failed to load environment: %w", err)
@@ -87,7 +84,6 @@ func (s *ConfigService) setEnvironmentVariables(cfg *Config, environment string)
 
 	if environment != TestEnvironment {
 		cfg.Logger.LoggerEnv = envVars["LOGG_ENV"]
-		cfg.HTTP.Host = envVars["HTTP_HOST"]
 		cfg.SMTP.Pass = envVars["SMTP_PASSWORD"]
 	}
 }

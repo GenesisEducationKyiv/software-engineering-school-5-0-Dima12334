@@ -4,6 +4,7 @@ import (
 	"common/logger"
 	"context"
 	"errors"
+	amqp "github.com/rabbitmq/amqp091-go"
 	"log"
 	"ms-weather-subscription/internal/config"
 	"ms-weather-subscription/internal/db"
@@ -14,6 +15,7 @@ import (
 	"ms-weather-subscription/pkg/cache"
 	"ms-weather-subscription/pkg/clients"
 	"ms-weather-subscription/pkg/hash"
+	"ms-weather-subscription/pkg/publisher"
 	"net/http"
 	"os"
 	"os/signal"
@@ -26,11 +28,12 @@ import (
 )
 
 type Application struct {
-	config     *config.Config
-	server     *server.Server
-	cronRunner Cron
-	dbConn     *sqlx.DB
-	redisConn  *redis.Client
+	config         *config.Config
+	server         *server.Server
+	cronRunner     Cron
+	dbConn         *sqlx.DB
+	redisConn      *redis.Client
+	emailPublisher *publisher.EmailPub
 }
 
 type ApplicationBuilder struct{}
@@ -60,17 +63,12 @@ func (ab *ApplicationBuilder) setupDependencies(app *Application) {
 
 	repositories := repository.NewRepositories(app.dbConn)
 
-	notificationClient, err := clients.NewNotificationClient(app.config.ThirdParty.NotificationServiceURL)
-	if err != nil {
-		log.Fatalf("failed to create notification client: %v", err)
-	}
-
 	services := service.NewServices(service.Deps{
 		WeatherClient:      cachingWeatherClient,
 		Repos:              repositories,
 		SubscriptionHasher: hasher,
 		HTTPConfig:         app.config.HTTP,
-		NotificationClient: notificationClient,
+		EmailPublisher:     app.emailPublisher,
 	})
 
 	app.cronRunner = NewCronRunner(services.WeatherForecastSender)
@@ -105,10 +103,20 @@ func (ab *ApplicationBuilder) Build(environment string) (*Application, error) {
 		log.Fatal(err)
 	}
 
+	rabbitConn, err := amqp.Dial(cfg.RabbitMQ.URL)
+	if err != nil {
+		log.Fatalf("failed to create RabbitMQ connection: %v", err)
+	}
+	emailPublisher, err := publisher.NewEmailPublisher(rabbitConn)
+	if err != nil {
+		log.Fatalf("failed to create email publisher: %v", err)
+	}
+
 	app := &Application{
-		config:    cfg,
-		dbConn:    dbConn,
-		redisConn: redisConn,
+		config:         cfg,
+		dbConn:         dbConn,
+		redisConn:      redisConn,
+		emailPublisher: emailPublisher,
 	}
 	ab.setupDependencies(app)
 
@@ -171,5 +179,11 @@ func (a *Application) shutdown() {
 		logger.Errorf("error occurred on redis connection close: %s", err.Error())
 	} else {
 		logger.Info("redis connection closed successfully")
+	}
+
+	if err := a.emailPublisher.Stop(); err != nil {
+		logger.Errorf("failed to stop email publisher: %s", err)
+	} else {
+		logger.Info("email publisher stopped successfully")
 	}
 }

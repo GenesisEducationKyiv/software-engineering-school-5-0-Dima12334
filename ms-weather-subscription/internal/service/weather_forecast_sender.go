@@ -5,6 +5,7 @@ import (
 	"context"
 	"ms-weather-subscription/internal/config"
 	"ms-weather-subscription/internal/domain"
+	"ms-weather-subscription/pkg/publisher"
 	"time"
 )
 
@@ -14,27 +15,23 @@ type (
 )
 
 type sendWeatherForecastInput[T domain.WeatherResponseType] struct {
-	ctx        context.Context
-	repo       SubscriptionSenderRepository
-	frequency  string
-	dateFormat string
-	getWeather WeatherFetcherFunc[T]
-	sendEmail  EmailSenderFunc[T]
-	baseURL    string
+	ctx            context.Context
+	repo           SubscriptionSenderRepository
+	emailPublisher publisher.EmailPublisher
+	frequency      string
+	dateFormat     string
+	queue          string
+	getWeather     WeatherFetcherFunc[T]
+	baseURL        string
 }
 
 type SubscriptionSenderRepository interface {
 	GetConfirmedByFrequency(ctx context.Context, frequency string) ([]domain.Subscription, error)
 }
 
-type WeatherNotificationSender interface {
-	SendWeatherForecastDailyEmail(domain.WeatherForecastEmailInput[*domain.DayWeatherResponse]) error
-	SendWeatherForecastHourlyEmail(domain.WeatherForecastEmailInput[*domain.WeatherResponse]) error
-}
-
 type WeatherForecastSenderService struct {
 	httpConfig             config.HTTPConfig
-	notificationClient     WeatherNotificationSender
+	emailPublisher         publisher.EmailPublisher
 	weatherService         Weather
 	subscriptionSenderRepo SubscriptionSenderRepository
 }
@@ -43,11 +40,11 @@ func NewWeatherForecastSenderService(
 	httpConfig config.HTTPConfig,
 	weatherService Weather,
 	subscriptionSenderRepo SubscriptionSenderRepository,
-	notificationClient WeatherNotificationSender,
+	emailPublisher publisher.EmailPublisher,
 ) *WeatherForecastSenderService {
 	return &WeatherForecastSenderService{
 		httpConfig:             httpConfig,
-		notificationClient:     notificationClient,
+		emailPublisher:         emailPublisher,
 		weatherService:         weatherService,
 		subscriptionSenderRepo: subscriptionSenderRepo,
 	}
@@ -55,25 +52,27 @@ func NewWeatherForecastSenderService(
 
 func (s *WeatherForecastSenderService) SendDailyWeatherForecast(ctx context.Context) error {
 	return sendWeatherForecast(sendWeatherForecastInput[*domain.DayWeatherResponse]{
-		ctx:        ctx,
-		repo:       s.subscriptionSenderRepo,
-		frequency:  domain.DailyWeatherEmailFrequency,
-		dateFormat: time.DateOnly,
-		getWeather: s.weatherService.GetDayWeather,
-		sendEmail:  s.notificationClient.SendWeatherForecastDailyEmail,
-		baseURL:    s.httpConfig.BaseURL,
+		ctx:            ctx,
+		repo:           s.subscriptionSenderRepo,
+		emailPublisher: s.emailPublisher,
+		frequency:      domain.DailyWeatherEmailFrequency,
+		dateFormat:     time.DateOnly,
+		queue:          publisher.EmailDailyForecastQueue,
+		getWeather:     s.weatherService.GetDayWeather,
+		baseURL:        s.httpConfig.BaseURL,
 	})
 }
 
 func (s *WeatherForecastSenderService) SendHourlyWeatherForecast(ctx context.Context) error {
 	return sendWeatherForecast(sendWeatherForecastInput[*domain.WeatherResponse]{
-		ctx:        ctx,
-		repo:       s.subscriptionSenderRepo,
-		frequency:  domain.HourlyWeatherEmailFrequency,
-		dateFormat: time.DateTime,
-		getWeather: s.weatherService.GetCurrentWeather,
-		sendEmail:  s.notificationClient.SendWeatherForecastHourlyEmail,
-		baseURL:    s.httpConfig.BaseURL,
+		ctx:            ctx,
+		repo:           s.subscriptionSenderRepo,
+		emailPublisher: s.emailPublisher,
+		frequency:      domain.HourlyWeatherEmailFrequency,
+		dateFormat:     time.DateTime,
+		queue:          publisher.EmailHourlyForecastQueue,
+		getWeather:     s.weatherService.GetCurrentWeather,
+		baseURL:        s.httpConfig.BaseURL,
 	})
 }
 
@@ -104,7 +103,7 @@ func sendWeatherForecast[T domain.WeatherResponseType](inp sendWeatherForecastIn
 				UnsubscribeLink: subscription.CreateUnsubscribeLink(inp.baseURL),
 			}
 
-			if err := inp.sendEmail(emailInput); err != nil {
+			if err := inp.emailPublisher.Publish(inp.queue, emailInput); err != nil {
 				logger.Errorf(
 					"failed to send email weather (%s) to %s: %s",
 					inp.frequency,

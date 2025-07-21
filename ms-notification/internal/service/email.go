@@ -15,32 +15,29 @@ type ConfirmationEmailTemplateInput struct {
 type WeatherForecastDailyEmailTemplateInput struct {
 	UnsubscribeLink string
 	City            string
-	Weather         domain.DayWeatherResponse
+	Weather         domain.DayWeather
 	Date            string
 }
 
 type WeatherForecastHourlyEmailTemplateInput struct {
 	UnsubscribeLink string
 	City            string
-	Weather         domain.WeatherResponse
+	Weather         domain.Weather
 	Date            string
 }
 
 type EmailService struct {
 	sender      email.Sender
 	emailConfig config.EmailConfig
-	httpConfig  config.HTTPConfig
 }
 
 func NewEmailsService(
 	sender email.Sender,
 	emailConfig config.EmailConfig,
-	httpConfig config.HTTPConfig,
 ) *EmailService {
 	return &EmailService{
 		sender:      sender,
 		emailConfig: emailConfig,
-		httpConfig:  httpConfig,
 	}
 }
 
@@ -89,7 +86,7 @@ func sendWeatherForecastEmail(
 }
 
 func (s *EmailService) SendWeatherForecastDailyEmail(
-	inp domain.WeatherForecastEmailInput[*domain.DayWeatherResponse],
+	inp domain.WeatherForecastEmailInput[*domain.DayWeather],
 ) error {
 	templateInput := WeatherForecastDailyEmailTemplateInput{
 		UnsubscribeLink: inp.UnsubscribeLink,
@@ -110,7 +107,7 @@ func (s *EmailService) SendWeatherForecastDailyEmail(
 }
 
 func (s *EmailService) SendWeatherForecastHourlyEmail(
-	inp domain.WeatherForecastEmailInput[*domain.WeatherResponse],
+	inp domain.WeatherForecastEmailInput[*domain.Weather],
 ) error {
 	templateInput := WeatherForecastHourlyEmailTemplateInput{
 		UnsubscribeLink: inp.UnsubscribeLink,

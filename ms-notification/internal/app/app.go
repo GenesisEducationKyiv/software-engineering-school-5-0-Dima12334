@@ -2,20 +2,19 @@ package app
 
 import (
 	"common/logger"
+	amqp "github.com/rabbitmq/amqp091-go"
 	"ms-notification/internal/config"
-	"ms-notification/internal/handlers"
-	"ms-notification/internal/server"
+	"ms-notification/internal/consumer"
 	"ms-notification/internal/service"
 	"ms-notification/pkg/email/smtp"
 	"os"
 	"os/signal"
-	pb "proto_stubs"
 	"syscall"
 )
 
 type Application struct {
-	config *config.Config
-	server *server.Server
+	config   *config.Config
+	consumer *consumer.Consumer
 }
 
 type ApplicationBuilder struct{}
@@ -37,18 +36,19 @@ func (ab *ApplicationBuilder) setupDependencies(app *Application) error {
 	services := service.NewServices(service.Deps{
 		EmailSender: emailSender,
 		EmailConfig: app.config.Email,
-		HTTPConfig:  app.config.HTTP,
 	})
 
-	grpcServer, err := server.NewServer(&app.config.HTTP)
+	rabbitConn, err := amqp.Dial(app.config.RabbitMQ.URL)
 	if err != nil {
 		return err
 	}
 
-	grpcNotificationHandler := handlers.NewNotificationGRPCHandler(services.Emails)
-	pb.RegisterNotificationServiceServer(grpcServer.GRPCServer(), grpcNotificationHandler)
-
-	app.server = grpcServer
+	consumer, err := consumer.NewConsumer(rabbitConn, services.Emails)
+	if err != nil {
+		return err
+	}
+	consumer.Start()
+	app.consumer = consumer
 
 	return nil
 }
@@ -72,13 +72,7 @@ func (ab *ApplicationBuilder) Build(environment string) (*Application, error) {
 }
 
 func (a *Application) Run() {
-	go func() {
-		if err := a.server.Run(); err != nil {
-			logger.Errorf("error occurred while running http server: %s\n", err.Error())
-		}
-	}()
-	logger.Info("server started")
-
+	logger.Info("notification consumer started")
 	a.waitForShutdown()
 }
 
@@ -87,10 +81,14 @@ func (a *Application) waitForShutdown() {
 	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
 	<-quit
 
-	logger.Info("shutting down server...")
+	logger.Info("shutting down notification service...")
 	a.shutdown()
 }
 
 func (a *Application) shutdown() {
-	a.server.Stop()
+	if err := a.consumer.Stop(); err != nil {
+		logger.Errorf("failed to stop consumer: %s", err)
+	} else {
+		logger.Info("consumer stopped successfully")
+	}
 }

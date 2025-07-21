@@ -9,18 +9,10 @@ const (
 
 type Config struct {
 	Environment string
-	HTTP        HTTPConfig   `mapstructure:"http_server"`
 	Logger      LoggerConfig `mapstructure:"logger"`
 	SMTP        SMTPConfig   `mapstructure:"smtp"`
 	Email       EmailConfig  `mapstructure:"email"`
-}
-
-type HTTPConfig struct {
-	Host    string `mapstructure:"host"`
-	Port    string `mapstructure:"port"`
-	Scheme  string
-	Domain  string
-	BaseURL string
+	RabbitMQ    RabbitMQConfig
 }
 
 type LoggerConfig struct {
@@ -34,6 +26,10 @@ type SMTPConfig struct {
 	From     string `mapstructure:"from"`
 	FromName string `mapstructure:"from_name"`
 	Pass     string
+}
+
+type RabbitMQConfig struct {
+	URL string
 }
 
 type EmailConfig struct {

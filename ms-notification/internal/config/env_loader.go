@@ -32,8 +32,8 @@ func (e *GodotenvLoader) GetRequiredEnvVars(environment string) map[string]strin
 		allVars = append(
 			allVars,
 			"LOGG_ENV",
-			"HTTP_HOST",
 			"SMTP_PASSWORD",
+			"RABBITMQ_URL",
 		)
 	}
 

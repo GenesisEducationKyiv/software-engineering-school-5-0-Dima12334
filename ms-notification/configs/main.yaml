@@ -1,7 +1,3 @@
-http_server:
-  host: localhost
-  port: 8000
-
 logger:
   file_path: ./logs/app.log
 
