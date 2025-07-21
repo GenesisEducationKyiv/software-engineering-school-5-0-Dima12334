@@ -8,9 +8,12 @@ on:
 
 env:
   ENV: "test"
+
   REDIS_ADDRESS: "127.0.0.1:6378"
   REDIS_CACHE_DB: 0
   REDIS_PASSWORD: "redispassword"
+
+  RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
 
 jobs:
   tests:
@@ -28,6 +31,14 @@ jobs:
         image: redis:latest
         ports:
           - 6378:6379
+      rabbitmq:
+        image: rabbitmq:3-management
+        ports:
+            - 5672:5672
+            - 15672:15672
+        env:
+            RABBITMQ_DEFAULT_USER: guest
+            RABBITMQ_DEFAULT_PASS: guest
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
