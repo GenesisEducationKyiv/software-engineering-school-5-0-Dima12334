@@ -3,7 +3,11 @@ package consumer
 import (
 	"common/logger"
 	"encoding/json"
+	"fmt"
 	"ms-notification/internal/domain"
+	"strings"
+
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 type confirmationEmailCommand struct {
@@ -25,24 +29,51 @@ type hourlyForecastCommand struct {
 	UnsubscribeLink string              `json:"unsubscribe_link"`
 }
 
-func (c *Consumer) handleConfirmationEmail(body []byte) {
+type MessageHandlerFunc func(msg amqp.Delivery) error
+
+func (c *Consumer) wrapHandler(handler MessageHandlerFunc) func(amqp.Delivery) {
+	return func(msg amqp.Delivery) {
+		err := handler(msg)
+		if err != nil {
+			logger.Errorf("handler error: %s", err)
+
+			var nackErr error
+			if strings.Contains(err.Error(), "invalid") && strings.Contains(err.Error(), "payload") {
+				nackErr = msg.Nack(false, false)
+			} else {
+				nackErr = msg.Nack(false, true)
+			}
+
+			if nackErr != nil {
+				logger.Errorf("failed to Nack message: %s", nackErr)
+			}
+			return
+		}
+
+		if ackErr := msg.Ack(false); ackErr != nil {
+			logger.Errorf("failed to Ack message: %s", ackErr)
+		}
+	}
+}
+
+func (c *Consumer) handleConfirmationEmail(msg amqp.Delivery) error {
 	var cmd confirmationEmailCommand
-	if err := json.Unmarshal(body, &cmd); err != nil {
-		logger.Errorf("failed to decode confirmation email: %s", err)
-		return
+	if err := json.Unmarshal(msg.Body, &cmd); err != nil {
+		return fmt.Errorf("invalid confirmation email payload: %w", err)
 	}
 
 	inp := domain.ConfirmationEmailInput(cmd)
 	if err := c.emailsService.SendConfirmationEmail(inp); err != nil {
-		logger.Errorf("email send error: %s", err)
+		return fmt.Errorf("confirmation email send error: %w", err)
 	}
+
+	return nil
 }
 
-func (c *Consumer) handleDailyForecast(body []byte) {
+func (c *Consumer) handleDailyForecast(msg amqp.Delivery) error {
 	var cmd dailyForecastCommand
-	if err := json.Unmarshal(body, &cmd); err != nil {
-		logger.Errorf("failed to decode daily forecast: %s", err)
-		return
+	if err := json.Unmarshal(msg.Body, &cmd); err != nil {
+		return fmt.Errorf("invalid daily forecast email payload: %w", err)
 	}
 
 	inp := domain.WeatherForecastEmailInput[*domain.DayWeather]{
@@ -52,15 +83,16 @@ func (c *Consumer) handleDailyForecast(body []byte) {
 		UnsubscribeLink: cmd.UnsubscribeLink,
 	}
 	if err := c.emailsService.SendWeatherForecastDailyEmail(inp); err != nil {
-		logger.Errorf("daily email send error: %s", err)
+		return fmt.Errorf("daily forecast email send error: %w", err)
 	}
+
+	return nil
 }
 
-func (c *Consumer) handleHourlyForecast(body []byte) {
+func (c *Consumer) handleHourlyForecast(msg amqp.Delivery) error {
 	var cmd hourlyForecastCommand
-	if err := json.Unmarshal(body, &cmd); err != nil {
-		logger.Errorf("failed to decode hourly forecast: %s", err)
-		return
+	if err := json.Unmarshal(msg.Body, &cmd); err != nil {
+		return fmt.Errorf("invalid hourly forecast email payload: %w", err)
 	}
 
 	inp := domain.WeatherForecastEmailInput[*domain.Weather]{
@@ -70,6 +102,8 @@ func (c *Consumer) handleHourlyForecast(body []byte) {
 		UnsubscribeLink: cmd.UnsubscribeLink,
 	}
 	if err := c.emailsService.SendWeatherForecastHourlyEmail(inp); err != nil {
-		logger.Errorf("hourly email send error: %s", err)
+		return fmt.Errorf("hourly forecast email send error: %w", err)
 	}
+
+	return nil
 }

@@ -37,9 +37,9 @@ func NewConsumer(conn *amqp.Connection, emailsService service.Emails) (*Consumer
 }
 
 func (c *Consumer) Start() {
-	go c.consume(EmailConfirmationQueue, c.handleConfirmationEmail)
-	go c.consume(EmailDailyForecastQueue, c.handleDailyForecast)
-	go c.consume(EmailHourlyForecastQueue, c.handleHourlyForecast)
+	go c.consume(EmailConfirmationQueue, c.wrapHandler(c.handleConfirmationEmail))
+	go c.consume(EmailDailyForecastQueue, c.wrapHandler(c.handleDailyForecast))
+	go c.consume(EmailHourlyForecastQueue, c.wrapHandler(c.handleHourlyForecast))
 }
 
 func (c *Consumer) Stop() error {
@@ -56,14 +56,14 @@ func (c *Consumer) Stop() error {
 	return err
 }
 
-func (c *Consumer) consume(queue string, handler func([]byte)) {
-	msgs, err := c.ch.Consume(queue, "", true, false, false, false, nil)
+func (c *Consumer) consume(queue string, handler func(amqp.Delivery)) {
+	msgs, err := c.ch.Consume(queue, "", false, false, false, false, nil)
 	if err != nil {
 		logger.Errorf("failed to consume from %s: %v", queue, err)
 		return
 	}
 
 	for msg := range msgs {
-		handler(msg.Body)
+		handler(msg)
 	}
 }
