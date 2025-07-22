@@ -85,5 +85,6 @@ func (s *ConfigService) setEnvironmentVariables(cfg *Config, environment string)
 	if environment != TestEnvironment {
 		cfg.Logger.LoggerEnv = envVars["LOGG_ENV"]
 		cfg.SMTP.Pass = envVars["SMTP_PASSWORD"]
+		cfg.RabbitMQ.URL = envVars["RABBITMQ_URL"]
 	}
 }
