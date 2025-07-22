@@ -104,13 +104,17 @@ func (ab *ApplicationBuilder) Build(environment string) (*Application, error) {
 		log.Fatal(err)
 	}
 
-	rabbitConn, err := amqp.Dial(cfg.RabbitMQ.URL)
-	if err != nil {
-		log.Fatalf("failed to create RabbitMQ connection: %v", err)
-	}
-	emailPublisher, err := publisher.NewEmailPublisher(rabbitConn)
-	if err != nil {
-		log.Fatalf("failed to create email publisher: %v", err)
+	var rabbitConn *amqp.Connection
+	var emailPublisher *publisher.EmailPub
+	if environment != config.TestEnvironment {
+		rabbitConn, err = amqp.Dial(cfg.RabbitMQ.URL)
+		if err != nil {
+			log.Fatalf("failed to create RabbitMQ connection: %v", err)
+		}
+		emailPublisher, err = publisher.NewEmailPublisher(rabbitConn)
+		if err != nil {
+			log.Fatalf("failed to create email publisher: %v", err)
+		}
 	}
 
 	app := &Application{
@@ -182,9 +186,11 @@ func (a *Application) shutdown() {
 		logger.Info("redis connection closed successfully")
 	}
 
-	if err := a.emailPublisher.Stop(); err != nil {
-		logger.Errorf("failed to stop email publisher: %s", err)
-	} else {
-		logger.Info("email publisher stopped successfully")
+	if a.emailPublisher != nil {
+		if err := a.emailPublisher.Stop(); err != nil {
+			logger.Errorf("failed to stop email publisher: %s", err)
+		} else {
+			logger.Info("email publisher stopped successfully")
+		}
 	}
 }
