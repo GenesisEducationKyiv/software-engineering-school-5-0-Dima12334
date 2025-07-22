@@ -13,7 +13,7 @@ env:
   REDIS_CACHE_DB: 0
   REDIS_PASSWORD: "redispassword"
 
-  RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+  RABBITMQ_URL: amqp://guest:guest@127.0.0.1:5672/
 
 jobs:
   tests:
