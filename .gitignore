@@ -1,17 +1,12 @@
 .idea
+.vscode
+
 .data
 .bin
-.DS_Store
 
-/ms-weather-subscription/logs/app.log
-/ms-weather-subscription/.env.dev
-
-/ms-notification/logs/app.log
-/ms-notification/.env.dev
+**/*.log
+*/*.env.dev
 
 cover.out
-
-# Visual Studio Settings
-.vscode
 
 .golangci.yaml
