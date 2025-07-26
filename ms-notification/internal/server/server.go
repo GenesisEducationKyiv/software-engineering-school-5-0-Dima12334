@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"ms-notification/internal/config"
 	"net"
 
@@ -13,7 +14,12 @@ type Server struct {
 }
 
 func NewServer(cfg *config.HTTPConfig) (*Server, error) {
-	listener, err := net.Listen("tcp", ":"+cfg.Port)
+	var lc net.ListenConfig
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	listener, err := lc.Listen(ctx, "tcp", ":"+cfg.Port)
+
 	if err != nil {
 		return &Server{}, err
 	}
