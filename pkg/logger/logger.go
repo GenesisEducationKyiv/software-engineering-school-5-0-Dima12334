@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -12,6 +13,10 @@ import (
 const (
 	prodLogEnv = "prod"
 	devLogEnv  = "dev"
+
+	logSamplingTick  = 1 * time.Second
+	logSamplingFirst = 10 // First 10 log entries per second
+	logSamplingEvery = 5  // Then every 5th log entry
 )
 
 const (
@@ -20,7 +25,9 @@ const (
 )
 
 func Init(loggerEnv, logFilePath string) error {
-	var core zapcore.Core
+	var writer zapcore.WriteSyncer
+	var encoder zapcore.Encoder
+	var levelThreshold zapcore.Level
 
 	encoderCfg := zap.NewProductionEncoderConfig()
 	encoderCfg.EncodeTime = zapcore.ISO8601TimeEncoder
@@ -36,14 +43,31 @@ func Init(loggerEnv, logFilePath string) error {
 		if err != nil {
 			return err
 		}
-
-		writer := zapcore.AddSync(logFile)
-		core = zapcore.NewCore(zapcore.NewJSONEncoder(encoderCfg), writer, zap.InfoLevel)
+		writer = zapcore.AddSync(logFile)
+		encoder = zapcore.NewJSONEncoder(encoderCfg)
+		levelThreshold = zapcore.InfoLevel
 	default:
-		core = zapcore.NewCore(
-			zapcore.NewConsoleEncoder(encoderCfg), zapcore.AddSync(os.Stdout), zap.DebugLevel,
-		)
+		writer = zapcore.AddSync(os.Stdout)
+		encoder = zapcore.NewConsoleEncoder(encoderCfg)
+		levelThreshold = zapcore.DebugLevel
 	}
+
+	// Core for Debug and Info (no sampling)
+	debugInfoCore := zapcore.NewCore(encoder, writer, zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
+		return lvl >= levelThreshold && lvl < zapcore.WarnLevel
+	}))
+
+	// Sampler for Warn and higher
+	warnErrorSampler := zapcore.NewSamplerWithOptions(
+		zapcore.NewCore(encoder, writer, zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
+			return lvl >= zapcore.WarnLevel
+		})),
+		logSamplingTick,
+		logSamplingFirst,
+		logSamplingEvery,
+	)
+
+	core := zapcore.NewTee(debugInfoCore, warnErrorSampler)
 
 	logger := zap.New(core, zap.AddCaller(), zap.AddCallerSkip(1))
 	zap.ReplaceGlobals(logger)
