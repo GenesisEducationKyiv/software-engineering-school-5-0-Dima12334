@@ -15,22 +15,22 @@ router.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
 ### Список цілей Prometheus
 
-![prometheus\_targets](./prometheus_targets.png)
+![prometheus\_targets](screenshots/prometheus_targets.png)
 
 --- 
 
 ### Загальна інформація про запуск Prometheus
 
-![prometheus\_run\_info](./prometheus_run_info.png)
+![prometheus\_run\_info](screenshots/prometheus_run_info.png)
 
 --- 
 
 ### Перегляд експорту метрик з /metrics
 
-![prometheus\_metrics](./prometheus_metrics.png)
+![prometheus\_metrics](screenshots/prometheus_metrics.png)
 
 --- 
 
 ### Дашборд у Grafana
 
-![grafana\_charts](./grafana_charts.png)
+![grafana\_charts](screenshots/grafana_charts.png)
