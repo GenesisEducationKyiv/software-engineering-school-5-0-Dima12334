@@ -1,9 +1,10 @@
 package handlers
 
 import (
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"ms-weather-subscription/internal/config"
 	"net/http"
+
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
