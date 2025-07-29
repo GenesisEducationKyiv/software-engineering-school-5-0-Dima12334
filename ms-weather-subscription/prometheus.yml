@@ -1,0 +1,9 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: "weather-subscription service"
+    static_configs:
+      - targets:
+        - weather_forecast_sub_app:8080

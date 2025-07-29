@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"ms-weather-subscription/internal/config"
 	"net/http"
 
@@ -54,6 +55,9 @@ func (h *Handler) initBaseRoutes(router *gin.Engine) {
 
 	// Swagger docs
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+	// Prometheus metrics
+	router.GET("/metrics", gin.WrapH(promhttp.Handler()))
 }
 
 func (h *Handler) initHTMLRoutes(router *gin.Engine) {
