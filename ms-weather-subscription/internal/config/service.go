@@ -78,7 +78,7 @@ func (s *ConfigService) loadEnvironmentFile(environment string) error {
 	case TestEnvironment:
 		envFile = "ms-weather-subscription/.env.test"
 	case ProdEnvironment:
-		envFile = "" // No env file for production
+		envFile = "" // No production env file, using os envs
 	default:
 		envFile = "ms-weather-subscription/.env.dev"
 	}

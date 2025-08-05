@@ -69,9 +69,9 @@ func (s *ConfigService) loadEnvironmentFile(environment string) error {
 
 	switch environment {
 	case TestEnvironment:
-		envFile = "ms-notification/.env.test"
+		return nil // No test envs
 	case ProdEnvironment:
-		envFile = "" // No env file for production
+		envFile = "" // No production env file, using os envs
 	default:
 		envFile = "ms-notification/.env.dev"
 	}
