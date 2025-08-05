@@ -14,12 +14,12 @@ const (
 )
 
 type Consumer struct {
-	ch            *amqp.Channel
-	conn          *amqp.Connection
-	emailsService service.Emails
+	ch           *amqp.Channel
+	conn         *amqp.Connection
+	emailService service.Email
 }
 
-func NewConsumer(conn *amqp.Connection, emailsService service.Emails) (*Consumer, error) {
+func NewConsumer(conn *amqp.Connection, emailService service.Email) (*Consumer, error) {
 	ch, err := conn.Channel()
 	if err != nil {
 		return nil, err
@@ -33,7 +33,7 @@ func NewConsumer(conn *amqp.Connection, emailsService service.Emails) (*Consumer
 		}
 	}
 
-	return &Consumer{ch: ch, conn: conn, emailsService: emailsService}, nil
+	return &Consumer{ch: ch, conn: conn, emailService: emailService}, nil
 }
 
 func (c *Consumer) Start() {

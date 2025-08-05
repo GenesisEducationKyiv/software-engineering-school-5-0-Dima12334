@@ -31,7 +31,7 @@ type EmailService struct {
 	emailConfig config.EmailConfig
 }
 
-func NewEmailsService(
+func NewEmailService(
 	sender email.Sender,
 	emailConfig config.EmailConfig,
 ) *EmailService {

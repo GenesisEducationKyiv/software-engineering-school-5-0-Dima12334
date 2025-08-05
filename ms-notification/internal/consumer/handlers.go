@@ -15,18 +15,20 @@ type confirmationEmailCommand struct {
 	ConfirmationLink string `json:"confirmation_link"`
 }
 
-type dailyForecastCommand struct {
+type baseForecastCommand struct {
 	Subscription    domain.Subscription `json:"subscription"`
-	Weather         domain.DayWeather   `json:"weather"`
 	Date            string              `json:"date"`
 	UnsubscribeLink string              `json:"unsubscribe_link"`
 }
 
+type dailyForecastCommand struct {
+	baseForecastCommand
+	Weather domain.DayWeather `json:"weather"`
+}
+
 type hourlyForecastCommand struct {
-	Subscription    domain.Subscription `json:"subscription"`
-	Weather         domain.Weather      `json:"weather"`
-	Date            string              `json:"date"`
-	UnsubscribeLink string              `json:"unsubscribe_link"`
+	baseForecastCommand
+	Weather domain.Weather `json:"weather"`
 }
 
 type MessageHandlerFunc func(msg amqp.Delivery) error
@@ -63,7 +65,7 @@ func (c *Consumer) handleConfirmationEmail(msg amqp.Delivery) error {
 	}
 
 	inp := domain.ConfirmationEmailInput(cmd)
-	if err := c.emailsService.SendConfirmationEmail(inp); err != nil {
+	if err := c.emailService.SendConfirmationEmail(inp); err != nil {
 		return fmt.Errorf("confirmation email send error: %w", err)
 	}
 
@@ -82,7 +84,7 @@ func (c *Consumer) handleDailyForecast(msg amqp.Delivery) error {
 		Date:            cmd.Date,
 		UnsubscribeLink: cmd.UnsubscribeLink,
 	}
-	if err := c.emailsService.SendWeatherForecastDailyEmail(inp); err != nil {
+	if err := c.emailService.SendWeatherForecastDailyEmail(inp); err != nil {
 		return fmt.Errorf("daily forecast email send error: %w", err)
 	}
 
@@ -101,7 +103,7 @@ func (c *Consumer) handleHourlyForecast(msg amqp.Delivery) error {
 		Date:            cmd.Date,
 		UnsubscribeLink: cmd.UnsubscribeLink,
 	}
-	if err := c.emailsService.SendWeatherForecastHourlyEmail(inp); err != nil {
+	if err := c.emailService.SendWeatherForecastHourlyEmail(inp); err != nil {
 		return fmt.Errorf("hourly forecast email send error: %w", err)
 	}
 

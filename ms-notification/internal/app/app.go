@@ -44,7 +44,7 @@ func (ab *ApplicationBuilder) setupDependencies(app *Application) error {
 		return err
 	}
 
-	consumer, err := consumer.NewConsumer(rabbitConn, services.Emails)
+	consumer, err := consumer.NewConsumer(rabbitConn, services.Email)
 	if err != nil {
 		return err
 	}
