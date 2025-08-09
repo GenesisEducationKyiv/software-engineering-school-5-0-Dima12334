@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	redisCache "ms-weather-subscription/pkg/cache"
+	"ms-weather-subscription/pkg/metrics"
 	"net/url"
 	"strings"
 	"time"
@@ -41,6 +42,7 @@ func (s *CachingWeatherClient) GetAPICurrentWeather(
 	if cached, err := s.cache.Get(ctx, key); err == nil {
 		var res domain.WeatherResponse
 		if err := json.Unmarshal([]byte(cached), &res); err == nil {
+			metrics.WeatherCacheHitCount.Inc()
 			return &res, nil
 		}
 

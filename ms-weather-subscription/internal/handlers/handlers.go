@@ -4,6 +4,8 @@ import (
 	"ms-weather-subscription/internal/config"
 	"net/http"
 
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -54,6 +56,9 @@ func (h *Handler) initBaseRoutes(router *gin.Engine) {
 
 	// Swagger docs
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+	// Prometheus metrics
+	router.GET("/metrics", gin.WrapH(promhttp.Handler()))
 }
 
 func (h *Handler) initHTMLRoutes(router *gin.Engine) {
