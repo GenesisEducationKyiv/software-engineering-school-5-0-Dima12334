@@ -20,8 +20,8 @@ type WeatherResponseType interface {
 }
 
 type WeatherForecastEmailInput[T WeatherResponseType] struct {
-	Subscription    Subscription
-	Weather         T
-	Date            string
-	UnsubscribeLink string
+	Subscription    Subscription `json:"subscription"`
+	Weather         T            `json:"weather"`
+	Date            string       `json:"date"`
+	UnsubscribeLink string       `json:"unsubscribe_link"`
 }

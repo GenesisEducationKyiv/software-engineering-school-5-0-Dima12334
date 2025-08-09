@@ -8,8 +8,9 @@ import (
 	"ms-weather-subscription/internal/handlers"
 	"ms-weather-subscription/internal/repository"
 	"ms-weather-subscription/internal/service"
-	mockClients "ms-weather-subscription/pkg/clients/mocks"
 	"ms-weather-subscription/pkg/hash"
+	"ms-weather-subscription/pkg/publisher"
+	mockPublisher "ms-weather-subscription/pkg/publisher/mocks"
 	"ms-weather-subscription/testutils"
 	"net/http"
 	"net/http/httptest"
@@ -38,10 +39,10 @@ func TestSubscription(t *testing.T) {
 }
 
 type subscriptionTestEnv struct {
-	TestDB                 *sqlx.DB
-	Router                 *gin.Engine
-	MockNotificationClient *mockClients.MockNotificationSender
-	CleanupFunc            func()
+	TestDB             *sqlx.DB
+	Router             *gin.Engine
+	MockEmailPublisher *mockPublisher.MockEmailPublisher
+	CleanupFunc        func()
 }
 
 func setupTestEnvironment(t *testing.T, ctrl *gomock.Controller) subscriptionTestEnv {
@@ -51,13 +52,13 @@ func setupTestEnvironment(t *testing.T, ctrl *gomock.Controller) subscriptionTes
 	repo := repository.NewSubscriptionRepo(testDB)
 	hasher := &hash.SHA256Hasher{}
 
-	mockNotificationClient := mockClients.NewMockNotificationSender(ctrl)
+	mockEmailPublisher := mockPublisher.NewMockEmailPublisher(ctrl)
 
 	subService := service.NewSubscriptionService(
 		cfg.HTTP,
 		repo,
 		hasher,
-		mockNotificationClient,
+		mockEmailPublisher,
 	)
 	services := &service.Services{Subscriptions: subService}
 
@@ -81,10 +82,10 @@ func setupTestEnvironment(t *testing.T, ctrl *gomock.Controller) subscriptionTes
 	}
 
 	return subscriptionTestEnv{
-		TestDB:                 testDB,
-		Router:                 router,
-		MockNotificationClient: mockNotificationClient,
-		CleanupFunc:            cleanup,
+		TestDB:             testDB,
+		Router:             router,
+		MockEmailPublisher: mockEmailPublisher,
+		CleanupFunc:        cleanup,
 	}
 }
 
@@ -114,9 +115,9 @@ func testSuccessfulSubscribe(t *testing.T) {
 	defer testSettings.CleanupFunc()
 
 	// Mock expectations
-	testSettings.MockNotificationClient.
+	testSettings.MockEmailPublisher.
 		EXPECT().
-		SendConfirmationEmail(gomock.Any()).
+		Publish(publisher.EmailConfirmationQueue, gomock.Any()).
 		Return(nil)
 
 	// Execute
@@ -154,9 +155,9 @@ func testSuccessfulSubscribeWithFailedEmail(t *testing.T) {
 	defer testSettings.CleanupFunc()
 
 	// Mock expectations
-	testSettings.MockNotificationClient.
+	testSettings.MockEmailPublisher.
 		EXPECT().
-		SendConfirmationEmail(gomock.Any()).
+		Publish(publisher.EmailConfirmationQueue, gomock.Any()).
 		Return(errors.New("some error"))
 
 	// Execute
@@ -262,9 +263,9 @@ func testDuplicateEmailSubscribe(t *testing.T) {
 	defer testSettings.CleanupFunc()
 
 	// Mock expectations
-	testSettings.MockNotificationClient.
+	testSettings.MockEmailPublisher.
 		EXPECT().
-		SendConfirmationEmail(gomock.Any()).
+		Publish(publisher.EmailConfirmationQueue, gomock.Any()).
 		Return(nil)
 
 	var createdSubscriptions int

@@ -1,25 +1,25 @@
 package domain
 
-type WeatherResponse struct {
+type Weather struct {
 	Temperature float32 `json:"temperature"`
 	Humidity    float32 `json:"humidity"`
 	Description string  `json:"description"`
 }
 
-type DayWeatherResponse struct {
-	SevenAM WeatherResponse `json:"seven_am"`
-	TenAM   WeatherResponse `json:"ten_am"`
-	OnePM   WeatherResponse `json:"one_pm"`
-	FourPM  WeatherResponse `json:"four_pm"`
-	SevenPM WeatherResponse `json:"seven_pm"`
-	TenPM   WeatherResponse `json:"ten_pm"`
+type DayWeather struct {
+	SevenAM Weather `json:"seven_am"`
+	TenAM   Weather `json:"ten_am"`
+	OnePM   Weather `json:"one_pm"`
+	FourPM  Weather `json:"four_pm"`
+	SevenPM Weather `json:"seven_pm"`
+	TenPM   Weather `json:"ten_pm"`
 }
 
-type WeatherResponseType interface {
-	*WeatherResponse | *DayWeatherResponse
+type WeatherType interface {
+	*Weather | *DayWeather
 }
 
-type WeatherForecastEmailInput[T WeatherResponseType] struct {
+type WeatherForecastEmailInput[T WeatherType] struct {
 	Subscription    Subscription
 	Weather         T
 	Date            string

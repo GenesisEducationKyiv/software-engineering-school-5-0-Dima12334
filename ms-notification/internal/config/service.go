@@ -6,7 +6,6 @@ import (
 )
 
 type ConfigReader interface {
-	SetDefaults()
 	ReadConfigFile(configDirPath, configName string) error
 	Unmarshal(cfg interface{}) error
 }
@@ -39,8 +38,6 @@ func NewConfigService(
 }
 
 func (s *ConfigService) LoadConfig(configDir, environment string) (*Config, error) {
-	s.reader.SetDefaults()
-
 	// Load environment file
 	if err := s.loadEnvironmentFile(environment); err != nil {
 		return nil, fmt.Errorf("failed to load environment: %w", err)
@@ -72,9 +69,9 @@ func (s *ConfigService) loadEnvironmentFile(environment string) error {
 
 	switch environment {
 	case TestEnvironment:
-		envFile = "ms-notification/.env.test"
+		return nil // No test envs
 	case ProdEnvironment:
-		envFile = "" // No env file for production
+		envFile = "" // No production env file, using os envs
 	default:
 		envFile = "ms-notification/.env.dev"
 	}
@@ -87,7 +84,7 @@ func (s *ConfigService) setEnvironmentVariables(cfg *Config, environment string)
 
 	if environment != TestEnvironment {
 		cfg.Logger.LoggerEnv = envVars["LOGG_ENV"]
-		cfg.HTTP.Host = envVars["HTTP_HOST"]
 		cfg.SMTP.Pass = envVars["SMTP_PASSWORD"]
+		cfg.RabbitMQ.URL = envVars["RABBITMQ_URL"]
 	}
 }

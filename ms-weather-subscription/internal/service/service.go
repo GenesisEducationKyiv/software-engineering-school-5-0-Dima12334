@@ -7,6 +7,7 @@ import (
 	"ms-weather-subscription/internal/repository"
 	"ms-weather-subscription/pkg/clients"
 	"ms-weather-subscription/pkg/hash"
+	"ms-weather-subscription/pkg/publisher"
 )
 
 //go:generate mockgen -source=service.go -destination=mocks/mock_service.go
@@ -32,7 +33,7 @@ type Deps struct {
 	WeatherClient      clients.WeatherClient
 	SubscriptionHasher hash.SubscriptionHasher
 	HTTPConfig         config.HTTPConfig
-	NotificationClient clients.NotificationSender
+	EmailPublisher     publisher.EmailPublisher
 }
 
 type Services struct {
@@ -48,14 +49,14 @@ func NewServices(deps Deps) *Services {
 			deps.HTTPConfig,
 			deps.Repos.Subscription,
 			deps.SubscriptionHasher,
-			deps.NotificationClient,
+			deps.EmailPublisher,
 		),
 		Weather: weatherService,
 		WeatherForecastSender: NewWeatherForecastSenderService(
 			deps.HTTPConfig,
 			weatherService,
 			deps.Repos.Subscription,
-			deps.NotificationClient,
+			deps.EmailPublisher,
 		),
 	}
 }

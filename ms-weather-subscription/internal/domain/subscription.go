@@ -46,6 +46,6 @@ type CreateSubscriptionInput struct {
 }
 
 type ConfirmationEmailInput struct {
-	Email            string
-	ConfirmationLink string
+	Email            string `json:"email"`
+	ConfirmationLink string `json:"confirmation_link"`
 }

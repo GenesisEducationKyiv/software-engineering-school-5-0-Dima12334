@@ -15,6 +15,7 @@ type Config struct {
 	Logger      LoggerConfig   `mapstructure:"logger"`
 	DB          DatabaseConfig `mapstructure:"db"`
 	Redis       RedisConfig
+	RabbitMQ    RabbitMQConfig
 	ThirdParty  ThirdPartyConfig
 }
 
@@ -31,9 +32,8 @@ type HTTPConfig struct {
 }
 
 type ThirdPartyConfig struct {
-	WeatherAPIKey          string
-	VisualCrossingAPIKey   string
-	NotificationServiceURL string
+	WeatherAPIKey        string
+	VisualCrossingAPIKey string
 }
 
 type LoggerConfig struct {
@@ -56,4 +56,8 @@ type RedisConfig struct {
 	Address  string
 	CacheDB  int
 	Password string
+}
+
+type RabbitMQConfig struct {
+	URL string
 }

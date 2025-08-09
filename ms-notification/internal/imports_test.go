@@ -6,17 +6,17 @@ import (
 	"github.com/matthewmcnew/archtest"
 )
 
-func Test_Service_ShouldNotDependOn_Handlers(t *testing.T) {
+func Test_Service_ShouldNotDependOn_Consumer(t *testing.T) {
 	t.Parallel()
 	archtest.Package(t, "ms-notification/internal/service").ShouldNotDependOn(
-		"ms-notification/internal/handlers",
+		"ms-notification/internal/consumer",
 	)
 }
 
-func Test_Domain_ShouldNotDependOn_Handlers(t *testing.T) {
+func Test_Domain_ShouldNotDependOn_Consumer(t *testing.T) {
 	t.Parallel()
 	archtest.Package(t, "ms-notification/internal/domain").ShouldNotDependOn(
-		"ms-notification/internal/handlers",
+		"ms-notification/internal/consumer",
 	)
 }
 
@@ -27,10 +27,10 @@ func Test_Domain_ShouldNotDependOn_Service(t *testing.T) {
 	)
 }
 
-func Test_Pkg_ShouldNotDependOn_Handlers(t *testing.T) {
+func Test_Pkg_ShouldNotDependOn_Consumer(t *testing.T) {
 	t.Parallel()
 	archtest.Package(t, "ms-notification/pkg/...").ShouldNotDependOn(
-		"ms-notification/internal/handlers",
+		"ms-notification/internal/consumer",
 	)
 }
 
