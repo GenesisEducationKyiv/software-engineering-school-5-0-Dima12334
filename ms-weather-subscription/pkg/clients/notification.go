@@ -99,7 +99,7 @@ func (n *NotificationClient) SendWeatherForecastDailyEmail(
 		logger.Warnf("failed to send daily weather forecast for %s", inp.Subscription.Email)
 	}
 
-	return err
+	return nil
 }
 
 func (n *NotificationClient) SendWeatherForecastHourlyEmail(
@@ -130,5 +130,5 @@ func (n *NotificationClient) SendWeatherForecastHourlyEmail(
 		logger.Warnf("failed to send hourly weather forecast for %s", inp.Subscription.Email)
 	}
 
-	return err
+	return nil
 }
