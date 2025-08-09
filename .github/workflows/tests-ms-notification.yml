@@ -1,0 +1,31 @@
+name: Tests ms-notification
+
+on:
+  push:
+    branches:
+      - '**'
+      - '!main'
+
+env:
+  ENV: "test"
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.24
+
+      - name: Install dependencies
+        working-directory: ./ms-notification
+        run: go mod tidy
+
+      # Run Unit tests
+      - name: Run unit tests
+        working-directory: ./ms-notification
+        run: go test -v $(go list ./... | grep -v 'internal/app\|internal/handlers')

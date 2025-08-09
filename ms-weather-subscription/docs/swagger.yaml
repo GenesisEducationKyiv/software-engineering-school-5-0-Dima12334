@@ -1,0 +1,140 @@
+basePath: /api
+definitions:
+  handlers.weatherResponse:
+    properties:
+      description:
+        type: string
+      humidity:
+        type: number
+      temperature:
+        type: number
+    type: object
+host: weather-forecast-sub-app.onrender.com
+info:
+  contact: {}
+  description: Weather API application that allows users to subscribe to weather updates
+    for their city.
+  title: Weather Forecast API
+  version: "1.0"
+paths:
+  /confirm/{token}:
+    get:
+      consumes:
+      - application/json
+      description: Confirms a subscription using the token sent in the confirmation
+        email.
+      parameters:
+      - description: Confirmation token
+        in: path
+        name: token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Subscription confirmed successfully
+        "400":
+          description: Invalid token
+        "404":
+          description: Token not found
+      summary: Confirm email subscription
+      tags:
+      - subscription
+  /subscribe:
+    post:
+      consumes:
+      - application/json
+      - application/x-www-form-urlencoded
+      description: Subscribe an email to receive weather updates for a specific city
+        with chosen frequency.
+      parameters:
+      - description: Email address to subscribe
+        in: formData
+        name: email
+        required: true
+        type: string
+      - description: City for weather updates
+        in: formData
+        name: city
+        required: true
+        type: string
+      - description: Frequency of updates (hourly or daily)
+        enum:
+        - hourly
+        - daily
+        in: formData
+        name: frequency
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Subscription successful. Confirmation email sent.
+        "400":
+          description: Invalid input
+        "409":
+          description: Email already subscribed
+      summary: Subscribe to weather updates
+      tags:
+      - subscription
+  /unsubscribe/{token}:
+    get:
+      consumes:
+      - application/json
+      description: Unsubscribes an email from weather updates using the token sent
+        in emails.
+      parameters:
+      - description: Unsubscribe token
+        in: path
+        name: token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Unsubscribed successfully
+        "400":
+          description: Invalid token
+        "404":
+          description: Token not found
+      summary: Unsubscribe from weather updates
+      tags:
+      - subscription
+  /weather:
+    get:
+      consumes:
+      - application/json
+      description: Returns the current weather forecast for the specified city using
+        WeatherAPI.com.
+      parameters:
+      - description: City name for weather forecast
+        in: query
+        name: city
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.weatherResponse'
+        "400":
+          description: Invalid request
+        "404":
+          description: City not found
+      summary: Get current weather for a city
+      tags:
+      - weather
+schemes:
+- http
+- https
+swagger: "2.0"
+tags:
+- description: Weather forecast operations
+  name: weather
+- description: Subscription management operations
+  name: subscription

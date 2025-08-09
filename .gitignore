@@ -1,0 +1,12 @@
+.idea
+.vscode
+
+.data
+.bin
+
+**/*.log
+*/*.env.dev
+
+cover.out
+
+.golangci.yaml
