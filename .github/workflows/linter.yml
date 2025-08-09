@@ -9,6 +9,13 @@ on:
 jobs:
   linter:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        module:
+          - ms-notification
+          - ms-weather-subscription
+          - pkg
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -16,7 +23,8 @@ jobs:
       - name: Fetch remote lint config
         run: curl -sSfL -o .golangci.yml https://raw.githubusercontent.com/fabl3ss/genesis-se-school-linter/refs/heads/main/.golangci.yaml
 
-      - name: Run golangci-lint
+      - name: Run golangci-lint in ${{ matrix.module }}
         uses: golangci/golangci-lint-action@v8
         with:
           version: latest
+          working-directory: ${{ matrix.module }}

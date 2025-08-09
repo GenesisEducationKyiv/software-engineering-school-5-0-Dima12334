@@ -1,0 +1,58 @@
+services:
+  db:
+    image: postgres:16
+    container_name: weather_forecast_sub_postgres
+    healthcheck:
+      test: [ "CMD-SHELL", "sh -c 'pg_isready -U ${DB_USER} -d ${DB_NAME}'" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "${DB_PORT}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - microservices-net
+
+  redis:
+    image: redis:latest
+    container_name: weather_forecast_sub_redis
+    healthcheck:
+      test: [ "CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}"]
+    networks:
+      - microservices-net
+
+  app:
+    build:
+      context: ..
+      dockerfile: ms-weather-subscription/Dockerfile
+    container_name: weather_forecast_sub_app
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "${APP_PORT}:${APP_PORT}"
+    volumes:
+      - .env.dev:/app/ms-weather-subscription/.env.dev
+      - ./logs:/app/ms-weather-subscription/logs
+    networks:
+      - microservices-net
+
+volumes:
+  postgres_data:
+
+networks:
+  microservices-net:
+    external: true

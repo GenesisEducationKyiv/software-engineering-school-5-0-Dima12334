@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+package notification;
+option go_package = "api/proto/stubs/notificationpb;notificationpb";
+
+// Subscription info
+message Subscription {
+  string email = 1;
+  string city = 2;
+}
+
+// Current Weather data
+message Weather {
+  float temperature = 1;
+  float humidity = 2;
+  string description = 3;
+}
+
+// Daily Weather data
+message DayWeather {
+  Weather seven_am = 1;
+  Weather ten_am = 2;
+  Weather one_pm = 3;
+  Weather four_pm = 4;
+  Weather seven_pm = 5;
+  Weather ten_pm = 6;
+}
+
+// Confirmation Email
+message ConfirmationEmailRequest {
+  string email = 1;
+  string confirmation_link = 2;
+}
+
+message SendStatus {
+  bool success = 1;
+}
+
+// Daily Forecast Email
+message DailyForecastEmailRequest {
+  Subscription subscription = 1;
+  DayWeather weather = 2;
+  string date = 3;
+  string unsubscribe_link = 4;
+}
+
+// Hourly Forecast Email
+message HourlyForecastEmailRequest {
+  Subscription subscription = 1;
+  Weather weather = 2;
+  string date = 3;
+  string unsubscribe_link = 4;
+}
+
+service NotificationService {
+  rpc SendConfirmationEmail(ConfirmationEmailRequest) returns (SendStatus);
+  rpc SendDailyForecastEmail(DailyForecastEmailRequest) returns (SendStatus);
+  rpc SendHourlyForecastEmail(HourlyForecastEmailRequest) returns (SendStatus);
+}

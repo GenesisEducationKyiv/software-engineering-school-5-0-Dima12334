@@ -1,0 +1,17 @@
+services:
+  ms-notification:
+    build:
+      context: ..
+      dockerfile: ms-notification/Dockerfile
+    container_name: weather_forecast_sub_notification_app
+    ports:
+      - "${APP_PORT}:${APP_PORT}"
+    volumes:
+      - .env.dev:/app/ms-notification/.env.dev
+      - ./logs:/app/ms-notification/logs
+    networks:
+      - microservices-net
+
+networks:
+  microservices-net:
+    external: true

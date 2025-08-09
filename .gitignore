@@ -1,14 +1,12 @@
 .idea
+.vscode
+
 .data
 .bin
-.DS_Store
 
-/logs/app.log
+**/*.log
+*/*.env.dev
 
-.env.dev
 cover.out
-
-# Visual Studio Settings
-.vscode
 
 .golangci.yaml

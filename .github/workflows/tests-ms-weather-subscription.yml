@@ -1,0 +1,85 @@
+name: Tests ms-weather-subscription
+
+on:
+  push:
+    branches:
+      - '**'
+      - '!main'
+
+env:
+  ENV: "test"
+  REDIS_ADDRESS: "127.0.0.1:6378"
+  REDIS_CACHE_DB: 0
+  REDIS_PASSWORD: "redispassword"
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: weather_forecast_sub_go_test
+        ports:
+          - 5433:5432
+      redis:
+        image: redis:latest
+        ports:
+          - 6378:6379
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.24
+
+      - name: Install dependencies
+        working-directory: ./ms-weather-subscription
+        run: go mod tidy
+
+      # Run Unit tests
+      - name: Run unit tests
+        working-directory: ./ms-weather-subscription
+        run: go test -v $(go list ./... | grep -v 'internal/app\|internal/handlers')
+
+      # Run Integration tests
+      - name: Run integration tests
+        working-directory: ./ms-weather-subscription
+        run: go test -v ./internal/app/... ./internal/handlers/...
+
+      # Run  E2E tests using Postman
+      - name: Install Postman CLI
+        run: curl -o- "https://dl-cli.pstmn.io/install/linux64.sh" | sh
+
+      - name: Login to Postman CLI
+        run: postman login --with-api-key ${{ secrets.POSTMAN_API_KEY }}
+
+      - name: Run Go server and E2E tests
+        working-directory: ./ms-weather-subscription
+        run: |
+          go run ./cmd/app/main.go &
+          SERVER_PID=$!
+          
+          # Wait for /ping to return 200 OK (max 10 attempts)
+          for i in {1..10}; do
+            if curl --fail --silent http://localhost:8080/ping > /dev/null; then
+              echo "Server is healthy!"
+              break
+            fi
+            echo "Waiting for /ping to return 200... ($i/10)"
+            sleep 1
+          done
+
+          if ! curl --fail --silent http://localhost:8080/ping > /dev/null; then
+            echo "Server failed to pass ping in time."
+            kill $SERVER_PID
+            exit 1
+          fi
+          
+          postman collection run "25524341-9be8d3fd-871f-4b5d-8765-49c908e55c40"
+          
+          kill $SERVER_PID
