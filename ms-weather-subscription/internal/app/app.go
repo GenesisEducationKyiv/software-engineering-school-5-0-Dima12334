@@ -186,11 +186,9 @@ func (a *Application) shutdown() {
 		logger.Info("redis connection closed successfully")
 	}
 
-	if a.emailPublisher != nil {
-		if err := a.emailPublisher.Stop(); err != nil {
-			logger.Errorf("failed to stop email publisher: %s", err)
-		} else {
-			logger.Info("email publisher stopped successfully")
-		}
+	if err := a.emailPublisher.Stop(); err != nil {
+		logger.Errorf("failed to stop email publisher: %s", err)
+	} else {
+		logger.Info("email publisher stopped successfully")
 	}
 }
